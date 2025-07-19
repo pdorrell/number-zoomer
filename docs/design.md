@@ -96,6 +96,14 @@ So grid lines are:
 * For fractions to 3DP - 2px
 * For fractions to 2DP or less - 3px (ie in this case, only 1.47 and 1.48)
 
+### Rounding of boundary coordinates
+
+The number N also determines the rounding of the boundary coordinates, ie X & Y for bottom-left
+and top-right corners, which is that the precision of those values should be limited to N+1
+(in effect rounding them to a level of precision limited by the size that 1/2 pixel represents).
+This should apply whenever the mapping from the view rectangle to X/Y space changes, ie for
+any zoom change or translation change.
+
 ## Navigation and Control
 
 There are four primary control actions that the user of the application
