@@ -95,39 +95,48 @@ export class AppStore {
   }
 
   zoom(factor: number, centerX?: number, centerY?: number) {
-    let center: Point;
-    
     if (centerX !== undefined && centerY !== undefined) {
-      // Mouse wheel zoom - use cursor position as center
-      center = this.mapping.screenToXY(centerX, centerY);
+      // Mouse wheel zoom - use cursor position as zoom center
+      this.zoomAroundScreenPoint(factor, centerX, centerY);
     } else {
       // Button zoom - choose center based on current point visibility
       if (this.isCurrentPointVisible()) {
-        // If current point is visible, keep it in the same viewport position
-        center = this.currentPoint;
+        // If current point is visible, zoom should keep it at its current screen position
+        const currentPointScreen = this.mapping.worldToScreen(this.currentPoint);
+        this.zoomAroundScreenPoint(factor, currentPointScreen.x, currentPointScreen.y);
       } else {
-        // If current point is not visible, zoom from center of world window
-        center = {
-          x: this.worldWindow.bottomLeft.x.add(this.worldWindow.topRight.x).div(new PreciseDecimal(2)),
-          y: this.worldWindow.bottomLeft.y.add(this.worldWindow.topRight.y).div(new PreciseDecimal(2))
-        };
+        // If current point is not visible, zoom from center of viewport
+        const centerX = this.screenViewport.width / 2;
+        const centerY = this.screenViewport.height / 2;
+        this.zoomAroundScreenPoint(factor, centerX, centerY);
       }
     }
+  }
 
+  private zoomAroundScreenPoint(factor: number, screenX: number, screenY: number) {
+    // Convert screen point to world coordinates in current view
+    const zoomCenterWorld = this.mapping.screenToWorld(screenX, screenY);
+
+    // Calculate new world window dimensions
     const currentWidth = this.worldWindow.topRight.x.sub(this.worldWindow.bottomLeft.x);
     const currentHeight = this.worldWindow.topRight.y.sub(this.worldWindow.bottomLeft.y);
 
     const newWidth = currentWidth.div(new PreciseDecimal(factor));
     const newHeight = currentHeight.div(new PreciseDecimal(factor));
 
+    // Calculate screen position ratios
+    const xRatio = screenX / this.screenViewport.width;
+    const yRatio = screenY / this.screenViewport.height;
+
+    // Calculate new world window bounds so that the zoom center stays at the same screen position
     const newBottomLeft = {
-      x: center.x.sub(newWidth.div(new PreciseDecimal(2))),
-      y: center.y.sub(newHeight.div(new PreciseDecimal(2)))
+      x: zoomCenterWorld.x.sub(newWidth.mul(new PreciseDecimal(xRatio))),
+      y: zoomCenterWorld.y.sub(newHeight.mul(new PreciseDecimal(1 - yRatio)))
     };
 
     const newTopRight = {
-      x: center.x.add(newWidth.div(new PreciseDecimal(2))),
-      y: center.y.add(newHeight.div(new PreciseDecimal(2)))
+      x: zoomCenterWorld.x.add(newWidth.mul(new PreciseDecimal(1 - xRatio))),
+      y: zoomCenterWorld.y.add(newHeight.mul(new PreciseDecimal(yRatio)))
     };
 
     // updateWorldWindow will handle boundary coordinate rounding
