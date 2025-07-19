@@ -112,6 +112,10 @@ There are four primary control actions that the user of the application can make
 * Zoom in and out:
   * On a touch screen via pinch and zoom
   * On a computer using "+" and "-" buttons or keyboard shortcuts
+  
+When zooming in and out - 
+  * If the point is visible, adjust the view transform so that the point retains it's current position within the screen viewport.
+  * If the point is not visible, zoom so that the centre of the world window retains it's current position in the centre of the viewport.
 
 ## Current Position of Point
 
