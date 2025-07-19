@@ -154,7 +154,7 @@ A second problem has to do with displaying grid coordinates. If there is precisi
 
 The following strategies can mitigate this issue:
 
-* Only display the grid coordinates for the thickest and second-thickest grid lines (based on the grid weight hierarchy)
+* Display the grid coordinates for all grid lines except the thinnest 1px grid lines (based on the grid weight hierarchy)
 * Only display up to some maximum number of final digits in the grid coordinate values, for example only the 6 last digits
 * If not all digits are being shown, display "..." in lieu of the missing digits
 * Display grid coordinates (not counting the ellipsis) with a particular background, eg light blue
