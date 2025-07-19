@@ -95,12 +95,24 @@ export class AppStore {
   }
 
   zoom(factor: number, centerX?: number, centerY?: number) {
-    const center = centerX !== undefined && centerY !== undefined 
-      ? this.mapping.screenToXY(centerX, centerY)
-      : {
+    let center: Point;
+    
+    if (centerX !== undefined && centerY !== undefined) {
+      // Mouse wheel zoom - use cursor position as center
+      center = this.mapping.screenToXY(centerX, centerY);
+    } else {
+      // Button zoom - choose center based on current point visibility
+      if (this.isCurrentPointVisible()) {
+        // If current point is visible, keep it in the same viewport position
+        center = this.currentPoint;
+      } else {
+        // If current point is not visible, zoom from center of world window
+        center = {
           x: this.worldWindow.bottomLeft.x.add(this.worldWindow.topRight.x).div(new PreciseDecimal(2)),
           y: this.worldWindow.bottomLeft.y.add(this.worldWindow.topRight.y).div(new PreciseDecimal(2))
         };
+      }
+    }
 
     const currentWidth = this.worldWindow.topRight.x.sub(this.worldWindow.bottomLeft.x);
     const currentHeight = this.worldWindow.topRight.y.sub(this.worldWindow.bottomLeft.y);
@@ -189,6 +201,17 @@ export class AppStore {
 
   getWorldWindowYRangeDisplay(): string {
     return `[${this.worldWindow.bottomLeft.y.toString()}, ${this.worldWindow.topRight.y.toString()}]`;
+  }
+
+  isCurrentPointVisible(): boolean {
+    // Check if current point is within the current world window
+    const pointX = this.currentPoint.x;
+    const pointY = this.currentPoint.y;
+    
+    const withinX = pointX.isWithinInterval(this.worldWindow.bottomLeft.x, this.worldWindow.topRight.x);
+    const withinY = pointY.isWithinInterval(this.worldWindow.bottomLeft.y, this.worldWindow.topRight.y);
+    
+    return withinX && withinY;
   }
 
   // Legacy methods for backward compatibility
