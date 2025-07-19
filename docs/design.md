@@ -66,14 +66,17 @@ Horizontal and vertical grid lines will be displayed for all exact decimal fract
 the current mapped rectangle subject to the following limitation:
 
 * The distance between two grid lines must be >= 5 pixels.
-* The visible thickness of the grid line is 10% of the distance between grid lines rounded to
-  the nearest pixel (with 0.5 rounding to 1).
+
+Let N be the maximum number of digits with no trailing zeros for which a grid line is 
+drawn:
+
+For all 
+
 * The thickness of the grid lines is a function of the number of digits after the decimal point
   not counting trailing zeros:
-  * Maximum digits N - 10% of minimum grid line separation S
-  * N-1 - 10% of 10*s
-  * N-2 - 20% of 100*s
-  * N-3 or anything smaller - 30% of 1000*s.
+  * Maximum digits N - 1px
+  * N-1 - 2px
+  * N-2 or anything smaller - 3px
   
 So for example, if the Y coordinate ranges from 1.472 to 1.486 and there are 1000 pixels in the display
 in the Y direction, then:
