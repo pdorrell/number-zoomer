@@ -54,7 +54,7 @@ export class AppStore {
   }
 
   updateCurrentPoint(point: Point) {
-    // Update precision based on current zoom level
+    // Point adopts current world window precision when moved by user
     const currentPrecision = this.calculateCurrentPrecision();
     this.currentPoint = {
       x: point.x.setPrecision(currentPrecision),
@@ -121,12 +121,8 @@ export class AppStore {
     // updateWorldWindow will handle boundary coordinate rounding
     this.updateWorldWindow(newBottomLeft, newTopRight);
     
-    // Update current point precision after zoom
-    const currentPrecision = this.calculateCurrentPrecision();
-    this.currentPoint = {
-      x: this.currentPoint.x.setPrecision(currentPrecision),
-      y: this.currentPoint.y.setPrecision(currentPrecision)
-    };
+    // Note: Current point precision is NOT updated during zoom
+    // It only changes when the user moves the point (per design spec)
   }
 
   pan(deltaX: number, deltaY: number) {
@@ -163,7 +159,7 @@ export class AppStore {
     // Use updateWorldWindow to ensure proper boundary rounding
     this.updateWorldWindow(defaultBottomLeft, defaultTopRight);
     
-    // Reset current point with appropriate precision
+    // Reset current point with appropriate precision (this counts as user action)
     const currentPrecision = this.calculateCurrentPrecision();
     this.currentPoint = {
       x: new PreciseDecimal(0, currentPrecision),
