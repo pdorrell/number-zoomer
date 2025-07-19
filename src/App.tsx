@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { AppStore } from './stores/AppStore';
 import { CoordinatePlane } from './components/CoordinatePlane';
+import { EquationType } from './types/Equation';
 
 export const App: React.FC = observer(() => {
   const [store] = useState(() => new AppStore());
@@ -14,10 +15,46 @@ export const App: React.FC = observer(() => {
     store.zoom(0.5);
   };
 
+  const handleEquationTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const type = event.target.value as EquationType;
+    if (type === 'linear') {
+      store.setEquation({ type: 'linear', c: store.getLinearC() });
+    } else {
+      store.setEquation({ type: 'quadratic' });
+    }
+  };
+
+  const handleLinearCChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const c = parseInt(event.target.value, 10);
+    store.setEquation({ type: 'linear', c });
+  };
+
   return (
     <div className="app">
       <div className="controls">
         <h1>Number Zoomer</h1>
+        <div className="equation-controls">
+          <label>
+            Equation: 
+            <select value={store.getEquationType()} onChange={handleEquationTypeChange}>
+              <option value="quadratic">y = x²</option>
+              <option value="linear">y = cx</option>
+            </select>
+          </label>
+          {store.getEquationType() === 'linear' && (
+            <label>
+              c = 
+              <select value={store.getLinearC()} onChange={handleLinearCChange}>
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </label>
+          )}
+          <span className="equation-display">
+            Current: {store.currentEquation.getDisplayName()}
+          </span>
+        </div>
         <div className="control-buttons">
           <button onClick={handleZoomIn}>Zoom In (+)</button>
           <button onClick={handleZoomOut}>Zoom Out (-)</button>

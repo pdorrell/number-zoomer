@@ -1,12 +1,14 @@
 import { makeAutoObservable } from 'mobx';
 import { PreciseDecimal } from '../types/Decimal';
 import { Point, WorldWindow, ScreenViewport, CoordinateMapping } from '../types/Coordinate';
+import { Equation, EquationType, EquationConfig, createEquation } from '../types/Equation';
 
 export class AppStore {
   screenViewport: ScreenViewport = { width: 800, height: 600 };
   worldWindow: WorldWindow;
   currentPoint: Point;
   mapping: CoordinateMapping;
+  currentEquation: Equation;
 
   constructor() {
     this.worldWindow = {
@@ -24,6 +26,8 @@ export class AppStore {
       x: new PreciseDecimal(0, 3),
       y: new PreciseDecimal(0, 3)
     };
+
+    this.currentEquation = createEquation({ type: 'quadratic' });
 
     this.mapping = new CoordinateMapping(this.screenViewport, this.worldWindow);
     
@@ -221,6 +225,21 @@ export class AppStore {
     const withinY = pointY.isWithinInterval(this.worldWindow.bottomLeft.y, this.worldWindow.topRight.y);
     
     return withinX && withinY;
+  }
+
+  setEquation(config: EquationConfig) {
+    this.currentEquation = createEquation(config);
+  }
+
+  getEquationType(): EquationType {
+    return this.currentEquation.getType();
+  }
+
+  getLinearC(): number {
+    if (this.currentEquation.getType() === 'linear') {
+      return (this.currentEquation as any).getC();
+    }
+    return 1;
   }
 
   // Legacy methods for backward compatibility

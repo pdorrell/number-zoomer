@@ -17,7 +17,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     const mouseX = event.clientX - rect.left;
     const mouseY = event.clientY - rect.top;
     
-    const currentPointScreen = store.mapping.xyToScreen(store.currentPoint);
+    const currentPointScreen = store.mapping.worldToScreen(store.currentPoint);
     const distanceToPoint = Math.sqrt(
       Math.pow(mouseX - currentPointScreen.x, 2) + 
       Math.pow(mouseY - currentPointScreen.y, 2)
@@ -38,7 +38,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     const mouseY = event.clientY - rect.top;
     
     if (isDraggingPoint) {
-      const newPoint = store.mapping.screenToXY(mouseX, mouseY);
+      const newPoint = store.mapping.screenToWorld(mouseX, mouseY);
       store.updateCurrentPoint(newPoint);
     } else if (isDraggingBackground) {
       const deltaX = mouseX - lastMousePos.x;
@@ -66,7 +66,30 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
   const horizontalLines = gridRenderer.calculateHorizontalGridLines();
   const verticalLines = gridRenderer.calculateVerticalGridLines();
 
-  const currentPointScreen = store.mapping.xyToScreen(store.currentPoint);
+  const currentPointScreen = store.mapping.worldToScreen(store.currentPoint);
+  
+  // Generate equation graph points
+  const equationPoints = store.currentEquation.generatePoints(store.worldWindow, store.screenViewport.width);
+  const screenPoints = equationPoints.map(point => store.mapping.worldToScreen(point));
+  
+  // Create SVG path for equation graph
+  const createEquationPath = (points: { x: number; y: number }[]) => {
+    if (points.length === 0) return '';
+    
+    let path = `M ${points[0].x} ${points[0].y}`;
+    
+    if (store.currentEquation.shouldDrawAsCurve(store.worldWindow) && points.length > 2) {
+      // Draw as smooth curve for quadratic equations at low zoom
+      for (let i = 1; i < points.length; i++) {
+        path += ` L ${points[i].x} ${points[i].y}`;
+      }
+    } else {
+      // Draw as straight line for linear equations or high zoom quadratic
+      path += ` L ${points[points.length - 1].x} ${points[points.length - 1].y}`;
+    }
+    
+    return path;
+  };
 
   return (
     <svg 
@@ -148,6 +171,17 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
           </g>
         );
       })}
+      
+      {/* Equation graph */}
+      {screenPoints.length > 0 && (
+        <path
+          d={createEquationPath(screenPoints)}
+          stroke="#dc3545"
+          strokeWidth={2}
+          fill="none"
+          vectorEffect="non-scaling-stroke"
+        />
+      )}
       
       <circle
         cx={currentPointScreen.x}
