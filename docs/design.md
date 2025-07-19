@@ -39,6 +39,9 @@ The preferred tech stack for an initial implementation is:
 
 This will allow deployment of the application as a static web application.
 
+Given the nature of the application's graphical requirements, I imagine
+that most of the implementation will use SVG.
+
 ## Decimal fractions
 
 When the application displays the values of numbers, it will always present
@@ -118,16 +121,111 @@ they always have the option to zoom in further in order to achieve more precisio
 
 The DP of the current point position does not change if the user zooms in or out - 
 so, for example, zooming out and zooming in will not lose any information in the
-current point position. But after zooming in or out, the DP will reset as soon as 
-the user moves the point.
+current point position.
+
+However, when zooming in, extra 0's will be displayed
+to match what it would be if the current point was moved. (This is necessary
+for the user to understand the relation between the current point coordinate
+display and the grid coordinate partial display as explained below.)
+
+After zooming in or out, the DP will reset as soon as the user moves the point.
 
 Given the rules of DP for moving the point and for display grid lines, there will
 be a maxDP value that will be part of the current application state, which
 for the example above would be 5.
 
+## Numerical Display
 
+### Current Point
 
+The intention of the application is to encourage the user to zoom in to a large
+amount to find accurate decimal approximations to the solutions of equations, 
+for example y=3*x for y=1, which to 500DP would the a "." with 500 following "3" characters.
 
+There will be some point where all the digits can't possibly displayed on the screen.
 
+However, I hope that we can achieve reasonable display of 1000 characters on an ipad
+or on 1080P computer screen.
 
+A reasonable strategy could be:
 
+* Display the digits on a rectangle to the right of the point location which has a maximum
+  width of 50% of the screen width.
+* When digits get past the maximum width, then they can wrap onto the next line.
+
+With this approach, a large number of digits will be fully visible as long as the user has 
+the point currently displayed somewhere in the left half of the screen.
+
+(An alternative could be to contrain the display to fit inside the screen, but that would
+required constant distracting re-wrapping as the user moves the point or the rectangle
+or zooms in or out.)
+
+### Grid Coordinates
+
+A second problem has to do with displaying grid coordinates. If there are 300DP in the
+the current point coordinates, then there will also be 300DP (or 299DP) in the grid
+coordinates. However it will get too crowded to display all of these.
+
+The following strategies can mitigate this issue:
+
+* Only display the grid coordinates for the thickest and second-thickest grid lines.
+* Only display up to some maximum number of final digits in the grid coordinate values,
+  for example only the 6 last digits.
+* If not all digits are being shown, display and "..." in lieu of the missing digits.
+* Display grid coordinates (not counting the ellipsis) with a particular background, 
+  eg light blue.
+* Display the corresponding decimal digits in the current point display in the same
+  background colour (ie also 6 digits if the current point is at the same precision
+  as the grid coordinates, but could be more than 6 digits if the current point
+  has more precision. In the case where the current point had less precision, extra
+  zeros will be displayed (as explained above), so 6 digits will still be showed to 
+  match.
+* In some cases the ellipsis will correspond digits different to those of the 
+  current point position, ie for a value just below a decimal with many zero's,
+  where the missing digits for the coordinates are actually nine's. This will be
+  displayed in a different background colour, eg pink.
+  
+There is still a problem in the case where the current point is not currently visible.
+In this case there will be a display of a point represented by the intersection of 
+the current top-most thickest Y coordinate grid line and current left-most thickest
+X coordinate grid line and it's full decimal coordinates, in a similar display
+as if it was the current point, but displayed without the thick black dot, and
+displayed with weaker coloration so that it is readily recognizable as not being
+the current point position.
+
+## Secondary Navigation Controls
+
+In the top panel there will be buttons (mostly with suitable emoji or other single-character
+labels and separate longer explanatory tooltips) which perform secondary navigation actions.
+
+* Go to current point position without changing zoom level
+* Undo previous zoom action or dragging action (of either point or background)
+* Redo previous undo
+* Move current point into current mapped rectangle.
+* Reset to original mapping
+
+## Coordinate-locking
+
+The user will have the option of snapping and locking the current point position to
+a chosen grid line:
+
+* There will be a padlock icon displayed at the ends of the thickest grid lines.
+* When clicked, the corresponding current point coordinate will snap to that value
+  and stay locked there. The grid line itself will display in a different colour,
+  eg a bright blue. If the point is still unlocked in the other direction,
+  then any dragging is constrained to that direction.
+* The padlock can be clicked again to unlock.
+
+## Equation Graph display
+
+The equation graph will be displayed in a particular colour, eg red.
+
+When rendering a low zoom level it will be a curve and the equation
+can be used to render it using normal floating point arithmetic to 
+create the curve as a sequence of very short lines.
+
+If the equation is linear, then it will just be a line in all cases.
+
+In the case where the equation is not linear (ie y=x^2 being the
+only example in the current specification), then once the zoom level
+is high enough it will be linear for all practical purposes.
