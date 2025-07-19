@@ -18,8 +18,8 @@
   
   .control-buttons {
     display: flex;
-    gap: 1rem;
-    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
     
     button {
       padding: 0.5rem 1rem;
@@ -28,16 +28,33 @@
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      font-size: 0.9rem;
       
       &:hover {
         background: #0056b3;
       }
     }
+  }
+  
+  .debug-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    font-size: 0.85rem;
     
-    .range-display {
+    .range-display,
+    .current-point-display,
+    .zoom-info {
       font-family: monospace;
-      font-size: 0.9rem;
-      color: #6c757d;
+      color: #495057;
+      background: #f8f9fa;
+      padding: 0.25rem 0.5rem;
+      border-radius: 3px;
+      border: 1px solid #dee2e6;
+      
+      strong {
+        color: #212529;
+      }
     }
   }
 }

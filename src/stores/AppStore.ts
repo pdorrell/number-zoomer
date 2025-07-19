@@ -90,4 +90,32 @@ export class AppStore {
 
     this.updateXYRectangle(newBottomLeft, newTopRight);
   }
+
+  resetView() {
+    this.xyRectangle = {
+      bottomLeft: { 
+        x: new PreciseDecimal(-5, 2), 
+        y: new PreciseDecimal(-5, 2) 
+      },
+      topRight: { 
+        x: new PreciseDecimal(5, 2), 
+        y: new PreciseDecimal(5, 2) 
+      }
+    };
+    this.currentPoint = {
+      x: new PreciseDecimal(0, 3),
+      y: new PreciseDecimal(0, 3)
+    };
+    this.mapping = new CoordinateMapping(this.screenDimensions, this.xyRectangle);
+  }
+
+  moveCurrentPointToCenter() {
+    const centerX = this.xyRectangle.bottomLeft.x.add(this.xyRectangle.topRight.x).div(new PreciseDecimal(2));
+    const centerY = this.xyRectangle.bottomLeft.y.add(this.xyRectangle.topRight.y).div(new PreciseDecimal(2));
+    
+    this.currentPoint = {
+      x: centerX,
+      y: centerY
+    };
+  }
 }
