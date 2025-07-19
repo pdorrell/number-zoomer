@@ -1,15 +1,15 @@
 import { makeAutoObservable } from 'mobx';
 import { PreciseDecimal } from '../types/Decimal';
-import { Point, Rectangle, ScreenDimensions, CoordinateMapping } from '../types/Coordinate';
+import { Point, WorldWindow, ScreenViewport, CoordinateMapping } from '../types/Coordinate';
 
 export class AppStore {
-  screenDimensions: ScreenDimensions = { width: 800, height: 600 };
-  xyRectangle: Rectangle;
+  screenViewport: ScreenViewport = { width: 800, height: 600 };
+  worldWindow: WorldWindow;
   currentPoint: Point;
   mapping: CoordinateMapping;
 
   constructor() {
-    this.xyRectangle = {
+    this.worldWindow = {
       bottomLeft: { 
         x: new PreciseDecimal(-5, 2), 
         y: new PreciseDecimal(-5, 2) 
@@ -25,31 +25,32 @@ export class AppStore {
       y: new PreciseDecimal(0, 3)
     };
 
-    this.mapping = new CoordinateMapping(this.screenDimensions, this.xyRectangle);
+    this.mapping = new CoordinateMapping(this.screenViewport, this.worldWindow);
     
     makeAutoObservable(this);
   }
 
-  updateScreenDimensions(width: number, height: number) {
-    this.screenDimensions = { width, height };
-    this.mapping = new CoordinateMapping(this.screenDimensions, this.xyRectangle);
+  updateScreenViewport(width: number, height: number) {
+    this.screenViewport = { width, height };
+    this.mapping = new CoordinateMapping(this.screenViewport, this.worldWindow);
   }
 
-  updateXYRectangle(bottomLeft: Point, topRight: Point) {
+  updateWorldWindow(bottomLeft: Point, topRight: Point) {
     // Round boundary coordinates according to design spec (precision N+1)
-    const boundaryPrecision = this.calculateMaxGridPrecision() + 1;
+    // Use X dimension only for precision calculation to ensure aspect ratio preservation
+    const worldWindowPrecision = this.calculateWorldWindowPrecision() + 1;
     
-    this.xyRectangle = { 
+    this.worldWindow = { 
       bottomLeft: {
-        x: bottomLeft.x.setPrecision(boundaryPrecision),
-        y: bottomLeft.y.setPrecision(boundaryPrecision)
+        x: bottomLeft.x.setPrecision(worldWindowPrecision),
+        y: bottomLeft.y.setPrecision(worldWindowPrecision)
       },
       topRight: {
-        x: topRight.x.setPrecision(boundaryPrecision),
-        y: topRight.y.setPrecision(boundaryPrecision)
+        x: topRight.x.setPrecision(worldWindowPrecision),
+        y: topRight.y.setPrecision(worldWindowPrecision)
       }
     };
-    this.mapping = new CoordinateMapping(this.screenDimensions, this.xyRectangle);
+    this.mapping = new CoordinateMapping(this.screenViewport, this.worldWindow);
   }
 
   updateCurrentPoint(point: Point) {
@@ -61,43 +62,48 @@ export class AppStore {
     };
   }
 
-  calculateMaxGridPrecision(): number {
-    // Calculate maximum grid precision N based on 5-pixel minimum separation
+  calculateWorldWindowPrecision(): number {
+    // Calculate world window precision N based on X dimension only (per design spec)
+    // This ensures aspect ratio preservation and identical grid resolution for both axes
     const pixelsPerXUnit = this.mapping.getPixelsPerXUnit();
-    const pixelsPerYUnit = this.mapping.getPixelsPerYUnit();
     
-    let maxPrecisionX = 0;
-    let maxPrecisionY = 0;
+    let maxPrecision = 0;
     
-    // Find maximum precision for X and Y that has adequate separation
+    // Find maximum precision for X dimension that has adequate separation (>= 5 pixels)
     for (let precision = 0; precision <= 15; precision++) {
       const step = Math.pow(10, -precision);
-      const separationX = pixelsPerXUnit * step;
-      const separationY = pixelsPerYUnit * step;
+      const separation = pixelsPerXUnit * step;
       
-      if (separationX >= 5) maxPrecisionX = precision;
-      if (separationY >= 5) maxPrecisionY = precision;
+      if (separation >= 5) {
+        maxPrecision = precision;
+      } else {
+        break;
+      }
     }
     
-    // Return the maximum displayable grid precision N
-    return Math.max(maxPrecisionX, maxPrecisionY);
+    return maxPrecision;
+  }
+
+  // Legacy method name for backward compatibility
+  calculateMaxGridPrecision(): number {
+    return this.calculateWorldWindowPrecision();
   }
 
   calculateCurrentPrecision(): number {
-    // Use grid precision + 1 for point positioning (per design spec)
-    return this.calculateMaxGridPrecision() + 1;
+    // Use world window precision + 1 for point positioning (per design spec)
+    return this.calculateWorldWindowPrecision() + 1;
   }
 
   zoom(factor: number, centerX?: number, centerY?: number) {
     const center = centerX !== undefined && centerY !== undefined 
       ? this.mapping.screenToXY(centerX, centerY)
       : {
-          x: this.xyRectangle.bottomLeft.x.add(this.xyRectangle.topRight.x).div(new PreciseDecimal(2)),
-          y: this.xyRectangle.bottomLeft.y.add(this.xyRectangle.topRight.y).div(new PreciseDecimal(2))
+          x: this.worldWindow.bottomLeft.x.add(this.worldWindow.topRight.x).div(new PreciseDecimal(2)),
+          y: this.worldWindow.bottomLeft.y.add(this.worldWindow.topRight.y).div(new PreciseDecimal(2))
         };
 
-    const currentWidth = this.xyRectangle.topRight.x.sub(this.xyRectangle.bottomLeft.x);
-    const currentHeight = this.xyRectangle.topRight.y.sub(this.xyRectangle.bottomLeft.y);
+    const currentWidth = this.worldWindow.topRight.x.sub(this.worldWindow.bottomLeft.x);
+    const currentHeight = this.worldWindow.topRight.y.sub(this.worldWindow.bottomLeft.y);
 
     const newWidth = currentWidth.div(new PreciseDecimal(factor));
     const newHeight = currentHeight.div(new PreciseDecimal(factor));
@@ -112,8 +118,8 @@ export class AppStore {
       y: center.y.add(newHeight.div(new PreciseDecimal(2)))
     };
 
-    // updateXYRectangle will handle boundary coordinate rounding
-    this.updateXYRectangle(newBottomLeft, newTopRight);
+    // updateWorldWindow will handle boundary coordinate rounding
+    this.updateWorldWindow(newBottomLeft, newTopRight);
     
     // Update current point precision after zoom
     const currentPrecision = this.calculateCurrentPrecision();
@@ -124,24 +130,24 @@ export class AppStore {
   }
 
   pan(deltaX: number, deltaY: number) {
-    const xyDelta = this.mapping.screenToXY(deltaX, deltaY);
-    const xyOrigin = this.mapping.screenToXY(0, 0);
+    const worldDelta = this.mapping.screenToXY(deltaX, deltaY);
+    const worldOrigin = this.mapping.screenToXY(0, 0);
     
-    const dx = xyDelta.x.sub(xyOrigin.x);
-    const dy = xyDelta.y.sub(xyOrigin.y);
+    const dx = worldDelta.x.sub(worldOrigin.x);
+    const dy = worldDelta.y.sub(worldOrigin.y);
 
     const newBottomLeft = {
-      x: this.xyRectangle.bottomLeft.x.sub(dx),
-      y: this.xyRectangle.bottomLeft.y.sub(dy)
+      x: this.worldWindow.bottomLeft.x.sub(dx),
+      y: this.worldWindow.bottomLeft.y.sub(dy)
     };
 
     const newTopRight = {
-      x: this.xyRectangle.topRight.x.sub(dx),
-      y: this.xyRectangle.topRight.y.sub(dy)
+      x: this.worldWindow.topRight.x.sub(dx),
+      y: this.worldWindow.topRight.y.sub(dy)
     };
 
-    // updateXYRectangle will handle boundary coordinate rounding
-    this.updateXYRectangle(newBottomLeft, newTopRight);
+    // updateWorldWindow will handle boundary coordinate rounding
+    this.updateWorldWindow(newBottomLeft, newTopRight);
   }
 
   resetView() {
@@ -154,8 +160,8 @@ export class AppStore {
       y: new PreciseDecimal(5, 2) 
     };
     
-    // Use updateXYRectangle to ensure proper boundary rounding
-    this.updateXYRectangle(defaultBottomLeft, defaultTopRight);
+    // Use updateWorldWindow to ensure proper boundary rounding
+    this.updateWorldWindow(defaultBottomLeft, defaultTopRight);
     
     // Reset current point with appropriate precision
     const currentPrecision = this.calculateCurrentPrecision();
@@ -166,8 +172,8 @@ export class AppStore {
   }
 
   moveCurrentPointToCenter() {
-    const centerX = this.xyRectangle.bottomLeft.x.add(this.xyRectangle.topRight.x).div(new PreciseDecimal(2));
-    const centerY = this.xyRectangle.bottomLeft.y.add(this.xyRectangle.topRight.y).div(new PreciseDecimal(2));
+    const centerX = this.worldWindow.bottomLeft.x.add(this.worldWindow.topRight.x).div(new PreciseDecimal(2));
+    const centerY = this.worldWindow.bottomLeft.y.add(this.worldWindow.topRight.y).div(new PreciseDecimal(2));
     
     const currentPrecision = this.calculateCurrentPrecision();
     this.currentPoint = {
@@ -181,11 +187,15 @@ export class AppStore {
     return `(${this.currentPoint.x.toString()}, ${this.currentPoint.y.toString()})`;
   }
 
-  getXRangeDisplay(): string {
-    return `[${this.xyRectangle.bottomLeft.x.toString()}, ${this.xyRectangle.topRight.x.toString()}]`;
+  getWorldWindowXRangeDisplay(): string {
+    return `[${this.worldWindow.bottomLeft.x.toString()}, ${this.worldWindow.topRight.x.toString()}]`;
   }
 
-  getYRangeDisplay(): string {
-    return `[${this.xyRectangle.bottomLeft.y.toString()}, ${this.xyRectangle.topRight.y.toString()}]`;
+  getWorldWindowYRangeDisplay(): string {
+    return `[${this.worldWindow.bottomLeft.y.toString()}, ${this.worldWindow.topRight.y.toString()}]`;
   }
+
+  // Legacy methods for backward compatibility
+  getXRangeDisplay = this.getWorldWindowXRangeDisplay;
+  getYRangeDisplay = this.getWorldWindowYRangeDisplay;
 }

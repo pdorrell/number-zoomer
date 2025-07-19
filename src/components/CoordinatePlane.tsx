@@ -70,8 +70,8 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
 
   return (
     <svg 
-      width={store.screenDimensions.width} 
-      height={store.screenDimensions.height} 
+      width={store.screenViewport.width} 
+      height={store.screenViewport.height} 
       className="coordinate-plane"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -81,15 +81,15 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       style={{ cursor: isDraggingPoint ? 'grabbing' : isDraggingBackground ? 'grabbing' : 'grab' }}
     >
       <rect 
-        width={store.screenDimensions.width} 
-        height={store.screenDimensions.height} 
+        width={store.screenViewport.width} 
+        height={store.screenViewport.height} 
         fill="#ffffff" 
         stroke="#dee2e6" 
       />
       
       {horizontalLines.map((line, index) => {
-        const screenY = store.mapping.xyToScreen({ 
-          x: store.xyRectangle.bottomLeft.x, 
+        const screenY = store.mapping.worldToScreen({ 
+          x: store.worldWindow.bottomLeft.x, 
           y: line.position 
         }).y;
         
@@ -98,7 +98,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
             <line
               x1={0}
               y1={screenY}
-              x2={store.screenDimensions.width}
+              x2={store.screenViewport.width}
               y2={screenY}
               stroke={line.isThick ? "#495057" : "#adb5bd"}
               strokeWidth={line.thickness}
@@ -119,9 +119,9 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       })}
       
       {verticalLines.map((line, index) => {
-        const screenX = store.mapping.xyToScreen({ 
+        const screenX = store.mapping.worldToScreen({ 
           x: line.position, 
-          y: store.xyRectangle.bottomLeft.y 
+          y: store.worldWindow.bottomLeft.y 
         }).x;
         
         return (
@@ -130,14 +130,14 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
               x1={screenX}
               y1={0}
               x2={screenX}
-              y2={store.screenDimensions.height}
+              y2={store.screenViewport.height}
               stroke={line.isThick ? "#495057" : "#adb5bd"}
               strokeWidth={line.thickness}
             />
             {line.isThick && (
               <text
                 x={screenX + 3}
-                y={store.screenDimensions.height - 5}
+                y={store.screenViewport.height - 5}
                 fontSize="10"
                 fill="#495057"
                 fontFamily="monospace"

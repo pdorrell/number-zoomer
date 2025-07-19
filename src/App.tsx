@@ -26,20 +26,20 @@ export const App: React.FC = observer(() => {
         </div>
         <div className="debug-info">
           <div className="range-display">
-            <strong>X Range:</strong> {store.getXRangeDisplay()}
+            <strong>World Window X:</strong> {store.getWorldWindowXRangeDisplay()}
           </div>
           <div className="range-display">
-            <strong>Y Range:</strong> {store.getYRangeDisplay()}
+            <strong>World Window Y:</strong> {store.getWorldWindowYRangeDisplay()}
           </div>
           <div className="current-point-display">
             <strong>Current Point:</strong> {store.getCurrentPointDisplay()}
           </div>
           <div className="zoom-info">
-            <strong>Grid Info:</strong> X: {store.mapping.getPixelsPerXUnit().toFixed(1)} px/unit, 
-            Y: {store.mapping.getPixelsPerYUnit().toFixed(1)} px/unit
+            <strong>Screen Viewport:</strong> {store.screenViewport.width}×{store.screenViewport.height}px, 
+            X: {store.mapping.getPixelsPerXUnit().toFixed(1)} px/unit
           </div>
           <div className="precision-info">
-            <strong>Precision:</strong> Grid: {store.calculateMaxGridPrecision()}, Point: {store.calculateCurrentPrecision()}, Boundary: {store.calculateMaxGridPrecision() + 1}
+            <strong>Resolution:</strong> Grid: {store.calculateWorldWindowPrecision()}DP, Point: {store.calculateCurrentPrecision()}DP, Window: {store.calculateWorldWindowPrecision() + 1}DP
           </div>
         </div>
       </div>

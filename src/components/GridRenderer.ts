@@ -16,20 +16,21 @@ export class GridRenderer {
   }
 
   calculateHorizontalGridLines(): GridLine[] {
-    const pixelsPerYUnit = this.mapping.getPixelsPerYUnit();
+    // Use X dimension for precision calculation to ensure consistent grid resolution
+    const pixelsPerXUnit = this.mapping.getPixelsPerXUnit();
     const minSeparation = 5;
     
-    const screenDims = this.getScreenDimensions();
-    const yMin = this.mapping.screenToXY(0, screenDims.height).y;
-    const yMax = this.mapping.screenToXY(0, 0).y;
+    const screenViewport = this.getScreenViewport();
+    const yMin = this.mapping.screenToWorld(0, screenViewport.height).y;
+    const yMax = this.mapping.screenToWorld(0, 0).y;
     
     const lines: GridLine[] = [];
     let maxPrecision = -1;
     
-    // First pass: find maximum precision that has adequate separation
+    // Find maximum precision based on X dimension only (per design spec)
     for (let precision = 0; precision <= 15; precision++) {
       const step = new PreciseDecimal(Math.pow(10, -precision));
-      const separation = pixelsPerYUnit * step.toNumber();
+      const separation = pixelsPerXUnit * step.toNumber();
       
       if (separation >= minSeparation) {
         maxPrecision = precision;
@@ -38,7 +39,7 @@ export class GridRenderer {
       }
     }
     
-    // Second pass: generate lines with correct thickness
+    // Generate lines with correct thickness based on grid weight hierarchy
     for (let precision = 0; precision <= maxPrecision; precision++) {
       const step = new PreciseDecimal(Math.pow(10, -precision));
       const thickness = this.calculateThickness(precision, maxPrecision);
@@ -59,17 +60,18 @@ export class GridRenderer {
   }
 
   calculateVerticalGridLines(): GridLine[] {
+    // Use X dimension for precision calculation to ensure consistent grid resolution
     const pixelsPerXUnit = this.mapping.getPixelsPerXUnit();
     const minSeparation = 5;
     
-    const screenDims = this.getScreenDimensions();
-    const xMin = this.mapping.screenToXY(0, 0).x;
-    const xMax = this.mapping.screenToXY(screenDims.width, 0).x;
+    const screenViewport = this.getScreenViewport();
+    const xMin = this.mapping.screenToWorld(0, 0).x;
+    const xMax = this.mapping.screenToWorld(screenViewport.width, 0).x;
     
     const lines: GridLine[] = [];
     let maxPrecision = -1;
     
-    // First pass: find maximum precision that has adequate separation
+    // Find maximum precision based on X dimension only (per design spec)
     for (let precision = 0; precision <= 15; precision++) {
       const step = new PreciseDecimal(Math.pow(10, -precision));
       const separation = pixelsPerXUnit * step.toNumber();
@@ -81,7 +83,7 @@ export class GridRenderer {
       }
     }
     
-    // Second pass: generate lines with correct thickness
+    // Generate lines with correct thickness based on grid weight hierarchy
     for (let precision = 0; precision <= maxPrecision; precision++) {
       const step = new PreciseDecimal(Math.pow(10, -precision));
       const thickness = this.calculateThickness(precision, maxPrecision);
@@ -102,11 +104,12 @@ export class GridRenderer {
   }
 
   private calculateThickness(precision: number, maxPrecision: number): number {
-    // Per design: N (max precision) = 1px, N-1 = 2px, N-2 or smaller = 3px
+    // Grid weight hierarchy: 1px + min(2, trailing_zeros)
+    // Per design spec: Essential precision N = 1px, N-1 = 2px, N-2 or smaller = 3px
     const precisionFromMax = maxPrecision - precision;
     
     if (precisionFromMax === 0) {
-      return 1; // Maximum precision (finest grid)
+      return 1; // Maximum precision (finest grid resolution)
     } else if (precisionFromMax === 1) {
       return 2; // One step coarser
     } else {
@@ -114,7 +117,12 @@ export class GridRenderer {
     }
   }
 
+  private getScreenViewport() {
+    return this.mapping.getScreenViewport();
+  }
+
+  // Legacy method for backward compatibility
   private getScreenDimensions() {
-    return this.mapping.getScreenDimensions();
+    return this.getScreenViewport();
   }
 }
