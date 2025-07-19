@@ -158,15 +158,27 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
         strokeWidth={2}
       />
       
-      <text 
-        x={currentPointScreen.x + 15} 
-        y={currentPointScreen.y - 15}
-        fontSize="12"
-        fill="#212529"
-        fontFamily="monospace"
-      >
-        ({store.currentPoint.x.toString()}, {store.currentPoint.y.toString()})
-      </text>
+      <g>
+        <rect
+          x={currentPointScreen.x + 10}
+          y={currentPointScreen.y - 25}
+          width="200"
+          height="18"
+          fill="#ffffff"
+          stroke="#212529"
+          strokeWidth={1}
+          rx={3}
+        />
+        <text 
+          x={currentPointScreen.x + 15} 
+          y={currentPointScreen.y - 12}
+          fontSize="12"
+          fill="#212529"
+          fontFamily="monospace"
+        >
+          {store.getCurrentPointDisplay()}
+        </text>
+      </g>
     </svg>
   );
 });

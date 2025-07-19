@@ -26,17 +26,17 @@ export const App: React.FC = observer(() => {
         </div>
         <div className="debug-info">
           <div className="range-display">
-            <strong>X Range:</strong> [{store.xyRectangle.bottomLeft.x.toString()}, {store.xyRectangle.topRight.x.toString()}]
+            <strong>X Range:</strong> {store.getXRangeDisplay()}
           </div>
           <div className="range-display">
-            <strong>Y Range:</strong> [{store.xyRectangle.bottomLeft.y.toString()}, {store.xyRectangle.topRight.y.toString()}]
+            <strong>Y Range:</strong> {store.getYRangeDisplay()}
           </div>
           <div className="current-point-display">
-            <strong>Current Point:</strong> ({store.currentPoint.x.toString()}, {store.currentPoint.y.toString()})
+            <strong>Current Point:</strong> {store.getCurrentPointDisplay()}
           </div>
           <div className="zoom-info">
             <strong>Grid Info:</strong> X: {store.mapping.getPixelsPerXUnit().toFixed(1)} px/unit, 
-            Y: {store.mapping.getPixelsPerYUnit().toFixed(1)} px/unit
+            Y: {store.mapping.getPixelsPerYUnit().toFixed(1)} px/unit, Precision: {store.calculateCurrentPrecision()}
           </div>
         </div>
       </div>

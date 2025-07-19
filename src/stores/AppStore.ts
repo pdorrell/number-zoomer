@@ -41,7 +41,34 @@ export class AppStore {
   }
 
   updateCurrentPoint(point: Point) {
-    this.currentPoint = point;
+    // Update precision based on current zoom level
+    const currentPrecision = this.calculateCurrentPrecision();
+    this.currentPoint = {
+      x: point.x.setPrecision(currentPrecision),
+      y: point.y.setPrecision(currentPrecision)
+    };
+  }
+
+  calculateCurrentPrecision(): number {
+    // Calculate precision based on grid spacing (one more than finest grid line precision)
+    const pixelsPerXUnit = this.mapping.getPixelsPerXUnit();
+    const pixelsPerYUnit = this.mapping.getPixelsPerYUnit();
+    
+    let maxPrecisionX = 0;
+    let maxPrecisionY = 0;
+    
+    // Find maximum precision for X that has adequate separation
+    for (let precision = 0; precision <= 15; precision++) {
+      const step = Math.pow(10, -precision);
+      const separationX = pixelsPerXUnit * step;
+      const separationY = pixelsPerYUnit * step;
+      
+      if (separationX >= 5) maxPrecisionX = precision;
+      if (separationY >= 5) maxPrecisionY = precision;
+    }
+    
+    // Use the higher precision (finer granularity) + 1 for point positioning
+    return Math.max(maxPrecisionX, maxPrecisionY) + 1;
   }
 
   zoom(factor: number, centerX?: number, centerY?: number) {
@@ -58,17 +85,27 @@ export class AppStore {
     const newWidth = currentWidth.div(new PreciseDecimal(factor));
     const newHeight = currentHeight.div(new PreciseDecimal(factor));
 
+    // Use high precision for rectangle coordinates to maintain accuracy at high zoom
+    const precision = Math.max(20, this.calculateCurrentPrecision());
+    
     const newBottomLeft = {
-      x: center.x.sub(newWidth.div(new PreciseDecimal(2))),
-      y: center.y.sub(newHeight.div(new PreciseDecimal(2)))
+      x: center.x.sub(newWidth.div(new PreciseDecimal(2))).setPrecision(precision),
+      y: center.y.sub(newHeight.div(new PreciseDecimal(2))).setPrecision(precision)
     };
 
     const newTopRight = {
-      x: center.x.add(newWidth.div(new PreciseDecimal(2))),
-      y: center.y.add(newHeight.div(new PreciseDecimal(2)))
+      x: center.x.add(newWidth.div(new PreciseDecimal(2))).setPrecision(precision),
+      y: center.y.add(newHeight.div(new PreciseDecimal(2))).setPrecision(precision)
     };
 
     this.updateXYRectangle(newBottomLeft, newTopRight);
+    
+    // Update current point precision after zoom
+    const currentPrecision = this.calculateCurrentPrecision();
+    this.currentPoint = {
+      x: this.currentPoint.x.setPrecision(currentPrecision),
+      y: this.currentPoint.y.setPrecision(currentPrecision)
+    };
   }
 
   pan(deltaX: number, deltaY: number) {
@@ -113,9 +150,23 @@ export class AppStore {
     const centerX = this.xyRectangle.bottomLeft.x.add(this.xyRectangle.topRight.x).div(new PreciseDecimal(2));
     const centerY = this.xyRectangle.bottomLeft.y.add(this.xyRectangle.topRight.y).div(new PreciseDecimal(2));
     
+    const currentPrecision = this.calculateCurrentPrecision();
     this.currentPoint = {
-      x: centerX,
-      y: centerY
+      x: centerX.setPrecision(currentPrecision),
+      y: centerY.setPrecision(currentPrecision)
     };
+  }
+
+  // Utility methods for formatted display
+  getCurrentPointDisplay(): string {
+    return `(${this.currentPoint.x.toString()}, ${this.currentPoint.y.toString()})`;
+  }
+
+  getXRangeDisplay(): string {
+    return `[${this.xyRectangle.bottomLeft.x.toString()}, ${this.xyRectangle.topRight.x.toString()}]`;
+  }
+
+  getYRangeDisplay(): string {
+    return `[${this.xyRectangle.bottomLeft.y.toString()}, ${this.xyRectangle.topRight.y.toString()}]`;
   }
 }
