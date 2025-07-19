@@ -4,7 +4,9 @@
 
 The intention with Number Zoomer is to present an X-Y coordinate plane
 where a user can zoom in to get closer and closer to the exact values
-of fractions or square roots represented as decimals.
+of fractions or square roots represented as decimals, where the value
+they are looking for is the intersection of a particular horizontal
+line for the y value and the graph of an equation relating x & y.
 
 A basic outline of the design would be, within a rectangular screen:
 
@@ -31,11 +33,13 @@ point might not be visible in the rectangle.
 
 ## Tech Stack
 
-The preferred tech stack for an initial implementation is:
+The tech stack for an initial implementation is:
 
 * Fully type-checked Typescript
 * MobX
 * Function React components
+* SCCS
+* Node, babel & webpack for development
 
 This will allow deployment of the application as a static web application.
 
@@ -84,6 +88,7 @@ in the Y direction, then:
 
 So grid lines are:
 
+* For fractions to 5DP - not enough separation to display
 * For fractions to 4DP - 1px
 * For fractions to 3DP - 2px
 * For fractions to 2DP or less - 3px (ie in this case, only 1.47 and 1.48)
@@ -138,14 +143,14 @@ for the example above would be 5.
 
 ### Current Point
 
-The intention of the application is to encourage the user to zoom in to a large
+The intention of the application is to encourage the user to zoom in by a large
 amount to find accurate decimal approximations to the solutions of equations, 
 for example y=3*x for y=1, which to 500DP would the a "." with 500 following "3" characters.
 
 There will be some point where all the digits can't possibly displayed on the screen.
 
 However, I hope that we can achieve reasonable display of 1000 characters on an ipad
-or on 1080P computer screen.
+or on a 1080P computer screen.
 
 A reasonable strategy could be:
 
@@ -171,16 +176,16 @@ The following strategies can mitigate this issue:
 * Only display the grid coordinates for the thickest and second-thickest grid lines.
 * Only display up to some maximum number of final digits in the grid coordinate values,
   for example only the 6 last digits.
-* If not all digits are being shown, display and "..." in lieu of the missing digits.
+* If not all digits are being shown, display "..." in lieu of the missing digits.
 * Display grid coordinates (not counting the ellipsis) with a particular background, 
   eg light blue.
 * Display the corresponding decimal digits in the current point display in the same
-  background colour (ie also 6 digits if the current point is at the same precision
+  background colour - ie also 6 digits if the current point is at the same precision
   as the grid coordinates, but could be more than 6 digits if the current point
   has more precision. In the case where the current point had less precision, extra
   zeros will be displayed (as explained above), so 6 digits will still be showed to 
   match.
-* In some cases the ellipsis will correspond digits different to those of the 
+* In some cases the ellipsis will correspond to digits different to those of the 
   current point position, ie for a value just below a decimal with many zero's,
   where the missing digits for the coordinates are actually nine's. This will be
   displayed in a different background colour, eg pink.
@@ -188,7 +193,7 @@ The following strategies can mitigate this issue:
 There is still a problem in the case where the current point is not currently visible.
 In this case there will be a display of a point represented by the intersection of 
 the current top-most thickest Y coordinate grid line and current left-most thickest
-X coordinate grid line and it's full decimal coordinates, in a similar display
+X coordinate grid line and its full decimal coordinates, in a similar display
 as if it was the current point, but displayed without the thick black dot, and
 displayed with weaker coloration so that it is readily recognizable as not being
 the current point position.
@@ -196,7 +201,7 @@ the current point position.
 ## Secondary Navigation Controls
 
 In the top panel there will be buttons (mostly with suitable emoji or other single-character
-labels and separate longer explanatory tooltips) which perform secondary navigation actions.
+labels and separate longer explanatory tooltips) which perform secondary navigation actions:
 
 * Go to current point position without changing zoom level
 * Undo previous zoom action or dragging action (of either point or background)
@@ -229,3 +234,7 @@ If the equation is linear, then it will just be a line in all cases.
 In the case where the equation is not linear (ie y=x^2 being the
 only example in the current specification), then once the zoom level
 is high enough it will be linear for all practical purposes.
+
+The equations should be represented by corresponding Equation classes
+that contain the rendering logic including details of when to switch
+from curve drawing to simple line drawing based on the zoom level.
