@@ -36,7 +36,10 @@ export const App: React.FC = observer(() => {
           </div>
           <div className="zoom-info">
             <strong>Grid Info:</strong> X: {store.mapping.getPixelsPerXUnit().toFixed(1)} px/unit, 
-            Y: {store.mapping.getPixelsPerYUnit().toFixed(1)} px/unit, Precision: {store.calculateCurrentPrecision()}
+            Y: {store.mapping.getPixelsPerYUnit().toFixed(1)} px/unit
+          </div>
+          <div className="precision-info">
+            <strong>Precision:</strong> Grid: {store.calculateMaxGridPrecision()}, Point: {store.calculateCurrentPrecision()}, Boundary: {store.calculateMaxGridPrecision() + 1}
           </div>
         </div>
       </div>

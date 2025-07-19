@@ -36,7 +36,19 @@ export class AppStore {
   }
 
   updateXYRectangle(bottomLeft: Point, topRight: Point) {
-    this.xyRectangle = { bottomLeft, topRight };
+    // Round boundary coordinates according to design spec (precision N+1)
+    const boundaryPrecision = this.calculateMaxGridPrecision() + 1;
+    
+    this.xyRectangle = { 
+      bottomLeft: {
+        x: bottomLeft.x.setPrecision(boundaryPrecision),
+        y: bottomLeft.y.setPrecision(boundaryPrecision)
+      },
+      topRight: {
+        x: topRight.x.setPrecision(boundaryPrecision),
+        y: topRight.y.setPrecision(boundaryPrecision)
+      }
+    };
     this.mapping = new CoordinateMapping(this.screenDimensions, this.xyRectangle);
   }
 
@@ -49,15 +61,15 @@ export class AppStore {
     };
   }
 
-  calculateCurrentPrecision(): number {
-    // Calculate precision based on grid spacing (one more than finest grid line precision)
+  calculateMaxGridPrecision(): number {
+    // Calculate maximum grid precision N based on 5-pixel minimum separation
     const pixelsPerXUnit = this.mapping.getPixelsPerXUnit();
     const pixelsPerYUnit = this.mapping.getPixelsPerYUnit();
     
     let maxPrecisionX = 0;
     let maxPrecisionY = 0;
     
-    // Find maximum precision for X that has adequate separation
+    // Find maximum precision for X and Y that has adequate separation
     for (let precision = 0; precision <= 15; precision++) {
       const step = Math.pow(10, -precision);
       const separationX = pixelsPerXUnit * step;
@@ -67,8 +79,13 @@ export class AppStore {
       if (separationY >= 5) maxPrecisionY = precision;
     }
     
-    // Use the higher precision (finer granularity) + 1 for point positioning
-    return Math.max(maxPrecisionX, maxPrecisionY) + 1;
+    // Return the maximum displayable grid precision N
+    return Math.max(maxPrecisionX, maxPrecisionY);
+  }
+
+  calculateCurrentPrecision(): number {
+    // Use grid precision + 1 for point positioning (per design spec)
+    return this.calculateMaxGridPrecision() + 1;
   }
 
   zoom(factor: number, centerX?: number, centerY?: number) {
@@ -85,19 +102,17 @@ export class AppStore {
     const newWidth = currentWidth.div(new PreciseDecimal(factor));
     const newHeight = currentHeight.div(new PreciseDecimal(factor));
 
-    // Use high precision for rectangle coordinates to maintain accuracy at high zoom
-    const precision = Math.max(20, this.calculateCurrentPrecision());
-    
     const newBottomLeft = {
-      x: center.x.sub(newWidth.div(new PreciseDecimal(2))).setPrecision(precision),
-      y: center.y.sub(newHeight.div(new PreciseDecimal(2))).setPrecision(precision)
+      x: center.x.sub(newWidth.div(new PreciseDecimal(2))),
+      y: center.y.sub(newHeight.div(new PreciseDecimal(2)))
     };
 
     const newTopRight = {
-      x: center.x.add(newWidth.div(new PreciseDecimal(2))).setPrecision(precision),
-      y: center.y.add(newHeight.div(new PreciseDecimal(2))).setPrecision(precision)
+      x: center.x.add(newWidth.div(new PreciseDecimal(2))),
+      y: center.y.add(newHeight.div(new PreciseDecimal(2)))
     };
 
+    // updateXYRectangle will handle boundary coordinate rounding
     this.updateXYRectangle(newBottomLeft, newTopRight);
     
     // Update current point precision after zoom
@@ -125,25 +140,29 @@ export class AppStore {
       y: this.xyRectangle.topRight.y.sub(dy)
     };
 
+    // updateXYRectangle will handle boundary coordinate rounding
     this.updateXYRectangle(newBottomLeft, newTopRight);
   }
 
   resetView() {
-    this.xyRectangle = {
-      bottomLeft: { 
-        x: new PreciseDecimal(-5, 2), 
-        y: new PreciseDecimal(-5, 2) 
-      },
-      topRight: { 
-        x: new PreciseDecimal(5, 2), 
-        y: new PreciseDecimal(5, 2) 
-      }
+    const defaultBottomLeft = {
+      x: new PreciseDecimal(-5, 2), 
+      y: new PreciseDecimal(-5, 2) 
     };
+    const defaultTopRight = {
+      x: new PreciseDecimal(5, 2), 
+      y: new PreciseDecimal(5, 2) 
+    };
+    
+    // Use updateXYRectangle to ensure proper boundary rounding
+    this.updateXYRectangle(defaultBottomLeft, defaultTopRight);
+    
+    // Reset current point with appropriate precision
+    const currentPrecision = this.calculateCurrentPrecision();
     this.currentPoint = {
-      x: new PreciseDecimal(0, 3),
-      y: new PreciseDecimal(0, 3)
+      x: new PreciseDecimal(0, currentPrecision),
+      y: new PreciseDecimal(0, currentPrecision)
     };
-    this.mapping = new CoordinateMapping(this.screenDimensions, this.xyRectangle);
   }
 
   moveCurrentPointToCenter() {
