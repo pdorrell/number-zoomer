@@ -43,7 +43,8 @@ export class GridRenderer {
     for (let precision = 0; precision <= maxPrecision; precision++) {
       const step = new PreciseDecimal(Math.pow(10, -precision));
       const thickness = this.calculateThickness(precision, maxPrecision);
-      const isThick = precision >= maxPrecision - 1; // Show labels on thickest lines
+      // Show labels for all grid lines except the thinnest (1px) ones
+      const isThick = thickness > 1;
       
       const startValue = Math.floor(yMin.toNumber() * Math.pow(10, precision)) / Math.pow(10, precision);
       const endValue = Math.ceil(yMax.toNumber() * Math.pow(10, precision)) / Math.pow(10, precision);
@@ -87,7 +88,8 @@ export class GridRenderer {
     for (let precision = 0; precision <= maxPrecision; precision++) {
       const step = new PreciseDecimal(Math.pow(10, -precision));
       const thickness = this.calculateThickness(precision, maxPrecision);
-      const isThick = precision >= maxPrecision - 1; // Show labels on thickest lines
+      // Show labels for all grid lines except the thinnest (1px) ones
+      const isThick = thickness > 1;
       
       const startValue = Math.floor(xMin.toNumber() * Math.pow(10, precision)) / Math.pow(10, precision);
       const endValue = Math.ceil(xMax.toNumber() * Math.pow(10, precision)) / Math.pow(10, precision);
