@@ -21,8 +21,8 @@ module.exports = {
       {
         test: /\.scss$/,
         use: [
-          'style-loader', 
-          'css-loader', 
+          'style-loader',
+          'css-loader',
           {
             loader: 'sass-loader',
             options: {
@@ -46,6 +46,6 @@ module.exports = {
   devServer: {
     static: path.join(__dirname, 'dist'),
     compress: true,
-    port: 3000,
+    port: 3002,
   },
 };
