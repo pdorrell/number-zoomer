@@ -99,6 +99,35 @@ can make:
   * On a touch screen via pinch and zoom
   * On a computer using "+" and "-" buttons or keyboard shortcuts.
 
+## Current Position of Point
+
+The current point position is always X,Y values that are decimal values of a 
+given precision.
+
+When the point is moved by the user, the precision of the new location is always
+limited by the same rule as the grid lines display, where the number of DP
+is only one more than the most DP for which the grid lines are displayed.
+
+Also, if the value is different for current X and Y zoom (which can happen if
+the screen size is not square), then choose the largest of those DP values.
+
+In the above example, considering only the Y coordinate, the new position will
+have 5DP of precision, eg 1.47223. (Subject to precision of the mouse or touch
+screen, the user will not necessarily be able to hit a precise value - but
+they always have the option to zoom in further in order to achieve more precision.)
+
+The DP of the current point position does not change if the user zooms in or out - 
+so, for example, zooming out and zooming in will not lose any information in the
+current point position. But after zooming in or out, the DP will reset as soon as 
+the user moves the point.
+
+Given the rules of DP for moving the point and for display grid lines, there will
+be a maxDP value that will be part of the current application state, which
+for the example above would be 5.
+
+
+
+
 
 
 
