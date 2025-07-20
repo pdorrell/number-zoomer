@@ -264,8 +264,6 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     }
   }, [isDraggingPoint, isDraggingBackground, startDragPos, lastMousePos, accumulatedPanDelta, isZooming, accumulatedZoomFactor, zoomCenter, store]);
   
-  // Only skip grid and equation calculations during zoom operations, not world window panning
-  const shouldSkipCalculation = store.transformState.isTransforming && isZooming;
   const currentPointScreen = store.mapping.worldToScreen(store.currentPoint);
 
   return (
@@ -294,7 +292,6 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       {/* Canvas for grid lines, coordinates, and equation */}
       <CanvasRenderer 
         store={store}
-        shouldSkipCalculation={shouldSkipCalculation}
       />
       
       {/* SVG overlay for current point */}

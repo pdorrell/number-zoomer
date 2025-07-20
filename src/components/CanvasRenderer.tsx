@@ -5,32 +5,23 @@ import { GridRenderer } from './GridRenderer';
 
 interface CanvasRendererProps {
   store: AppStore;
-  shouldSkipCalculation: boolean;
 }
 
-export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store, shouldSkipCalculation }) => {
+export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
   // Memoize grid renderer to prevent recreation on every render
   const gridRenderer = useMemo(() => new GridRenderer(store.mapping), [store.mapping]);
   
-  // Memoize grid lines calculation
-  const { horizontalLines, verticalLines } = useMemo(() => {
-    if (shouldSkipCalculation) {
-      return { horizontalLines: [], verticalLines: [] };
-    }
-    return {
-      horizontalLines: gridRenderer.calculateHorizontalGridLines(),
-      verticalLines: gridRenderer.calculateVerticalGridLines()
-    };
-  }, [shouldSkipCalculation, gridRenderer]);
-  
-  // Memoize equation graph points
-  const equationScreenWidth = shouldSkipCalculation ? store.screenViewport.width / 4 : store.screenViewport.width;
-  const screenPoints = useMemo(() => {
-    const equationPoints = store.currentEquation.generatePoints(store.worldWindow, equationScreenWidth);
-    return equationPoints.map(point => store.mapping.worldToScreen(point));
-  }, [store.currentEquation, store.worldWindow, store.mapping, equationScreenWidth]);
+  // Memoize grid lines and equation points calculation
+  const { horizontalLines, verticalLines, screenPoints } = useMemo(() => {
+    const horizontalLines = gridRenderer.calculateHorizontalGridLines();
+    const verticalLines = gridRenderer.calculateVerticalGridLines();
+    const equationPoints = store.currentEquation.generatePoints(store.worldWindow, store.screenViewport.width);
+    const screenPoints = equationPoints.map(point => store.mapping.worldToScreen(point));
+    
+    return { horizontalLines, verticalLines, screenPoints };
+  }, [gridRenderer, store.currentEquation, store.worldWindow, store.mapping, store.screenViewport.width]);
   
   const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
