@@ -7,6 +7,7 @@ export interface TransformState {
   pointTransform: string;
   gridTransform: string;
   isTransforming: boolean;
+  transformType?: 'drag' | 'pan' | 'zoom' | 'slider';
 }
 
 export class AppStore {
@@ -39,7 +40,8 @@ export class AppStore {
     this.transformState = {
       pointTransform: '',
       gridTransform: '',
-      isTransforming: false
+      isTransforming: false,
+      transformType: undefined
     };
 
     this.mapping = new CoordinateMapping(this.screenViewport, this.worldWindow);
@@ -265,18 +267,26 @@ export class AppStore {
 
   startWorldWindowDrag() {
     this.transformState.isTransforming = true;
+    this.transformState.transformType = 'pan';
     this.transformState.pointTransform = '';
     this.transformState.gridTransform = '';
   }
 
   updateWorldWindowDragTransform(deltaX: number, deltaY: number) {
-    const transform = `translate(${deltaX}px, ${deltaY}px)`;
-    this.transformState.gridTransform = transform;
-    this.transformState.pointTransform = transform; // Point moves with world window
+    const newTransform = `translate(${deltaX}px, ${deltaY}px)`;
+    
+    // Only update if transform actually changed to avoid unnecessary re-renders
+    if (this.transformState.gridTransform !== newTransform) {
+      this.transformState.gridTransform = newTransform;
+    }
+    if (this.transformState.pointTransform !== newTransform) {
+      this.transformState.pointTransform = newTransform; // Point moves with world window
+    }
   }
 
   startZoom(centerScreen: { x: number; y: number }) {
     this.transformState.isTransforming = true;
+    this.transformState.transformType = 'zoom';
     this.transformState.pointTransform = '';
     this.transformState.gridTransform = '';
   }
@@ -287,22 +297,30 @@ export class AppStore {
     const centerY = centerScreen.y;
     
     // Grid transform: scale around the zoom center
-    this.transformState.gridTransform = `translate(${centerX}px, ${centerY}px) scale(${scale}) translate(${-centerX}px, ${-centerY}px)`;
+    const newGridTransform = `translate(${centerX}px, ${centerY}px) scale(${scale}) translate(${-centerX}px, ${-centerY}px)`;
     
     // Point transform: if point is visible, don't transform; if not visible, simulate center-based zoom
-    if (this.isCurrentPointVisible()) {
-      this.transformState.pointTransform = '';
-    } else {
+    let newPointTransform = '';
+    if (!this.isCurrentPointVisible()) {
       // Calculate how the point would move during center-based zoom
       const currentPointScreen = this.mapping.worldToScreen(this.currentPoint);
       const deltaX = (currentPointScreen.x - centerX) * (scale - 1);
       const deltaY = (currentPointScreen.y - centerY) * (scale - 1);
-      this.transformState.pointTransform = `translate(${deltaX}px, ${deltaY}px)`;
+      newPointTransform = `translate(${deltaX}px, ${deltaY}px)`;
+    }
+    
+    // Only update if transforms actually changed to avoid unnecessary re-renders
+    if (this.transformState.gridTransform !== newGridTransform) {
+      this.transformState.gridTransform = newGridTransform;
+    }
+    if (this.transformState.pointTransform !== newPointTransform) {
+      this.transformState.pointTransform = newPointTransform;
     }
   }
 
   completeTransform() {
     this.transformState.isTransforming = false;
+    this.transformState.transformType = undefined;
     this.transformState.pointTransform = '';
     this.transformState.gridTransform = '';
   }
@@ -328,7 +346,8 @@ export class AppStore {
       this.completeTransform();
     } else {
       // Apply CSS transform only
-      this.startZoom(centerScreen);
+      this.transformState.isTransforming = true;
+      this.transformState.transformType = 'slider';
       this.updateZoomTransform(zoomFactor, centerScreen);
     }
   }

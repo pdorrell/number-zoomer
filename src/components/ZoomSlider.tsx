@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 
 interface ZoomSliderProps {
   onZoomChange: (zoomFactor: number, isComplete: boolean) => void;
@@ -9,6 +9,21 @@ export const ZoomSlider: React.FC<ZoomSliderProps> = ({ onZoomChange, disabled =
   const [sliderValue, setSliderValue] = useState(0.5);
   const [isDisabled, setIsDisabled] = useState(disabled);
   const [isDragging, setIsDragging] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sync disabled prop
+  React.useEffect(() => {
+    setIsDisabled(disabled);
+  }, [disabled]);
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   // Calculate zoom factor: F = 2^(2x-1) where x is slider value
   const calculateZoomFactor = (value: number): number => {
@@ -21,6 +36,7 @@ export const ZoomSlider: React.FC<ZoomSliderProps> = ({ onZoomChange, disabled =
     const value = parseFloat(event.target.value);
     setSliderValue(value);
     
+    // Always call onZoomChange for immediate feedback - CSS transforms are cheap
     const zoomFactor = calculateZoomFactor(value);
     onZoomChange(zoomFactor, false); // Not complete yet
   }, [isDisabled, onZoomChange]);
@@ -38,10 +54,16 @@ export const ZoomSlider: React.FC<ZoomSliderProps> = ({ onZoomChange, disabled =
     setIsDragging(false);
     setIsDisabled(true);
     
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    
     // Reset after delay
-    setTimeout(() => {
+    timeoutRef.current = setTimeout(() => {
       setSliderValue(0.5);
       setIsDisabled(false);
+      timeoutRef.current = null;
     }, 300);
   }, [isDisabled, sliderValue, onZoomChange]);
 

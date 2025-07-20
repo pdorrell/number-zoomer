@@ -89,7 +89,7 @@ export const App: React.FC = observer(() => {
         <CoordinatePlane store={store} />
         <ZoomSlider 
           onZoomChange={handleZoomSlider}
-          disabled={store.transformState.isTransforming}
+          disabled={store.transformState.isTransforming && store.transformState.transformType !== 'slider'}
         />
       </div>
     </div>

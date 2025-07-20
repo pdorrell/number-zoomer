@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
 import { AppStore } from '../stores/AppStore';
 import { GridRenderer } from './GridRenderer';
@@ -245,38 +245,48 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       });
     }
   }, [isDraggingPoint, isDraggingBackground, startDragPos, lastMousePos, accumulatedPanDelta, isZooming, accumulatedZoomFactor, zoomCenter, store]);
-  const gridRenderer = new GridRenderer(store.mapping);
   
-  // Reduce grid calculations during zoom operations for performance
-  const shouldSkipGridCalculation = isZooming;
-  const horizontalLines = shouldSkipGridCalculation ? [] : gridRenderer.calculateHorizontalGridLines();
-  const verticalLines = shouldSkipGridCalculation ? [] : gridRenderer.calculateVerticalGridLines();
+  // Memoize grid renderer to prevent recreation on every render
+  const gridRenderer = useMemo(() => new GridRenderer(store.mapping), [store.mapping]);
+  
+  // Only skip grid calculations during zoom operations, not world window panning
+  const shouldSkipGridCalculation = store.transformState.isTransforming && isZooming;
+  const horizontalLines = useMemo(() => 
+    shouldSkipGridCalculation ? [] : gridRenderer.calculateHorizontalGridLines(),
+    [shouldSkipGridCalculation, gridRenderer]
+  );
+  const verticalLines = useMemo(() => 
+    shouldSkipGridCalculation ? [] : gridRenderer.calculateVerticalGridLines(),
+    [shouldSkipGridCalculation, gridRenderer]
+  );
 
   const currentPointScreen = store.mapping.worldToScreen(store.currentPoint);
   
-  // Generate equation graph points (reduce resolution during zoom)
-  const equationScreenWidth = isZooming ? store.screenViewport.width / 4 : store.screenViewport.width;
-  const equationPoints = store.currentEquation.generatePoints(store.worldWindow, equationScreenWidth);
-  const screenPoints = equationPoints.map(point => store.mapping.worldToScreen(point));
+  // Memoize equation graph points (reduce resolution during transform operations)
+  const equationScreenWidth = shouldSkipGridCalculation ? store.screenViewport.width / 4 : store.screenViewport.width;
+  const screenPoints = useMemo(() => {
+    const equationPoints = store.currentEquation.generatePoints(store.worldWindow, equationScreenWidth);
+    return equationPoints.map(point => store.mapping.worldToScreen(point));
+  }, [store.currentEquation, store.worldWindow, store.mapping, equationScreenWidth]);
   
-  // Create SVG path for equation graph
-  const createEquationPath = (points: { x: number; y: number }[]) => {
-    if (points.length === 0) return '';
+  // Memoize SVG path creation
+  const equationPath = useMemo(() => {
+    if (screenPoints.length === 0) return '';
     
-    let path = `M ${points[0].x} ${points[0].y}`;
+    let path = `M ${screenPoints[0].x} ${screenPoints[0].y}`;
     
-    if (store.currentEquation.shouldDrawAsCurve(store.worldWindow) && points.length > 2) {
+    if (store.currentEquation.shouldDrawAsCurve(store.worldWindow) && screenPoints.length > 2) {
       // Draw as smooth curve for quadratic equations at low zoom
-      for (let i = 1; i < points.length; i++) {
-        path += ` L ${points[i].x} ${points[i].y}`;
+      for (let i = 1; i < screenPoints.length; i++) {
+        path += ` L ${screenPoints[i].x} ${screenPoints[i].y}`;
       }
     } else {
       // Draw as straight line for linear equations or high zoom quadratic
-      path += ` L ${points[points.length - 1].x} ${points[points.length - 1].y}`;
+      path += ` L ${screenPoints[screenPoints.length - 1].x} ${screenPoints[screenPoints.length - 1].y}`;
     }
     
     return path;
-  };
+  }, [screenPoints, store.currentEquation, store.worldWindow]);
 
   return (
     <svg 
@@ -373,10 +383,10 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       </g>
       
       {/* Equation graph */}
-      {screenPoints.length > 0 && (
+      {equationPath && (
         <g style={{ transform: store.transformState.gridTransform }}>
           <path
-            d={createEquationPath(screenPoints)}
+            d={equationPath}
             stroke="#dc3545"
             strokeWidth={2}
             fill="none"
