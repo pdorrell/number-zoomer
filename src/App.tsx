@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { AppStore } from './stores/AppStore';
 import { CoordinatePlane } from './components/CoordinatePlane';
-import { ZoomSlider } from './components/ZoomSlider';
+import { CustomZoomSlider } from './components/CustomZoomSlider';
 import { EquationType } from './types/Equation';
 
 export const App: React.FC = observer(() => {
@@ -32,17 +32,6 @@ export const App: React.FC = observer(() => {
     store.setEquation({ type: 'linear', c });
   };
 
-  const handleZoomStart = () => {
-    store.startZoom('slider', 'slider');
-  };
-
-  const handleZoomChange = (zoomFactor: number) => {
-    store.setZoomFactor('slider', zoomFactor);
-  };
-
-  const handleZoomComplete = (zoomFactor?: number) => {
-    store.completeZoom('slider', zoomFactor);
-  };
 
   return (
     <div className="app">
@@ -97,10 +86,10 @@ export const App: React.FC = observer(() => {
       </div>
       <div className="main-area">
         <CoordinatePlane store={store} />
-        <ZoomSlider 
-          onZoomStart={handleZoomStart}
-          onZoomChange={handleZoomChange}
-          onZoomComplete={handleZoomComplete}
+        <CustomZoomSlider 
+          zoomable={store}
+          source="slider"
+          zoomRange={8}
           disabled={store.transformState.isTransforming && store.transformState.transformType !== 'slider'}
         />
       </div>
