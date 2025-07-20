@@ -186,6 +186,10 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     onPinch: ({ offset: [scale] }) => {
       if (!isZooming) return;
       
+      // Debug the scale value
+      console.log('Pinch scale:', scale, 'Center:', zoomCenter);
+      
+      // Use the fixed center from pinch start
       store.updateZoomTransform(scale, zoomCenter);
       setInitialZoomFactor(scale);
     },
