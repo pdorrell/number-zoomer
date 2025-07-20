@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
+import { useGesture } from '@use-gesture/react';
 import { AppStore } from '../stores/AppStore';
 import { CanvasRenderer } from './CanvasRenderer';
 
@@ -12,13 +13,10 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
   const [isDraggingPoint, setIsDraggingPoint] = useState(false);
   const [isDraggingBackground, setIsDraggingBackground] = useState(false);
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
-  const [lastTouchDistance, setLastTouchDistance] = useState<number | null>(null);
-  const [lastTouchCenter, setLastTouchCenter] = useState({ x: 0, y: 0 });
   const [isZooming, setIsZooming] = useState(false);
-  const [lastZoomTime, setLastZoomTime] = useState(0);
   const [startDragPos, setStartDragPos] = useState({ x: 0, y: 0 });
   const [accumulatedPanDelta, setAccumulatedPanDelta] = useState({ x: 0, y: 0 });
-  const [accumulatedZoomFactor, setAccumulatedZoomFactor] = useState(1);
+  const [initialZoomFactor, setInitialZoomFactor] = useState(1);
   const [zoomCenter, setZoomCenter] = useState({ x: 0, y: 0 });
 
   // Global mouse move handler for dragging outside the component
@@ -108,37 +106,16 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     store.zoom(zoomFactor, mouseX, mouseY);
   }, [store]);
 
-  const getTouchDistance = (touches: React.TouchList) => {
-    if (touches.length < 2) return 0;
-    const touch1 = touches[0];
-    const touch2 = touches[1];
-    return Math.sqrt(
-      Math.pow(touch2.clientX - touch1.clientX, 2) + 
-      Math.pow(touch2.clientY - touch1.clientY, 2)
-    );
-  };
-
-  const getTouchCenter = (touches: React.TouchList, rect: DOMRect) => {
-    if (touches.length === 1) {
-      return {
-        x: touches[0].clientX - rect.left,
-        y: touches[0].clientY - rect.top
-      };
-    }
-    const centerX = (touches[0].clientX + touches[1].clientX) / 2 - rect.left;
-    const centerY = (touches[0].clientY + touches[1].clientY) / 2 - rect.top;
-    return { x: centerX, y: centerY };
-  };
-
-  const handleTouchStart = useCallback((event: React.TouchEvent) => {
-    event.preventDefault(); // Prevent default touch behavior
-    const rect = (event.currentTarget as HTMLDivElement).getBoundingClientRect();
-    
-    if (event.touches.length === 1) {
-      // Single touch - check if touching current point or background
-      const touch = event.touches[0];
-      const touchX = touch.clientX - rect.left;
-      const touchY = touch.clientY - rect.top;
+  // Use-gesture for both drag and pinch handling
+  const bind = useGesture({
+    onDragStart: ({ event }) => {
+      if (!containerRef.current) return;
+      
+      const rect = containerRef.current.getBoundingClientRect();
+      const clientX = 'touches' in event ? event.touches[0].clientX : 'clientX' in event ? event.clientX : 0;
+      const clientY = 'touches' in event ? event.touches[0].clientY : 'clientY' in event ? event.clientY : 0;
+      const touchX = clientX - rect.left;
+      const touchY = clientY - rect.top;
       
       const currentPointScreen = store.mapping.worldToScreen(store.currentPoint);
       const distanceToPoint = Math.sqrt(
@@ -146,7 +123,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
         Math.pow(touchY - currentPointScreen.y, 2)
       );
       
-      if (distanceToPoint <= 15) { // Larger touch target
+      if (distanceToPoint <= 15) { // Touch target for point
         setIsDraggingPoint(true);
         store.startPointDrag({ x: touchX, y: touchY });
         setStartDragPos({ x: touchX, y: touchY });
@@ -157,112 +134,87 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       }
       
       setLastMousePos({ x: touchX, y: touchY });
-    } else if (event.touches.length === 2) {
-      // Two touches - pinch to zoom
-      const distance = getTouchDistance(event.touches);
-      const center = getTouchCenter(event.touches, rect);
-      
-      setLastTouchDistance(distance);
-      setLastTouchCenter(center);
-      setZoomCenter(center);
-      setAccumulatedZoomFactor(1); // Reset accumulated zoom
-      setIsDraggingPoint(false);
-      setIsDraggingBackground(false);
-    }
-  }, [store]);
-
-  const handleTouchMove = useCallback((event: React.TouchEvent) => {
-    event.preventDefault(); // Prevent default touch behavior
-    const rect = (event.currentTarget as HTMLDivElement).getBoundingClientRect();
+    },
     
-    if (event.touches.length === 1) {
-      // Single touch - drag point or background
-      const touch = event.touches[0];
-      const touchX = touch.clientX - rect.left;
-      const touchY = touch.clientY - rect.top;
+    onDrag: ({ event, movement: [movementX, movementY] }) => {
+      if (!containerRef.current) return;
       
       if (isDraggingPoint) {
-        // Continuously update point position for real-time coordinate display
+        // For point dragging, use absolute position
+        const rect = containerRef.current.getBoundingClientRect();
+        const clientX = 'touches' in event ? event.touches[0].clientX : 'clientX' in event ? event.clientX : 0;
+        const clientY = 'touches' in event ? event.touches[0].clientY : 'clientY' in event ? event.clientY : 0;
+        const touchX = clientX - rect.left;
+        const touchY = clientY - rect.top;
+        
         const newPoint = store.mapping.screenToWorld(touchX, touchY);
         store.updateCurrentPoint(newPoint);
       } else if (isDraggingBackground) {
-        // Use CSS transform for immediate feedback
-        const deltaX = touchX - lastMousePos.x;
-        const deltaY = touchY - lastMousePos.y;
-        const newAccumulatedDelta = {
-          x: accumulatedPanDelta.x + deltaX,
-          y: accumulatedPanDelta.y + deltaY
-        };
-        setAccumulatedPanDelta(newAccumulatedDelta);
-        store.updateWorldWindowDragTransform(newAccumulatedDelta.x, newAccumulatedDelta.y);
-        setLastMousePos({ x: touchX, y: touchY });
+        // For background dragging, use movement (total distance from start)
+        setAccumulatedPanDelta({ x: movementX, y: movementY });
+        store.updateWorldWindowDragTransform(movementX, movementY);
       }
-    } else if (event.touches.length === 2 && lastTouchDistance !== null) {
-      // Two touches - pinch to zoom with throttling
-      const currentTime = Date.now();
-      const distance = getTouchDistance(event.touches);
-      const center = getTouchCenter(event.touches, rect);
-      
-      // Throttle zoom events to every 50ms for performance
-      if (currentTime - lastZoomTime > 50 && lastTouchDistance > 0) {
-        const zoomFactor = distance / lastTouchDistance;
-        
-        // Only zoom if the change is significant (> 5% change)
-        if (Math.abs(zoomFactor - 1) > 0.05) {
-          setIsZooming(true);
-          
-          // Accumulate zoom factor for final application
-          const newAccumulatedZoom = accumulatedZoomFactor * zoomFactor;
-          setAccumulatedZoomFactor(newAccumulatedZoom);
-          
-          // Use CSS transform for immediate feedback (no redraw until completion)
-          store.startZoom(center);
-          store.updateZoomTransform(newAccumulatedZoom, center);
-          
-          setLastZoomTime(currentTime);
-          setLastTouchDistance(distance);
-        }
-      }
-      
-      setLastTouchCenter(center);
-    }
-  }, [isDraggingPoint, isDraggingBackground, lastMousePos, lastTouchDistance, lastZoomTime, accumulatedZoomFactor, store]);
-
-  const handleTouchEnd = useCallback((event: React.TouchEvent) => {
-    event.preventDefault(); // Prevent default touch behavior
+    },
     
-    if (event.touches.length === 0) {
-      // All touches ended - complete any ongoing interactions
+    onDragEnd: () => {
       if (isDraggingBackground) {
-        // Complete the pan with actual update
         store.pan(accumulatedPanDelta.x, accumulatedPanDelta.y);
-      }
-      // Point dragging doesn't need completion since it updates continuously
-      
-      // Complete any ongoing zoom operation
-      if (isZooming) {
-        store.zoom(accumulatedZoomFactor, zoomCenter.x, zoomCenter.y);
-        setAccumulatedZoomFactor(1); // Reset for next interaction
       }
       
       store.completeTransform();
       setIsDraggingPoint(false);
       setIsDraggingBackground(false);
-      setLastTouchDistance(null);
-      setIsZooming(false);
       setAccumulatedPanDelta({ x: 0, y: 0 });
-    } else if (event.touches.length === 1) {
-      // One touch remaining after pinch
-      setLastTouchDistance(null);
+    },
+    
+    onPinchStart: () => {
+      // Determine zoom center based on current point visibility (same logic as zoom slider)
+      let centerScreen;
+      if (store.isCurrentPointVisible()) {
+        centerScreen = store.mapping.worldToScreen(store.currentPoint);
+      } else {
+        centerScreen = { 
+          x: store.screenViewport.width / 2, 
+          y: store.screenViewport.height / 2 
+        };
+      }
+      
+      setZoomCenter(centerScreen);
+      setInitialZoomFactor(1);
+      setIsZooming(true);
+      store.startZoom(centerScreen);
+    },
+    
+    onPinch: ({ offset: [scale] }) => {
+      if (!isZooming) return;
+      
+      store.updateZoomTransform(scale, zoomCenter);
+      setInitialZoomFactor(scale);
+    },
+    
+    onPinchEnd: () => {
+      if (!isZooming) return;
+      
+      store.zoom(initialZoomFactor, zoomCenter.x, zoomCenter.y);
+      store.completeTransform();
       setIsZooming(false);
-      const rect = (event.currentTarget as HTMLDivElement).getBoundingClientRect();
-      const touch = event.touches[0];
-      setLastMousePos({ 
-        x: touch.clientX - rect.left, 
-        y: touch.clientY - rect.top 
-      });
+      setInitialZoomFactor(1);
     }
-  }, [isDraggingPoint, isDraggingBackground, startDragPos, lastMousePos, accumulatedPanDelta, isZooming, accumulatedZoomFactor, zoomCenter, store]);
+  }, {
+    eventOptions: { passive: false },
+    drag: {
+      filterTaps: true,
+      pointer: { touch: true },
+      from: () => [0, 0]
+    },
+    pinch: {
+      scaleBounds: { min: 0.1, max: 10 },
+      rubberband: true,
+      pointer: { touch: true }
+    }
+  });
+
+
   
   const currentPointScreen = store.mapping.worldToScreen(store.currentPoint);
 
@@ -272,10 +224,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       className="coordinate-plane"
       onMouseDown={handleMouseDown}
       onWheel={handleWheel}
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchEnd}
+      {...bind()}
       style={{ 
         position: 'relative',
         width: store.screenViewport.width,
