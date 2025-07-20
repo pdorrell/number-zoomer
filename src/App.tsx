@@ -9,11 +9,13 @@ export const App: React.FC = observer(() => {
   const [store] = useState(() => new AppStore());
 
   const handleZoomIn = () => {
-    store.zoom(2);
+    store.startZoom('zoomInButton');
+    store.completeZoom('zoomInButton', 2);
   };
 
   const handleZoomOut = () => {
-    store.zoom(0.5);
+    store.startZoom('zoomOutButton');
+    store.completeZoom('zoomOutButton', 0.5);
   };
 
   const handleEquationTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -30,8 +32,16 @@ export const App: React.FC = observer(() => {
     store.setEquation({ type: 'linear', c });
   };
 
-  const handleZoomSlider = (zoomFactor: number, isComplete: boolean) => {
-    store.handleZoomSlider(zoomFactor, isComplete);
+  const handleZoomStart = () => {
+    store.startZoom('slider', 'slider');
+  };
+
+  const handleZoomChange = (zoomFactor: number) => {
+    store.setZoomFactor('slider', zoomFactor);
+  };
+
+  const handleZoomComplete = (zoomFactor?: number) => {
+    store.completeZoom('slider', zoomFactor);
   };
 
   return (
@@ -68,10 +78,10 @@ export const App: React.FC = observer(() => {
         </div>
         <div className="debug-info">
           <div className="range-display">
-            <strong>World Window X:</strong> {store.getWorldWindowXRangeDisplay()}
+            <strong>World Window X:</strong> {store.getPreviewWorldWindowXRangeDisplay()}
           </div>
           <div className="range-display">
-            <strong>World Window Y:</strong> {store.getWorldWindowYRangeDisplay()}
+            <strong>World Window Y:</strong> {store.getPreviewWorldWindowYRangeDisplay()}
           </div>
           <div className="current-point-display">
             <strong>Current Point:</strong> {store.getCurrentPointDisplay()}
@@ -88,7 +98,9 @@ export const App: React.FC = observer(() => {
       <div className="main-area">
         <CoordinatePlane store={store} />
         <ZoomSlider 
-          onZoomChange={handleZoomSlider}
+          onZoomStart={handleZoomStart}
+          onZoomChange={handleZoomChange}
+          onZoomComplete={handleZoomComplete}
           disabled={store.transformState.isTransforming && store.transformState.transformType !== 'slider'}
         />
       </div>

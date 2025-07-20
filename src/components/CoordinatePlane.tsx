@@ -166,21 +166,14 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     },
     
     onPinchStart: () => {
-      // Determine zoom center based on current point visibility (same logic as zoom slider)
-      let centerScreen;
-      if (store.isCurrentPointVisible()) {
-        centerScreen = store.mapping.worldToScreen(store.currentPoint);
-      } else {
-        centerScreen = { 
-          x: store.screenViewport.width / 2, 
-          y: store.screenViewport.height / 2 
-        };
-      }
-      
-      setZoomCenter(centerScreen);
       setInitialZoomFactor(1);
       setIsZooming(true);
-      store.startZoom(centerScreen);
+      store.startZoom('pinch');
+      
+      // Get the center point from the store (it handles the logic internally)
+      if (store.centrePoint) {
+        setZoomCenter(store.centrePoint);
+      }
     },
     
     onPinch: ({ offset: [scale] }) => {
@@ -189,16 +182,16 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       // Debug the scale value
       console.log('Pinch scale:', scale, 'Center:', zoomCenter);
       
-      // Use the fixed center from pinch start
-      store.updateZoomTransform(scale, zoomCenter);
+      // Use the new ZoomableInterface method
+      store.setZoomFactor('pinch', scale);
       setInitialZoomFactor(scale);
     },
     
     onPinchEnd: () => {
       if (!isZooming) return;
       
-      store.zoom(initialZoomFactor, zoomCenter.x, zoomCenter.y);
-      store.completeTransform();
+      // Use the new ZoomableInterface method
+      store.completeZoom('pinch', initialZoomFactor);
       setIsZooming(false);
       setInitialZoomFactor(1);
     }

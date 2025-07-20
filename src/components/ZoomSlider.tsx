@@ -1,11 +1,13 @@
 import React, { useState, useCallback } from 'react';
 
 interface ZoomSliderProps {
-  onZoomChange: (zoomFactor: number, isComplete: boolean) => void;
+  onZoomStart: () => void;
+  onZoomChange: (zoomFactor: number) => void;
+  onZoomComplete: (zoomFactor?: number) => void;
   disabled?: boolean;
 }
 
-export const ZoomSlider: React.FC<ZoomSliderProps> = ({ onZoomChange, disabled = false }) => {
+export const ZoomSlider: React.FC<ZoomSliderProps> = ({ onZoomStart, onZoomChange, onZoomComplete, disabled = false }) => {
   const [sliderValue, setSliderValue] = useState(0.5);
   const [isDisabled, setIsDisabled] = useState(disabled);
   const [isDragging, setIsDragging] = useState(false);
@@ -29,26 +31,27 @@ export const ZoomSlider: React.FC<ZoomSliderProps> = ({ onZoomChange, disabled =
     
     // Always call onZoomChange for immediate feedback - CSS transforms are cheap
     const zoomFactor = calculateZoomFactor(value);
-    onZoomChange(zoomFactor, false); // Not complete yet
+    onZoomChange(zoomFactor);
   }, [isDisabled, onZoomChange]);
 
   const handleSliderStart = useCallback(() => {
     setIsDragging(true);
-  }, []);
+    onZoomStart();
+  }, [onZoomStart]);
 
   const handleSliderEnd = useCallback(() => {
     if (isDisabled) return;
     
     const zoomFactor = calculateZoomFactor(sliderValue);
     
-    // Complete the zoom action immediately
-    onZoomChange(zoomFactor, true);
+    // Complete the zoom action
+    onZoomComplete(zoomFactor);
     
     // Reset slider state immediately
     setIsDragging(false);
     setSliderValue(0.5);
     
-  }, [isDisabled, sliderValue, onZoomChange]);
+  }, [isDisabled, sliderValue, onZoomComplete]);
 
   // Handle touch events for mobile
   const handleTouchEnd = useCallback((event: React.TouchEvent) => {
