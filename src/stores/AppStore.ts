@@ -309,18 +309,25 @@ export class AppStore {
 
   // Zoom slider support
   handleZoomSlider(zoomFactor: number, isComplete: boolean) {
-    if (isComplete) {
-      // Apply actual zoom and reset transforms
-      const centerX = this.screenViewport.width / 2;
-      const centerY = this.screenViewport.height / 2;
-      this.zoom(zoomFactor, centerX, centerY);
-      this.completeTransform();
+    // Determine zoom center based on current point visibility
+    let centerScreen;
+    if (this.isCurrentPointVisible()) {
+      // If current point is visible, zoom around it
+      centerScreen = this.mapping.worldToScreen(this.currentPoint);
     } else {
-      // Apply CSS transform only
-      const centerScreen = { 
+      // If current point is not visible, zoom from viewport center
+      centerScreen = { 
         x: this.screenViewport.width / 2, 
         y: this.screenViewport.height / 2 
       };
+    }
+
+    if (isComplete) {
+      // Apply actual zoom and reset transforms
+      this.zoom(zoomFactor, centerScreen.x, centerScreen.y);
+      this.completeTransform();
+    } else {
+      // Apply CSS transform only
       this.startZoom(centerScreen);
       this.updateZoomTransform(zoomFactor, centerScreen);
     }
