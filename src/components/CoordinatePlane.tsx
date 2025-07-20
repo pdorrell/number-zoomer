@@ -11,6 +11,8 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
   const [isDraggingPoint, setIsDraggingPoint] = useState(false);
   const [isDraggingBackground, setIsDraggingBackground] = useState(false);
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
+  const [lastTouchDistance, setLastTouchDistance] = useState<number | null>(null);
+  const [lastTouchCenter, setLastTouchCenter] = useState({ x: 0, y: 0 });
 
   const handleMouseDown = useCallback((event: React.MouseEvent) => {
     const rect = (event.currentTarget as SVGSVGElement).getBoundingClientRect();
@@ -62,6 +64,117 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
     store.zoom(zoomFactor, mouseX, mouseY);
   }, [store]);
+
+  const getTouchDistance = (touches: TouchList) => {
+    if (touches.length < 2) return 0;
+    const touch1 = touches[0];
+    const touch2 = touches[1];
+    return Math.sqrt(
+      Math.pow(touch2.clientX - touch1.clientX, 2) + 
+      Math.pow(touch2.clientY - touch1.clientY, 2)
+    );
+  };
+
+  const getTouchCenter = (touches: TouchList, rect: DOMRect) => {
+    if (touches.length === 1) {
+      return {
+        x: touches[0].clientX - rect.left,
+        y: touches[0].clientY - rect.top
+      };
+    }
+    const centerX = (touches[0].clientX + touches[1].clientX) / 2 - rect.left;
+    const centerY = (touches[0].clientY + touches[1].clientY) / 2 - rect.top;
+    return { x: centerX, y: centerY };
+  };
+
+  const handleTouchStart = useCallback((event: React.TouchEvent) => {
+    event.preventDefault(); // Prevent default touch behavior
+    const rect = (event.currentTarget as SVGSVGElement).getBoundingClientRect();
+    
+    if (event.touches.length === 1) {
+      // Single touch - check if touching current point or background
+      const touch = event.touches[0];
+      const touchX = touch.clientX - rect.left;
+      const touchY = touch.clientY - rect.top;
+      
+      const currentPointScreen = store.mapping.worldToScreen(store.currentPoint);
+      const distanceToPoint = Math.sqrt(
+        Math.pow(touchX - currentPointScreen.x, 2) + 
+        Math.pow(touchY - currentPointScreen.y, 2)
+      );
+      
+      if (distanceToPoint <= 15) { // Larger touch target
+        setIsDraggingPoint(true);
+      } else {
+        setIsDraggingBackground(true);
+      }
+      
+      setLastMousePos({ x: touchX, y: touchY });
+    } else if (event.touches.length === 2) {
+      // Two touches - pinch to zoom
+      const distance = getTouchDistance(event.touches);
+      const center = getTouchCenter(event.touches, rect);
+      
+      setLastTouchDistance(distance);
+      setLastTouchCenter(center);
+      setIsDraggingPoint(false);
+      setIsDraggingBackground(false);
+    }
+  }, [store]);
+
+  const handleTouchMove = useCallback((event: React.TouchEvent) => {
+    event.preventDefault(); // Prevent default touch behavior
+    const rect = (event.currentTarget as SVGSVGElement).getBoundingClientRect();
+    
+    if (event.touches.length === 1) {
+      // Single touch - drag point or background
+      const touch = event.touches[0];
+      const touchX = touch.clientX - rect.left;
+      const touchY = touch.clientY - rect.top;
+      
+      if (isDraggingPoint) {
+        const newPoint = store.mapping.screenToWorld(touchX, touchY);
+        store.updateCurrentPoint(newPoint);
+      } else if (isDraggingBackground) {
+        const deltaX = touchX - lastMousePos.x;
+        const deltaY = touchY - lastMousePos.y;
+        store.pan(deltaX, deltaY);
+        setLastMousePos({ x: touchX, y: touchY });
+      }
+    } else if (event.touches.length === 2 && lastTouchDistance !== null) {
+      // Two touches - pinch to zoom
+      const distance = getTouchDistance(event.touches);
+      const center = getTouchCenter(event.touches, rect);
+      
+      if (lastTouchDistance > 0) {
+        const zoomFactor = distance / lastTouchDistance;
+        store.zoom(zoomFactor, center.x, center.y);
+      }
+      
+      setLastTouchDistance(distance);
+      setLastTouchCenter(center);
+    }
+  }, [isDraggingPoint, isDraggingBackground, lastMousePos, lastTouchDistance, store]);
+
+  const handleTouchEnd = useCallback((event: React.TouchEvent) => {
+    event.preventDefault(); // Prevent default touch behavior
+    
+    if (event.touches.length === 0) {
+      // All touches ended
+      setIsDraggingPoint(false);
+      setIsDraggingBackground(false);
+      setLastTouchDistance(null);
+    } else if (event.touches.length === 1) {
+      // One touch remaining after pinch
+      setLastTouchDistance(null);
+      const rect = (event.currentTarget as SVGSVGElement).getBoundingClientRect();
+      const touch = event.touches[0];
+      setLastMousePos({ 
+        x: touch.clientX - rect.left, 
+        y: touch.clientY - rect.top 
+      });
+    }
+  }, []);
   const gridRenderer = new GridRenderer(store.mapping);
   const horizontalLines = gridRenderer.calculateHorizontalGridLines();
   const verticalLines = gridRenderer.calculateVerticalGridLines();
@@ -101,7 +214,14 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
       onWheel={handleWheel}
-      style={{ cursor: isDraggingPoint ? 'grabbing' : isDraggingBackground ? 'grabbing' : 'grab' }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
+      style={{ 
+        cursor: isDraggingPoint ? 'grabbing' : isDraggingBackground ? 'grabbing' : 'grab',
+        touchAction: 'none' // Prevent default touch behaviors
+      }}
     >
       <rect 
         width={store.screenViewport.width} 
