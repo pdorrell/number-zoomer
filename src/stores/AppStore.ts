@@ -104,9 +104,11 @@ export class AppStore implements ZoomableInterface {
     let maxPrecision = 0;
     
     // Find maximum precision for X dimension that has adequate separation (>= 5 pixels)
-    for (let precision = 0; precision <= 15; precision++) {
-      const step = Math.pow(10, -precision);
-      const separation = pixelsPerXUnit * step;
+    // Use PreciseDecimal for arbitrary precision instead of floating-point Math.pow
+    for (let precision = 0; precision <= 50; precision++) {
+      const step = new PreciseDecimal(10, 0).pow(-precision); // 10^(-precision)
+      const stepValue = step.toNumber();
+      const separation = pixelsPerXUnit * stepValue;
       
       if (separation >= 5) {
         maxPrecision = precision;
