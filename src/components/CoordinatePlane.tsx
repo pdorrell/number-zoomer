@@ -1,7 +1,7 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { AppStore } from '../stores/AppStore';
-import { GridRenderer } from './GridRenderer';
+import { CanvasRenderer } from './CanvasRenderer';
 
 interface CoordinatePlaneProps {
   store: AppStore;
@@ -21,7 +21,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
   const [zoomCenter, setZoomCenter] = useState({ x: 0, y: 0 });
 
   const handleMouseDown = useCallback((event: React.MouseEvent) => {
-    const rect = (event.currentTarget as SVGSVGElement).getBoundingClientRect();
+    const rect = (event.currentTarget as HTMLDivElement).getBoundingClientRect();
     const mouseX = event.clientX - rect.left;
     const mouseY = event.clientY - rect.top;
     
@@ -45,7 +45,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
   }, [store]);
 
   const handleMouseMove = useCallback((event: React.MouseEvent) => {
-    const rect = (event.currentTarget as SVGSVGElement).getBoundingClientRect();
+    const rect = (event.currentTarget as HTMLDivElement).getBoundingClientRect();
     const mouseX = event.clientX - rect.left;
     const mouseY = event.clientY - rect.top;
     
@@ -82,7 +82,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
 
   const handleWheel = useCallback((event: React.WheelEvent) => {
     event.preventDefault();
-    const rect = (event.currentTarget as SVGSVGElement).getBoundingClientRect();
+    const rect = (event.currentTarget as HTMLDivElement).getBoundingClientRect();
     const mouseX = event.clientX - rect.left;
     const mouseY = event.clientY - rect.top;
     
@@ -90,7 +90,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     store.zoom(zoomFactor, mouseX, mouseY);
   }, [store]);
 
-  const getTouchDistance = (touches: TouchList) => {
+  const getTouchDistance = (touches: React.TouchList) => {
     if (touches.length < 2) return 0;
     const touch1 = touches[0];
     const touch2 = touches[1];
@@ -100,7 +100,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     );
   };
 
-  const getTouchCenter = (touches: TouchList, rect: DOMRect) => {
+  const getTouchCenter = (touches: React.TouchList, rect: DOMRect) => {
     if (touches.length === 1) {
       return {
         x: touches[0].clientX - rect.left,
@@ -114,7 +114,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
 
   const handleTouchStart = useCallback((event: React.TouchEvent) => {
     event.preventDefault(); // Prevent default touch behavior
-    const rect = (event.currentTarget as SVGSVGElement).getBoundingClientRect();
+    const rect = (event.currentTarget as HTMLDivElement).getBoundingClientRect();
     
     if (event.touches.length === 1) {
       // Single touch - check if touching current point or background
@@ -155,7 +155,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
 
   const handleTouchMove = useCallback((event: React.TouchEvent) => {
     event.preventDefault(); // Prevent default touch behavior
-    const rect = (event.currentTarget as SVGSVGElement).getBoundingClientRect();
+    const rect = (event.currentTarget as HTMLDivElement).getBoundingClientRect();
     
     if (event.touches.length === 1) {
       // Single touch - drag point or background
@@ -237,7 +237,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       // One touch remaining after pinch
       setLastTouchDistance(null);
       setIsZooming(false);
-      const rect = (event.currentTarget as SVGSVGElement).getBoundingClientRect();
+      const rect = (event.currentTarget as HTMLDivElement).getBoundingClientRect();
       const touch = event.touches[0];
       setLastMousePos({ 
         x: touch.clientX - rect.left, 
@@ -246,52 +246,12 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     }
   }, [isDraggingPoint, isDraggingBackground, startDragPos, lastMousePos, accumulatedPanDelta, isZooming, accumulatedZoomFactor, zoomCenter, store]);
   
-  // Memoize grid renderer to prevent recreation on every render
-  const gridRenderer = useMemo(() => new GridRenderer(store.mapping), [store.mapping]);
-  
-  // Only skip grid calculations during zoom operations, not world window panning
-  const shouldSkipGridCalculation = store.transformState.isTransforming && isZooming;
-  const horizontalLines = useMemo(() => 
-    shouldSkipGridCalculation ? [] : gridRenderer.calculateHorizontalGridLines(),
-    [shouldSkipGridCalculation, gridRenderer]
-  );
-  const verticalLines = useMemo(() => 
-    shouldSkipGridCalculation ? [] : gridRenderer.calculateVerticalGridLines(),
-    [shouldSkipGridCalculation, gridRenderer]
-  );
-
+  // Only skip grid and equation calculations during zoom operations, not world window panning
+  const shouldSkipCalculation = store.transformState.isTransforming && isZooming;
   const currentPointScreen = store.mapping.worldToScreen(store.currentPoint);
-  
-  // Memoize equation graph points (reduce resolution during transform operations)
-  const equationScreenWidth = shouldSkipGridCalculation ? store.screenViewport.width / 4 : store.screenViewport.width;
-  const screenPoints = useMemo(() => {
-    const equationPoints = store.currentEquation.generatePoints(store.worldWindow, equationScreenWidth);
-    return equationPoints.map(point => store.mapping.worldToScreen(point));
-  }, [store.currentEquation, store.worldWindow, store.mapping, equationScreenWidth]);
-  
-  // Memoize SVG path creation
-  const equationPath = useMemo(() => {
-    if (screenPoints.length === 0) return '';
-    
-    let path = `M ${screenPoints[0].x} ${screenPoints[0].y}`;
-    
-    if (store.currentEquation.shouldDrawAsCurve(store.worldWindow) && screenPoints.length > 2) {
-      // Draw as smooth curve for quadratic equations at low zoom
-      for (let i = 1; i < screenPoints.length; i++) {
-        path += ` L ${screenPoints[i].x} ${screenPoints[i].y}`;
-      }
-    } else {
-      // Draw as straight line for linear equations or high zoom quadratic
-      path += ` L ${screenPoints[screenPoints.length - 1].x} ${screenPoints[screenPoints.length - 1].y}`;
-    }
-    
-    return path;
-  }, [screenPoints, store.currentEquation, store.worldWindow]);
 
   return (
-    <svg 
-      width={store.screenViewport.width} 
-      height={store.screenViewport.height} 
+    <div 
       className="coordinate-plane"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -303,130 +263,65 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       onTouchEnd={handleTouchEnd}
       onTouchCancel={handleTouchEnd}
       style={{ 
+        position: 'relative',
+        width: store.screenViewport.width,
+        height: store.screenViewport.height,
         cursor: isDraggingPoint ? 'grabbing' : isDraggingBackground ? 'grabbing' : 'grab',
         touchAction: 'none', // Prevent default touch behaviors
         opacity: isZooming ? 0.8 : 1, // Visual feedback during zoom
         transition: isZooming ? 'none' : 'opacity 0.1s ease'
       }}
     >
-      <rect 
-        width={store.screenViewport.width} 
-        height={store.screenViewport.height} 
-        fill="#ffffff" 
-        stroke="#dee2e6" 
+      {/* Canvas for grid lines, coordinates, and equation */}
+      <CanvasRenderer 
+        store={store}
+        shouldSkipCalculation={shouldSkipCalculation}
       />
       
-      <g style={{ transform: store.transformState.gridTransform }}>
-        {horizontalLines.map((line, index) => {
-          const screenY = store.mapping.worldToScreen({ 
-            x: store.worldWindow.bottomLeft.x, 
-            y: line.position 
-          }).y;
-          
-          return (
-            <g key={`h-${index}`}>
-              <line
-                x1={0}
-                y1={screenY}
-                x2={store.screenViewport.width}
-                y2={screenY}
-                stroke={line.isThick ? "#495057" : "#adb5bd"}
-                strokeWidth={line.thickness}
-              />
-              {line.isThick && (
-                <text
-                  x={5}
-                  y={screenY - 3}
-                  fontSize="10"
-                  fill="#495057"
-                  fontFamily="monospace"
-                >
-                  y={line.position.toString()}
-                </text>
-              )}
-            </g>
-          );
-        })}
-      </g>
-      
-      <g style={{ transform: store.transformState.gridTransform }}>
-        {verticalLines.map((line, index) => {
-          const screenX = store.mapping.worldToScreen({ 
-            x: line.position, 
-            y: store.worldWindow.bottomLeft.y 
-          }).x;
-          
-          return (
-            <g key={`v-${index}`}>
-              <line
-                x1={screenX}
-                y1={0}
-                x2={screenX}
-                y2={store.screenViewport.height}
-                stroke={line.isThick ? "#495057" : "#adb5bd"}
-                strokeWidth={line.thickness}
-              />
-              {line.isThick && (
-                <text
-                  x={screenX + 3}
-                  y={store.screenViewport.height - 5}
-                  fontSize="10"
-                  fill="#495057"
-                  fontFamily="monospace"
-                >
-                  x={line.position.toString()}
-                </text>
-                )}
-            </g>
-          );
-        })}
-      </g>
-      
-      {/* Equation graph */}
-      {equationPath && (
-        <g style={{ transform: store.transformState.gridTransform }}>
-          <path
-            d={equationPath}
-            stroke="#dc3545"
-            strokeWidth={2}
-            fill="none"
-            vectorEffect="non-scaling-stroke"
-          />
-        </g>
-      )}
-      
-      <g style={{ transform: store.transformState.pointTransform }}>
-        <circle
-          cx={currentPointScreen.x}
-          cy={currentPointScreen.y}
-          r={6}
-          fill="#212529"
-          stroke="#ffffff"
-          strokeWidth={2}
-        />
-        
-        <g>
-          <rect
-            x={currentPointScreen.x + 10}
-            y={currentPointScreen.y - 25}
-            width="200"
-            height="18"
-            fill="#ffffff"
-            stroke="#212529"
-            strokeWidth={1}
-            rx={3}
-          />
-          <text 
-            x={currentPointScreen.x + 15} 
-            y={currentPointScreen.y - 12}
-            fontSize="12"
+      {/* SVG overlay for current point */}
+      <svg 
+        width={store.screenViewport.width} 
+        height={store.screenViewport.height} 
+        style={{ 
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          pointerEvents: 'none' // Let mouse events pass through to the div
+        }}
+      >
+        <g style={{ transform: store.transformState.pointTransform }}>
+          <circle
+            cx={currentPointScreen.x}
+            cy={currentPointScreen.y}
+            r={6}
             fill="#212529"
-            fontFamily="monospace"
-          >
-            {store.getCurrentPointDisplay()}
-          </text>
+            stroke="#ffffff"
+            strokeWidth={2}
+          />
+          
+          <g>
+            <rect
+              x={currentPointScreen.x + 10}
+              y={currentPointScreen.y - 25}
+              width="200"
+              height="18"
+              fill="#ffffff"
+              stroke="#212529"
+              strokeWidth={1}
+              rx={3}
+            />
+            <text 
+              x={currentPointScreen.x + 15} 
+              y={currentPointScreen.y - 12}
+              fontSize="12"
+              fill="#212529"
+              fontFamily="monospace"
+            >
+              {store.getCurrentPointDisplay()}
+            </text>
+          </g>
         </g>
-      </g>
-    </svg>
+      </svg>
+    </div>
   );
 });
