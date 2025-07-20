@@ -108,12 +108,14 @@ export class AppStore implements ZoomableInterface {
     
     // Find maximum precision for X dimension that has adequate separation (>= 5 pixels)
     // Use PreciseDecimal for arbitrary precision instead of floating-point Math.pow
-    for (let precision = 0; precision <= 50; precision++) {
+    // Removed arbitrary precision limit to allow unlimited zoom precision
+    for (let precision = 0; precision <= 1000; precision++) {
       const step = new PreciseDecimal(10, 0).pow(-precision); // 10^(-precision)
-      const stepValue = step.toNumber();
-      const separation = pixelsPerXUnit * stepValue;
       
-      if (separation >= 5) {
+      // Use PreciseDecimal arithmetic to avoid floating-point precision loss
+      const separation = new PreciseDecimal(pixelsPerXUnit).mul(step);
+      
+      if (separation.decimal.gte(new PreciseDecimal(5).decimal)) {
         maxPrecision = precision;
       } else {
         break;
