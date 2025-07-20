@@ -296,8 +296,15 @@ export class AppStore {
     const centerX = centerScreen.x;
     const centerY = centerScreen.y;
     
-    // Grid transform: scale around the zoom center
-    const newGridTransform = `translate(${centerX}px, ${centerY}px) scale(${scale}) translate(${-centerX}px, ${-centerY}px)`;
+    // Only apply transform if scale is meaningfully different from 1
+    // This prevents tiny scale changes from showing as translations
+    let newGridTransform = '';
+    if (Math.abs(scale - 1) > 0.01) {
+      newGridTransform = `translate(${centerX}px, ${centerY}px) scale(${scale}) translate(${-centerX}px, ${-centerY}px)`;
+    }
+    
+    // Debug the transform being generated
+    console.log('Generated grid transform:', newGridTransform, 'scale:', scale);
     
     // Point transform: if point is visible, don't transform; if not visible, simulate center-based zoom
     let newPointTransform = '';
