@@ -48,8 +48,9 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     const mouseY = event.clientY - rect.top;
     
     if (isDraggingPoint) {
-      // Use CSS transform for immediate feedback
-      store.updatePointDragTransform({ x: mouseX, y: mouseY }, startDragPos);
+      // Continuously update point position for real-time coordinate display
+      const newPoint = store.mapping.screenToWorld(mouseX, mouseY);
+      store.updateCurrentPoint(newPoint);
     } else if (isDraggingBackground) {
       // Use CSS transform for immediate feedback
       const deltaX = mouseX - lastMousePos.x;
@@ -65,25 +66,17 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
   }, [isDraggingPoint, isDraggingBackground, lastMousePos, startDragPos, accumulatedPanDelta, store]);
 
   const handleMouseUp = useCallback(() => {
-    if (isDraggingPoint) {
-      // Complete the point drag with actual update
-      const currentPos = { x: startDragPos.x, y: startDragPos.y };
-      const transformedPos = {
-        x: currentPos.x + (lastMousePos.x - startDragPos.x),
-        y: currentPos.y + (lastMousePos.y - startDragPos.y)
-      };
-      const newPoint = store.mapping.screenToWorld(transformedPos.x, transformedPos.y);
-      store.updateCurrentPoint(newPoint);
-    } else if (isDraggingBackground) {
+    if (isDraggingBackground) {
       // Complete the pan with actual update
       store.pan(accumulatedPanDelta.x, accumulatedPanDelta.y);
     }
+    // Point dragging doesn't need completion since it updates continuously
     
     store.completeTransform();
     setIsDraggingPoint(false);
     setIsDraggingBackground(false);
     setAccumulatedPanDelta({ x: 0, y: 0 });
-  }, [isDraggingPoint, isDraggingBackground, startDragPos, lastMousePos, accumulatedPanDelta, store]);
+  }, [isDraggingPoint, isDraggingBackground, accumulatedPanDelta, store]);
 
   const handleWheel = useCallback((event: React.WheelEvent) => {
     event.preventDefault();
@@ -167,8 +160,9 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       const touchY = touch.clientY - rect.top;
       
       if (isDraggingPoint) {
-        // Use CSS transform for immediate feedback
-        store.updatePointDragTransform({ x: touchX, y: touchY }, startDragPos);
+        // Continuously update point position for real-time coordinate display
+        const newPoint = store.mapping.screenToWorld(touchX, touchY);
+        store.updateCurrentPoint(newPoint);
       } else if (isDraggingBackground) {
         // Use CSS transform for immediate feedback
         const deltaX = touchX - lastMousePos.x;
@@ -220,18 +214,11 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     
     if (event.touches.length === 0) {
       // All touches ended - complete any ongoing interactions
-      if (isDraggingPoint) {
-        // Complete the point drag with actual update
-        const transformedPos = {
-          x: startDragPos.x + (lastMousePos.x - startDragPos.x),
-          y: startDragPos.y + (lastMousePos.y - startDragPos.y)
-        };
-        const newPoint = store.mapping.screenToWorld(transformedPos.x, transformedPos.y);
-        store.updateCurrentPoint(newPoint);
-      } else if (isDraggingBackground) {
+      if (isDraggingBackground) {
         // Complete the pan with actual update
         store.pan(accumulatedPanDelta.x, accumulatedPanDelta.y);
       }
+      // Point dragging doesn't need completion since it updates continuously
       
       store.completeTransform();
       setIsDraggingPoint(false);

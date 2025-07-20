@@ -257,15 +257,10 @@ export class AppStore {
 
   // Transform methods for responsive UI
   startPointDrag(startScreenPos: { x: number; y: number }) {
-    this.transformState.isTransforming = true;
+    // Point dragging updates continuously, no transform needed
+    this.transformState.isTransforming = false;
     this.transformState.pointTransform = '';
     this.transformState.gridTransform = '';
-  }
-
-  updatePointDragTransform(currentScreenPos: { x: number; y: number }, startScreenPos: { x: number; y: number }) {
-    const deltaX = currentScreenPos.x - startScreenPos.x;
-    const deltaY = currentScreenPos.y - startScreenPos.y;
-    this.transformState.pointTransform = `translate(${deltaX}px, ${deltaY}px)`;
   }
 
   startWorldWindowDrag() {
@@ -275,7 +270,9 @@ export class AppStore {
   }
 
   updateWorldWindowDragTransform(deltaX: number, deltaY: number) {
-    this.transformState.gridTransform = `translate(${deltaX}px, ${deltaY}px)`;
+    const transform = `translate(${deltaX}px, ${deltaY}px)`;
+    this.transformState.gridTransform = transform;
+    this.transformState.pointTransform = transform; // Point moves with world window
   }
 
   startZoom(centerScreen: { x: number; y: number }) {
