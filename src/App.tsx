@@ -37,50 +37,45 @@ export const App: React.FC = observer(() => {
     <div className="app">
       <div className="controls">
         <h1>Number Zoomer</h1>
-        <div className="equation-controls">
-          <label>
-            Equation: 
-            <select value={store.getEquationType()} onChange={handleEquationTypeChange}>
-              <option value="quadratic">y = x²</option>
-              <option value="linear">y = cx</option>
-            </select>
-          </label>
-          {store.getEquationType() === 'linear' && (
+        <div className="controls-row">
+          <div className="equation-controls">
             <label>
-              c = 
-              <select value={store.getLinearC()} onChange={handleLinearCChange}>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(c => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
+              Equation: 
+              <select value={store.getEquationType()} onChange={handleEquationTypeChange}>
+                <option value="quadratic">y = x²</option>
+                <option value="linear">y = cx</option>
               </select>
             </label>
-          )}
-          <span className="equation-display">
-            Current: {store.currentEquation.getDisplayName()}
-          </span>
-        </div>
-        <div className="control-buttons">
-          <button onClick={handleZoomIn}>Zoom In (+)</button>
-          <button onClick={handleZoomOut}>Zoom Out (-)</button>
-          <button onClick={() => store.resetView()}>Reset View</button>
-          <button onClick={() => store.moveCurrentPointToCenter()}>Center Point</button>
+            {store.getEquationType() === 'linear' && (
+              <label>
+                c = 
+                <select value={store.getLinearC()} onChange={handleLinearCChange}>
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(c => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <span className="equation-display">
+              Current: {store.currentEquation.getDisplayName()}
+            </span>
+          </div>
+          <div className="control-buttons">
+            <button onClick={handleZoomIn}>Zoom In (+)</button>
+            <button onClick={handleZoomOut}>Zoom Out (-)</button>
+            <button onClick={() => store.resetView()}>Reset View</button>
+            <button onClick={() => store.moveCurrentPointToCenter()}>Center Point</button>
+          </div>
         </div>
         <div className="debug-info">
-          <div className="range-display">
-            <strong>World Window X:</strong> {store.getPreviewWorldWindowXRangeDisplay()}
+          <div className="info-item">
+            <strong>World Window:</strong> X: {store.getPreviewWorldWindowXRangeDisplay()}, Y: {store.getPreviewWorldWindowYRangeDisplay()}
           </div>
-          <div className="range-display">
-            <strong>World Window Y:</strong> {store.getPreviewWorldWindowYRangeDisplay()}
+          <div className="info-item">
+            <strong>Current Point:</strong> {store.getCurrentPointDisplay()} ({store.calculateCurrentPrecision()}DP)
           </div>
-          <div className="current-point-display">
-            <strong>Current Point:</strong> {store.getCurrentPointDisplay()}
-          </div>
-          <div className="zoom-info">
-            <strong>Screen Viewport:</strong> {store.screenViewport.width}×{store.screenViewport.height}px, 
-            X: {store.mapping.getPixelsPerXUnit().toFixed(1)} px/unit
-          </div>
-          <div className="precision-info">
-            <strong>Resolution:</strong> Grid: {store.calculateWorldWindowPrecision()}DP, Point: {store.calculateCurrentPrecision()}DP, Window: {store.calculateWorldWindowPrecision() + 1}DP
+          <div className="info-item">
+            <strong>Screen Viewport:</strong> {store.screenViewport.width}×{store.screenViewport.height}px, {store.mapping.getPixelsPerXUnit().toFixed(1)} px/unit, Window: {store.calculateWorldWindowPrecision() + 1}DP
           </div>
         </div>
       </div>
