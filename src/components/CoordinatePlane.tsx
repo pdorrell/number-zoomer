@@ -112,8 +112,8 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       if (!containerRef.current) return;
       
       const rect = containerRef.current.getBoundingClientRect();
-      const clientX = 'touches' in event ? event.touches[0].clientX : 'clientX' in event ? event.clientX : 0;
-      const clientY = 'touches' in event ? event.touches[0].clientY : 'clientY' in event ? event.clientY : 0;
+      const clientX = 'touches' in event && event.touches.length > 0 ? event.touches[0].clientX : 'clientX' in event ? event.clientX : 0;
+      const clientY = 'touches' in event && event.touches.length > 0 ? event.touches[0].clientY : 'clientY' in event ? event.clientY : 0;
       const touchX = clientX - rect.left;
       const touchY = clientY - rect.top;
       
@@ -136,16 +136,14 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       setLastMousePos({ x: touchX, y: touchY });
     },
     
-    onDrag: ({ event, movement: [movementX, movementY] }) => {
+    onDrag: ({ event, movement: [movementX, movementY], xy: [currentX, currentY] }) => {
       if (!containerRef.current) return;
       
       if (isDraggingPoint) {
-        // For point dragging, use absolute position
+        // For point dragging, use current absolute position relative to container
         const rect = containerRef.current.getBoundingClientRect();
-        const clientX = 'touches' in event ? event.touches[0].clientX : 'clientX' in event ? event.clientX : 0;
-        const clientY = 'touches' in event ? event.touches[0].clientY : 'clientY' in event ? event.clientY : 0;
-        const touchX = clientX - rect.left;
-        const touchY = clientY - rect.top;
+        const touchX = currentX - rect.left;
+        const touchY = currentY - rect.top;
         
         const newPoint = store.mapping.screenToWorld(touchX, touchY);
         store.updateCurrentPoint(newPoint);
