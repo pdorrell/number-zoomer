@@ -75,7 +75,7 @@ export const App: React.FC = observer(() => {
             <strong>Current Point:</strong> {store.getCurrentPointDisplay()} ({store.calculateCurrentPrecision()}DP)
           </div>
           <div className="info-item">
-            <strong>Screen Viewport:</strong> {store.screenViewport.width}×{store.screenViewport.height}px, {store.mapping.getPixelsPerXUnit().toFixed(1)} px/unit, Window: {store.calculateWorldWindowPrecision() + 1}DP
+            <strong>Screen Viewport:</strong> {store.screenViewport.width}×{store.screenViewport.height}px, {store.getPreviewPixelsPerXUnit().toFixed(1)} px/unit, Window: {store.calculateWorldWindowPrecision() + 1}DP
           </div>
         </div>
       </div>

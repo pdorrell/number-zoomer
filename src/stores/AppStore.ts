@@ -28,6 +28,9 @@ export class AppStore implements ZoomableInterface {
   // Preview values for immediate display during zoom
   previewWorldWindow: WorldWindow | null = null;
   
+  // Preview values for immediate display during world window drag
+  dragPreviewWorldWindow: WorldWindow | null = null;
+  
   // Computed property for backward compatibility
   get isZooming(): boolean {
     return this.zoomingSource !== null;
@@ -241,26 +244,52 @@ export class AppStore implements ZoomableInterface {
   }
 
   getWorldWindowXRangeDisplay(): string {
-    return `[${this.worldWindow.bottomLeft.x.toString()}, ${this.worldWindow.topRight.x.toString()}]`;
+    const windowDP = this.calculateWorldWindowPrecision() + 1;
+    const bottomLeft = this.worldWindow.bottomLeft.x.setPrecision(windowDP).toString();
+    const topRight = this.worldWindow.topRight.x.setPrecision(windowDP).toString();
+    return `[${bottomLeft}, ${topRight}]`;
   }
 
   getWorldWindowYRangeDisplay(): string {
-    return `[${this.worldWindow.bottomLeft.y.toString()}, ${this.worldWindow.topRight.y.toString()}]`;
+    const windowDP = this.calculateWorldWindowPrecision() + 1;
+    const bottomLeft = this.worldWindow.bottomLeft.y.setPrecision(windowDP).toString();
+    const topRight = this.worldWindow.topRight.y.setPrecision(windowDP).toString();
+    return `[${bottomLeft}, ${topRight}]`;
   }
   
-  // Live preview methods for zoom operations
+  // Live preview methods for zoom and drag operations
   getPreviewWorldWindowXRangeDisplay(): string {
-    if (this.previewWorldWindow) {
-      return `[${this.previewWorldWindow.bottomLeft.x.toString()}, ${this.previewWorldWindow.topRight.x.toString()}]`;
+    // Check for zoom preview first, then drag preview
+    const previewWindow = this.previewWorldWindow || this.dragPreviewWorldWindow;
+    if (previewWindow) {
+      const windowDP = this.calculateWorldWindowPrecision() + 1;
+      const bottomLeft = previewWindow.bottomLeft.x.setPrecision(windowDP).toString();
+      const topRight = previewWindow.topRight.x.setPrecision(windowDP).toString();
+      return `[${bottomLeft}, ${topRight}]`;
     }
     return this.getWorldWindowXRangeDisplay();
   }
   
   getPreviewWorldWindowYRangeDisplay(): string {
-    if (this.previewWorldWindow) {
-      return `[${this.previewWorldWindow.bottomLeft.y.toString()}, ${this.previewWorldWindow.topRight.y.toString()}]`;
+    // Check for zoom preview first, then drag preview
+    const previewWindow = this.previewWorldWindow || this.dragPreviewWorldWindow;
+    if (previewWindow) {
+      const windowDP = this.calculateWorldWindowPrecision() + 1;
+      const bottomLeft = previewWindow.bottomLeft.y.setPrecision(windowDP).toString();
+      const topRight = previewWindow.topRight.y.setPrecision(windowDP).toString();
+      return `[${bottomLeft}, ${topRight}]`;
     }
     return this.getWorldWindowYRangeDisplay();
+  }
+  
+  // Live preview method for px/unit during zoom operations
+  getPreviewPixelsPerXUnit(): number {
+    if (this.previewWorldWindow) {
+      // Calculate px/unit based on preview world window
+      const previewWidth = this.previewWorldWindow.topRight.x.sub(this.previewWorldWindow.bottomLeft.x);
+      return this.screenViewport.width / previewWidth.toNumber();
+    }
+    return this.mapping.getPixelsPerXUnit();
   }
 
   isCurrentPointVisible(): boolean {
@@ -302,6 +331,9 @@ export class AppStore implements ZoomableInterface {
     this.transformState.transformType = 'pan';
     this.transformState.pointTransform = '';
     this.transformState.gridTransform = '';
+    
+    // Store the starting world window for drag preview calculations
+    this.dragPreviewWorldWindow = null; // Will be calculated in updateWorldWindowDragTransform
   }
 
   updateWorldWindowDragTransform(deltaX: number, deltaY: number) {
@@ -314,6 +346,24 @@ export class AppStore implements ZoomableInterface {
     if (this.transformState.pointTransform !== newTransform) {
       this.transformState.pointTransform = newTransform; // Point moves with world window
     }
+    
+    // Calculate drag preview world window for live coordinate display
+    const worldDelta = this.mapping.screenToXY(deltaX, deltaY);
+    const worldOrigin = this.mapping.screenToXY(0, 0);
+    
+    const dx = worldDelta.x.sub(worldOrigin.x);
+    const dy = worldDelta.y.sub(worldOrigin.y);
+    
+    this.dragPreviewWorldWindow = {
+      bottomLeft: {
+        x: this.worldWindow.bottomLeft.x.sub(dx),
+        y: this.worldWindow.bottomLeft.y.sub(dy)
+      },
+      topRight: {
+        x: this.worldWindow.topRight.x.sub(dx),
+        y: this.worldWindow.topRight.y.sub(dy)
+      }
+    };
   }
 
   completeTransform() {
@@ -321,6 +371,9 @@ export class AppStore implements ZoomableInterface {
     this.transformState.transformType = undefined;
     this.transformState.pointTransform = '';
     this.transformState.gridTransform = '';
+    
+    // Clear drag preview
+    this.dragPreviewWorldWindow = null;
   }
   
   updateZoomTransform(zoomFactor: number, centerScreen: { x: number; y: number }) {
