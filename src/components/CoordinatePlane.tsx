@@ -17,6 +17,8 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
   const [lastZoomTime, setLastZoomTime] = useState(0);
   const [startDragPos, setStartDragPos] = useState({ x: 0, y: 0 });
   const [accumulatedPanDelta, setAccumulatedPanDelta] = useState({ x: 0, y: 0 });
+  const [accumulatedZoomFactor, setAccumulatedZoomFactor] = useState(1);
+  const [zoomCenter, setZoomCenter] = useState({ x: 0, y: 0 });
 
   const handleMouseDown = useCallback((event: React.MouseEvent) => {
     const rect = (event.currentTarget as SVGSVGElement).getBoundingClientRect();
@@ -144,6 +146,8 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       
       setLastTouchDistance(distance);
       setLastTouchCenter(center);
+      setZoomCenter(center);
+      setAccumulatedZoomFactor(1); // Reset accumulated zoom
       setIsDraggingPoint(false);
       setIsDraggingBackground(false);
     }
@@ -189,16 +193,13 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
         if (Math.abs(zoomFactor - 1) > 0.05) {
           setIsZooming(true);
           
-          // Use CSS transform for immediate feedback, then apply actual zoom
-          store.startZoom(center);
-          store.updateZoomTransform(zoomFactor, center);
+          // Accumulate zoom factor for final application
+          const newAccumulatedZoom = accumulatedZoomFactor * zoomFactor;
+          setAccumulatedZoomFactor(newAccumulatedZoom);
           
-          // Apply actual zoom after a delay for responsiveness
-          setTimeout(() => {
-            store.zoom(zoomFactor, center.x, center.y);
-            store.completeTransform();
-            setIsZooming(false);
-          }, 100);
+          // Use CSS transform for immediate feedback (no redraw until completion)
+          store.startZoom(center);
+          store.updateZoomTransform(newAccumulatedZoom, center);
           
           setLastZoomTime(currentTime);
           setLastTouchDistance(distance);
@@ -207,7 +208,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       
       setLastTouchCenter(center);
     }
-  }, [isDraggingPoint, isDraggingBackground, lastMousePos, lastTouchDistance, lastZoomTime, store]);
+  }, [isDraggingPoint, isDraggingBackground, lastMousePos, lastTouchDistance, lastZoomTime, accumulatedZoomFactor, store]);
 
   const handleTouchEnd = useCallback((event: React.TouchEvent) => {
     event.preventDefault(); // Prevent default touch behavior
@@ -219,6 +220,12 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
         store.pan(accumulatedPanDelta.x, accumulatedPanDelta.y);
       }
       // Point dragging doesn't need completion since it updates continuously
+      
+      // Complete any ongoing zoom operation
+      if (isZooming) {
+        store.zoom(accumulatedZoomFactor, zoomCenter.x, zoomCenter.y);
+        setAccumulatedZoomFactor(1); // Reset for next interaction
+      }
       
       store.completeTransform();
       setIsDraggingPoint(false);
@@ -237,7 +244,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
         y: touch.clientY - rect.top 
       });
     }
-  }, [isDraggingPoint, isDraggingBackground, startDragPos, lastMousePos, accumulatedPanDelta, store]);
+  }, [isDraggingPoint, isDraggingBackground, startDragPos, lastMousePos, accumulatedPanDelta, isZooming, accumulatedZoomFactor, zoomCenter, store]);
   const gridRenderer = new GridRenderer(store.mapping);
   
   // Reduce grid calculations during zoom operations for performance
