@@ -28,8 +28,8 @@ export class GridRenderer {
     let maxPrecision = -1;
     
     // Find maximum precision based on X dimension only (per design spec)
-    for (let precision = 0; precision <= 15; precision++) {
-      const step = new PreciseDecimal(Math.pow(10, -precision));
+    for (let precision = 0; precision <= 50; precision++) {
+      const step = new PreciseDecimal(10, 0).pow(-precision);
       const separation = pixelsPerXUnit * step.toNumber();
       
       if (separation >= minSeparation) {
@@ -41,18 +41,23 @@ export class GridRenderer {
     
     // Generate lines with correct thickness based on grid weight hierarchy
     for (let precision = 0; precision <= maxPrecision; precision++) {
-      const step = new PreciseDecimal(Math.pow(10, -precision));
+      const step = new PreciseDecimal(10, 0).pow(-precision);
       const thickness = this.calculateThickness(precision, maxPrecision);
       // Show labels for all grid lines except the thinnest (1px) ones
       const isThick = thickness > 1;
       
-      const startValue = Math.floor(yMin.toNumber() * Math.pow(10, precision)) / Math.pow(10, precision);
-      const endValue = Math.ceil(yMax.toNumber() * Math.pow(10, precision)) / Math.pow(10, precision);
+      // Use PreciseDecimal for all calculations to avoid floating-point errors
+      const multiplier = new PreciseDecimal(10, 0).pow(precision);
+      const startMultiplied = yMin.mul(multiplier);
+      const endMultiplied = yMax.mul(multiplier);
       
-      for (let value = startValue; value <= endValue; value += step.toNumber()) {
-        const position = new PreciseDecimal(value.toFixed(precision), precision);
+      const startIndex = Math.floor(startMultiplied.toNumber());
+      const endIndex = Math.ceil(endMultiplied.toNumber());
+      
+      for (let i = startIndex; i <= endIndex; i++) {
+        const position = new PreciseDecimal(i, 0).div(multiplier);
         if (position.isWithinInterval(yMin, yMax)) {
-          lines.push({ position, thickness, precision, isThick });
+          lines.push({ position: position.setPrecision(precision), thickness, precision, isThick });
         }
       }
     }
@@ -73,8 +78,8 @@ export class GridRenderer {
     let maxPrecision = -1;
     
     // Find maximum precision based on X dimension only (per design spec)
-    for (let precision = 0; precision <= 15; precision++) {
-      const step = new PreciseDecimal(Math.pow(10, -precision));
+    for (let precision = 0; precision <= 50; precision++) {
+      const step = new PreciseDecimal(10, 0).pow(-precision);
       const separation = pixelsPerXUnit * step.toNumber();
       
       if (separation >= minSeparation) {
@@ -86,18 +91,23 @@ export class GridRenderer {
     
     // Generate lines with correct thickness based on grid weight hierarchy
     for (let precision = 0; precision <= maxPrecision; precision++) {
-      const step = new PreciseDecimal(Math.pow(10, -precision));
+      const step = new PreciseDecimal(10, 0).pow(-precision);
       const thickness = this.calculateThickness(precision, maxPrecision);
       // Show labels for all grid lines except the thinnest (1px) ones
       const isThick = thickness > 1;
       
-      const startValue = Math.floor(xMin.toNumber() * Math.pow(10, precision)) / Math.pow(10, precision);
-      const endValue = Math.ceil(xMax.toNumber() * Math.pow(10, precision)) / Math.pow(10, precision);
+      // Use PreciseDecimal for all calculations to avoid floating-point errors
+      const multiplier = new PreciseDecimal(10, 0).pow(precision);
+      const startMultiplied = xMin.mul(multiplier);
+      const endMultiplied = xMax.mul(multiplier);
       
-      for (let value = startValue; value <= endValue; value += step.toNumber()) {
-        const position = new PreciseDecimal(value.toFixed(precision), precision);
+      const startIndex = Math.floor(startMultiplied.toNumber());
+      const endIndex = Math.ceil(endMultiplied.toNumber());
+      
+      for (let i = startIndex; i <= endIndex; i++) {
+        const position = new PreciseDecimal(i, 0).div(multiplier);
         if (position.isWithinInterval(xMin, xMax)) {
-          lines.push({ position, thickness, precision, isThick });
+          lines.push({ position: position.setPrecision(precision), thickness, precision, isThick });
         }
       }
     }
