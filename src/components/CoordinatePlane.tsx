@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { AppStore } from '../stores/AppStore';
 import { CanvasRenderer } from './CanvasRenderer';
@@ -8,6 +8,7 @@ interface CoordinatePlaneProps {
 }
 
 export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isDraggingPoint, setIsDraggingPoint] = useState(false);
   const [isDraggingBackground, setIsDraggingBackground] = useState(false);
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
@@ -19,6 +20,58 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
   const [accumulatedPanDelta, setAccumulatedPanDelta] = useState({ x: 0, y: 0 });
   const [accumulatedZoomFactor, setAccumulatedZoomFactor] = useState(1);
   const [zoomCenter, setZoomCenter] = useState({ x: 0, y: 0 });
+
+  // Global mouse move handler for dragging outside the component
+  const handleGlobalMouseMove = useCallback((event: MouseEvent) => {
+    if (!containerRef.current || (!isDraggingPoint && !isDraggingBackground)) return;
+    
+    const rect = containerRef.current.getBoundingClientRect();
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
+    
+    if (isDraggingPoint) {
+      // Continuously update point position for real-time coordinate display
+      const newPoint = store.mapping.screenToWorld(mouseX, mouseY);
+      store.updateCurrentPoint(newPoint);
+    } else if (isDraggingBackground) {
+      // Use CSS transform for immediate feedback
+      const deltaX = mouseX - lastMousePos.x;
+      const deltaY = mouseY - lastMousePos.y;
+      const newAccumulatedDelta = {
+        x: accumulatedPanDelta.x + deltaX,
+        y: accumulatedPanDelta.y + deltaY
+      };
+      setAccumulatedPanDelta(newAccumulatedDelta);
+      store.updateWorldWindowDragTransform(newAccumulatedDelta.x, newAccumulatedDelta.y);
+      setLastMousePos({ x: mouseX, y: mouseY });
+    }
+  }, [isDraggingPoint, isDraggingBackground, lastMousePos, accumulatedPanDelta, store]);
+
+  // Global mouse up handler for ending drags outside the component
+  const handleGlobalMouseUp = useCallback(() => {
+    if (isDraggingBackground) {
+      // Complete the pan with actual update
+      store.pan(accumulatedPanDelta.x, accumulatedPanDelta.y);
+    }
+    // Point dragging doesn't need completion since it updates continuously
+    
+    store.completeTransform();
+    setIsDraggingPoint(false);
+    setIsDraggingBackground(false);
+    setAccumulatedPanDelta({ x: 0, y: 0 });
+  }, [isDraggingPoint, isDraggingBackground, accumulatedPanDelta, store]);
+
+  // Add/remove global event listeners when dragging state changes
+  useEffect(() => {
+    if (isDraggingPoint || isDraggingBackground) {
+      document.addEventListener('mousemove', handleGlobalMouseMove);
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleGlobalMouseMove);
+        document.removeEventListener('mouseup', handleGlobalMouseUp);
+      };
+    }
+  }, [isDraggingPoint, isDraggingBackground, handleGlobalMouseMove, handleGlobalMouseUp]);
 
   const handleMouseDown = useCallback((event: React.MouseEvent) => {
     const rect = (event.currentTarget as HTMLDivElement).getBoundingClientRect();
@@ -44,41 +97,6 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     setLastMousePos({ x: mouseX, y: mouseY });
   }, [store]);
 
-  const handleMouseMove = useCallback((event: React.MouseEvent) => {
-    const rect = (event.currentTarget as HTMLDivElement).getBoundingClientRect();
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
-    
-    if (isDraggingPoint) {
-      // Continuously update point position for real-time coordinate display
-      const newPoint = store.mapping.screenToWorld(mouseX, mouseY);
-      store.updateCurrentPoint(newPoint);
-    } else if (isDraggingBackground) {
-      // Use CSS transform for immediate feedback
-      const deltaX = mouseX - lastMousePos.x;
-      const deltaY = mouseY - lastMousePos.y;
-      const newAccumulatedDelta = {
-        x: accumulatedPanDelta.x + deltaX,
-        y: accumulatedPanDelta.y + deltaY
-      };
-      setAccumulatedPanDelta(newAccumulatedDelta);
-      store.updateWorldWindowDragTransform(newAccumulatedDelta.x, newAccumulatedDelta.y);
-      setLastMousePos({ x: mouseX, y: mouseY });
-    }
-  }, [isDraggingPoint, isDraggingBackground, lastMousePos, startDragPos, accumulatedPanDelta, store]);
-
-  const handleMouseUp = useCallback(() => {
-    if (isDraggingBackground) {
-      // Complete the pan with actual update
-      store.pan(accumulatedPanDelta.x, accumulatedPanDelta.y);
-    }
-    // Point dragging doesn't need completion since it updates continuously
-    
-    store.completeTransform();
-    setIsDraggingPoint(false);
-    setIsDraggingBackground(false);
-    setAccumulatedPanDelta({ x: 0, y: 0 });
-  }, [isDraggingPoint, isDraggingBackground, accumulatedPanDelta, store]);
 
   const handleWheel = useCallback((event: React.WheelEvent) => {
     event.preventDefault();
@@ -252,11 +270,9 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
 
   return (
     <div 
+      ref={containerRef}
       className="coordinate-plane"
       onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseUp}
       onWheel={handleWheel}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
