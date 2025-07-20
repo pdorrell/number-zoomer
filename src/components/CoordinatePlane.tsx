@@ -111,6 +111,9 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     onDragStart: ({ event }) => {
       if (!containerRef.current) return;
       
+      // Block new drag operations during pinch zoom
+      if (isZooming) return;
+      
       const rect = containerRef.current.getBoundingClientRect();
       const clientX = 'touches' in event && event.touches.length > 0 ? event.touches[0].clientX : 'clientX' in event ? event.clientX : 0;
       const clientY = 'touches' in event && event.touches.length > 0 ? event.touches[0].clientY : 'clientY' in event ? event.clientY : 0;
@@ -139,6 +142,9 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     onDrag: ({ event, movement: [movementX, movementY], xy: [currentX, currentY] }) => {
       if (!containerRef.current) return;
       
+      // Block drag operations during pinch zoom
+      if (isZooming) return;
+      
       if (isDraggingPoint) {
         // For point dragging, use current absolute position relative to container
         const rect = containerRef.current.getBoundingClientRect();
@@ -166,6 +172,19 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     },
     
     onPinchStart: () => {
+      // Cancel any active drag operations when pinch starts
+      if (isDraggingBackground) {
+        store.pan(accumulatedPanDelta.x, accumulatedPanDelta.y);
+        store.completeTransform();
+      } else if (isDraggingPoint) {
+        store.completeTransform();
+      }
+      
+      // Reset drag state
+      setIsDraggingPoint(false);
+      setIsDraggingBackground(false);
+      setAccumulatedPanDelta({ x: 0, y: 0 });
+      
       setInitialZoomFactor(1);
       setIsZooming(true);
       store.startZoom('pinch');
@@ -238,7 +257,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
         store={store}
       />
       
-      {/* SVG overlay for current point */}
+      {/* SVG overlay for current point circle */}
       <svg 
         width={store.screenViewport.width} 
         height={store.screenViewport.height} 
@@ -258,30 +277,29 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
             stroke="#ffffff"
             strokeWidth={2}
           />
-          
-          <g>
-            <rect
-              x={currentPointScreen.x + 10}
-              y={currentPointScreen.y - 25}
-              width="200"
-              height="18"
-              fill="#ffffff"
-              stroke="#212529"
-              strokeWidth={1}
-              rx={3}
-            />
-            <text 
-              x={currentPointScreen.x + 15} 
-              y={currentPointScreen.y - 12}
-              fontSize="12"
-              fill="#212529"
-              fontFamily="monospace"
-            >
-              {store.getCurrentPointDisplay()}
-            </text>
-          </g>
         </g>
       </svg>
+      
+      {/* Expandable div for coordinate display */}
+      <div
+        style={{
+          position: 'absolute',
+          left: currentPointScreen.x + 10,
+          top: currentPointScreen.y - 25,
+          background: '#ffffff',
+          border: '1px solid #212529',
+          borderRadius: '3px',
+          padding: '2px 5px',
+          fontSize: '12px',
+          fontFamily: 'monospace',
+          color: '#212529',
+          pointerEvents: 'none',
+          whiteSpace: 'nowrap',
+          transform: store.transformState.pointTransform
+        }}
+      >
+        {store.getCurrentPointDisplay()}
+      </div>
     </div>
   );
 });
