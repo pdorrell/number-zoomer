@@ -3,12 +3,19 @@ import { PreciseDecimal } from '../types/Decimal';
 import { Point, WorldWindow, ScreenViewport, CoordinateMapping } from '../types/Coordinate';
 import { Equation, EquationType, EquationConfig, createEquation } from '../types/Equation';
 
+export interface TransformState {
+  pointTransform: string;
+  gridTransform: string;
+  isTransforming: boolean;
+}
+
 export class AppStore {
   screenViewport: ScreenViewport = { width: 800, height: 600 };
   worldWindow: WorldWindow;
   currentPoint: Point;
   mapping: CoordinateMapping;
   currentEquation: Equation;
+  transformState: TransformState;
 
   constructor() {
     this.worldWindow = {
@@ -28,6 +35,12 @@ export class AppStore {
     };
 
     this.currentEquation = createEquation({ type: 'quadratic' });
+
+    this.transformState = {
+      pointTransform: '',
+      gridTransform: '',
+      isTransforming: false
+    };
 
     this.mapping = new CoordinateMapping(this.screenViewport, this.worldWindow);
     
@@ -240,6 +253,80 @@ export class AppStore {
       return (this.currentEquation as any).getC();
     }
     return 1;
+  }
+
+  // Transform methods for responsive UI
+  startPointDrag(startScreenPos: { x: number; y: number }) {
+    this.transformState.isTransforming = true;
+    this.transformState.pointTransform = '';
+    this.transformState.gridTransform = '';
+  }
+
+  updatePointDragTransform(currentScreenPos: { x: number; y: number }, startScreenPos: { x: number; y: number }) {
+    const deltaX = currentScreenPos.x - startScreenPos.x;
+    const deltaY = currentScreenPos.y - startScreenPos.y;
+    this.transformState.pointTransform = `translate(${deltaX}px, ${deltaY}px)`;
+  }
+
+  startWorldWindowDrag() {
+    this.transformState.isTransforming = true;
+    this.transformState.pointTransform = '';
+    this.transformState.gridTransform = '';
+  }
+
+  updateWorldWindowDragTransform(deltaX: number, deltaY: number) {
+    this.transformState.gridTransform = `translate(${deltaX}px, ${deltaY}px)`;
+  }
+
+  startZoom(centerScreen: { x: number; y: number }) {
+    this.transformState.isTransforming = true;
+    this.transformState.pointTransform = '';
+    this.transformState.gridTransform = '';
+  }
+
+  updateZoomTransform(zoomFactor: number, centerScreen: { x: number; y: number }) {
+    const scale = zoomFactor;
+    const centerX = centerScreen.x;
+    const centerY = centerScreen.y;
+    
+    // Grid transform: scale around the zoom center
+    this.transformState.gridTransform = `translate(${centerX}px, ${centerY}px) scale(${scale}) translate(${-centerX}px, ${-centerY}px)`;
+    
+    // Point transform: if point is visible, don't transform; if not visible, simulate center-based zoom
+    if (this.isCurrentPointVisible()) {
+      this.transformState.pointTransform = '';
+    } else {
+      // Calculate how the point would move during center-based zoom
+      const currentPointScreen = this.mapping.worldToScreen(this.currentPoint);
+      const deltaX = (currentPointScreen.x - centerX) * (scale - 1);
+      const deltaY = (currentPointScreen.y - centerY) * (scale - 1);
+      this.transformState.pointTransform = `translate(${deltaX}px, ${deltaY}px)`;
+    }
+  }
+
+  completeTransform() {
+    this.transformState.isTransforming = false;
+    this.transformState.pointTransform = '';
+    this.transformState.gridTransform = '';
+  }
+
+  // Zoom slider support
+  handleZoomSlider(zoomFactor: number, isComplete: boolean) {
+    if (isComplete) {
+      // Apply actual zoom and reset transforms
+      const centerX = this.screenViewport.width / 2;
+      const centerY = this.screenViewport.height / 2;
+      this.zoom(zoomFactor, centerX, centerY);
+      this.completeTransform();
+    } else {
+      // Apply CSS transform only
+      const centerScreen = { 
+        x: this.screenViewport.width / 2, 
+        y: this.screenViewport.height / 2 
+      };
+      this.startZoom(centerScreen);
+      this.updateZoomTransform(zoomFactor, centerScreen);
+    }
   }
 
   // Legacy methods for backward compatibility

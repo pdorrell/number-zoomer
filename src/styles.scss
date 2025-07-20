@@ -63,6 +63,7 @@
 .main-area {
   flex: 1;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   background: #fff;
@@ -71,4 +72,101 @@
 .coordinate-plane {
   border: 1px solid #dee2e6;
   border-radius: 4px;
+}
+
+.zoom-slider-container {
+  width: 100%;
+  max-width: 800px;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+  
+  .zoom-slider-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: #495057;
+    
+    .zoom-label {
+      font-weight: 600;
+      font-family: monospace;
+    }
+    
+    .zoom-instructions {
+      font-style: italic;
+    }
+  }
+  
+  .zoom-slider {
+    width: 100%;
+    height: 8px;
+    background: #dee2e6;
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    
+    &::-webkit-slider-thumb {
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: #007bff;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.1s ease;
+      
+      &:hover {
+        background: #0056b3;
+        transform: scale(1.1);
+      }
+    }
+    
+    &::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: #007bff;
+      border-radius: 50%;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s ease, transform 0.1s ease;
+      
+      &:hover {
+        background: #0056b3;
+        transform: scale(1.1);
+      }
+    }
+    
+    &.dragging {
+      background: #adb5bd;
+      
+      &::-webkit-slider-thumb {
+        background: #28a745;
+        transform: scale(1.2);
+      }
+      
+      &::-moz-range-thumb {
+        background: #28a745;
+        transform: scale(1.2);
+      }
+    }
+    
+    &.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      
+      &::-webkit-slider-thumb {
+        cursor: not-allowed;
+        background: #6c757d;
+        transform: none;
+      }
+      
+      &::-moz-range-thumb {
+        cursor: not-allowed;
+        background: #6c757d;
+        transform: none;
+      }
+    }
+  }
 }

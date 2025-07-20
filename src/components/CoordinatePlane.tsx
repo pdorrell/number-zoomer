@@ -15,6 +15,8 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
   const [lastTouchCenter, setLastTouchCenter] = useState({ x: 0, y: 0 });
   const [isZooming, setIsZooming] = useState(false);
   const [lastZoomTime, setLastZoomTime] = useState(0);
+  const [startDragPos, setStartDragPos] = useState({ x: 0, y: 0 });
+  const [accumulatedPanDelta, setAccumulatedPanDelta] = useState({ x: 0, y: 0 });
 
   const handleMouseDown = useCallback((event: React.MouseEvent) => {
     const rect = (event.currentTarget as SVGSVGElement).getBoundingClientRect();
@@ -29,8 +31,12 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     
     if (distanceToPoint <= 10) {
       setIsDraggingPoint(true);
+      store.startPointDrag({ x: mouseX, y: mouseY });
+      setStartDragPos({ x: mouseX, y: mouseY });
     } else {
       setIsDraggingBackground(true);
+      store.startWorldWindowDrag();
+      setAccumulatedPanDelta({ x: 0, y: 0 });
     }
     
     setLastMousePos({ x: mouseX, y: mouseY });
@@ -42,20 +48,42 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     const mouseY = event.clientY - rect.top;
     
     if (isDraggingPoint) {
-      const newPoint = store.mapping.screenToWorld(mouseX, mouseY);
-      store.updateCurrentPoint(newPoint);
+      // Use CSS transform for immediate feedback
+      store.updatePointDragTransform({ x: mouseX, y: mouseY }, startDragPos);
     } else if (isDraggingBackground) {
+      // Use CSS transform for immediate feedback
       const deltaX = mouseX - lastMousePos.x;
       const deltaY = mouseY - lastMousePos.y;
-      store.pan(deltaX, deltaY);
+      const newAccumulatedDelta = {
+        x: accumulatedPanDelta.x + deltaX,
+        y: accumulatedPanDelta.y + deltaY
+      };
+      setAccumulatedPanDelta(newAccumulatedDelta);
+      store.updateWorldWindowDragTransform(newAccumulatedDelta.x, newAccumulatedDelta.y);
       setLastMousePos({ x: mouseX, y: mouseY });
     }
-  }, [isDraggingPoint, isDraggingBackground, lastMousePos, store]);
+  }, [isDraggingPoint, isDraggingBackground, lastMousePos, startDragPos, accumulatedPanDelta, store]);
 
   const handleMouseUp = useCallback(() => {
+    if (isDraggingPoint) {
+      // Complete the point drag with actual update
+      const currentPos = { x: startDragPos.x, y: startDragPos.y };
+      const transformedPos = {
+        x: currentPos.x + (lastMousePos.x - startDragPos.x),
+        y: currentPos.y + (lastMousePos.y - startDragPos.y)
+      };
+      const newPoint = store.mapping.screenToWorld(transformedPos.x, transformedPos.y);
+      store.updateCurrentPoint(newPoint);
+    } else if (isDraggingBackground) {
+      // Complete the pan with actual update
+      store.pan(accumulatedPanDelta.x, accumulatedPanDelta.y);
+    }
+    
+    store.completeTransform();
     setIsDraggingPoint(false);
     setIsDraggingBackground(false);
-  }, []);
+    setAccumulatedPanDelta({ x: 0, y: 0 });
+  }, [isDraggingPoint, isDraggingBackground, startDragPos, lastMousePos, accumulatedPanDelta, store]);
 
   const handleWheel = useCallback((event: React.WheelEvent) => {
     event.preventDefault();
@@ -107,8 +135,12 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       
       if (distanceToPoint <= 15) { // Larger touch target
         setIsDraggingPoint(true);
+        store.startPointDrag({ x: touchX, y: touchY });
+        setStartDragPos({ x: touchX, y: touchY });
       } else {
         setIsDraggingBackground(true);
+        store.startWorldWindowDrag();
+        setAccumulatedPanDelta({ x: 0, y: 0 });
       }
       
       setLastMousePos({ x: touchX, y: touchY });
@@ -135,12 +167,18 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       const touchY = touch.clientY - rect.top;
       
       if (isDraggingPoint) {
-        const newPoint = store.mapping.screenToWorld(touchX, touchY);
-        store.updateCurrentPoint(newPoint);
+        // Use CSS transform for immediate feedback
+        store.updatePointDragTransform({ x: touchX, y: touchY }, startDragPos);
       } else if (isDraggingBackground) {
+        // Use CSS transform for immediate feedback
         const deltaX = touchX - lastMousePos.x;
         const deltaY = touchY - lastMousePos.y;
-        store.pan(deltaX, deltaY);
+        const newAccumulatedDelta = {
+          x: accumulatedPanDelta.x + deltaX,
+          y: accumulatedPanDelta.y + deltaY
+        };
+        setAccumulatedPanDelta(newAccumulatedDelta);
+        store.updateWorldWindowDragTransform(newAccumulatedDelta.x, newAccumulatedDelta.y);
         setLastMousePos({ x: touchX, y: touchY });
       }
     } else if (event.touches.length === 2 && lastTouchDistance !== null) {
@@ -156,12 +194,20 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
         // Only zoom if the change is significant (> 5% change)
         if (Math.abs(zoomFactor - 1) > 0.05) {
           setIsZooming(true);
-          store.zoom(zoomFactor, center.x, center.y);
+          
+          // Use CSS transform for immediate feedback, then apply actual zoom
+          store.startZoom(center);
+          store.updateZoomTransform(zoomFactor, center);
+          
+          // Apply actual zoom after a delay for responsiveness
+          setTimeout(() => {
+            store.zoom(zoomFactor, center.x, center.y);
+            store.completeTransform();
+            setIsZooming(false);
+          }, 100);
+          
           setLastZoomTime(currentTime);
           setLastTouchDistance(distance);
-          
-          // Clear zooming state after a delay
-          setTimeout(() => setIsZooming(false), 100);
         }
       }
       
@@ -173,11 +219,26 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     event.preventDefault(); // Prevent default touch behavior
     
     if (event.touches.length === 0) {
-      // All touches ended
+      // All touches ended - complete any ongoing interactions
+      if (isDraggingPoint) {
+        // Complete the point drag with actual update
+        const transformedPos = {
+          x: startDragPos.x + (lastMousePos.x - startDragPos.x),
+          y: startDragPos.y + (lastMousePos.y - startDragPos.y)
+        };
+        const newPoint = store.mapping.screenToWorld(transformedPos.x, transformedPos.y);
+        store.updateCurrentPoint(newPoint);
+      } else if (isDraggingBackground) {
+        // Complete the pan with actual update
+        store.pan(accumulatedPanDelta.x, accumulatedPanDelta.y);
+      }
+      
+      store.completeTransform();
       setIsDraggingPoint(false);
       setIsDraggingBackground(false);
       setLastTouchDistance(null);
       setIsZooming(false);
+      setAccumulatedPanDelta({ x: 0, y: 0 });
     } else if (event.touches.length === 1) {
       // One touch remaining after pinch
       setLastTouchDistance(null);
@@ -189,7 +250,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
         y: touch.clientY - rect.top 
       });
     }
-  }, []);
+  }, [isDraggingPoint, isDraggingBackground, startDragPos, lastMousePos, accumulatedPanDelta, store]);
   const gridRenderer = new GridRenderer(store.mapping);
   
   // Reduce grid calculations during zoom operations for performance
@@ -251,108 +312,116 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
         stroke="#dee2e6" 
       />
       
-      {horizontalLines.map((line, index) => {
-        const screenY = store.mapping.worldToScreen({ 
-          x: store.worldWindow.bottomLeft.x, 
-          y: line.position 
-        }).y;
-        
-        return (
-          <g key={`h-${index}`}>
-            <line
-              x1={0}
-              y1={screenY}
-              x2={store.screenViewport.width}
-              y2={screenY}
-              stroke={line.isThick ? "#495057" : "#adb5bd"}
-              strokeWidth={line.thickness}
-            />
-            {line.isThick && (
-              <text
-                x={5}
-                y={screenY - 3}
-                fontSize="10"
-                fill="#495057"
-                fontFamily="monospace"
-              >
-                y={line.position.toString()}
-              </text>
-            )}
-          </g>
-        );
-      })}
+      <g style={{ transform: store.transformState.gridTransform }}>
+        {horizontalLines.map((line, index) => {
+          const screenY = store.mapping.worldToScreen({ 
+            x: store.worldWindow.bottomLeft.x, 
+            y: line.position 
+          }).y;
+          
+          return (
+            <g key={`h-${index}`}>
+              <line
+                x1={0}
+                y1={screenY}
+                x2={store.screenViewport.width}
+                y2={screenY}
+                stroke={line.isThick ? "#495057" : "#adb5bd"}
+                strokeWidth={line.thickness}
+              />
+              {line.isThick && (
+                <text
+                  x={5}
+                  y={screenY - 3}
+                  fontSize="10"
+                  fill="#495057"
+                  fontFamily="monospace"
+                >
+                  y={line.position.toString()}
+                </text>
+              )}
+            </g>
+          );
+        })}
+      </g>
       
-      {verticalLines.map((line, index) => {
-        const screenX = store.mapping.worldToScreen({ 
-          x: line.position, 
-          y: store.worldWindow.bottomLeft.y 
-        }).x;
-        
-        return (
-          <g key={`v-${index}`}>
-            <line
-              x1={screenX}
-              y1={0}
-              x2={screenX}
-              y2={store.screenViewport.height}
-              stroke={line.isThick ? "#495057" : "#adb5bd"}
-              strokeWidth={line.thickness}
-            />
-            {line.isThick && (
-              <text
-                x={screenX + 3}
-                y={store.screenViewport.height - 5}
-                fontSize="10"
-                fill="#495057"
-                fontFamily="monospace"
-              >
-                x={line.position.toString()}
-              </text>
-            )}
-          </g>
-        );
-      })}
+      <g style={{ transform: store.transformState.gridTransform }}>
+        {verticalLines.map((line, index) => {
+          const screenX = store.mapping.worldToScreen({ 
+            x: line.position, 
+            y: store.worldWindow.bottomLeft.y 
+          }).x;
+          
+          return (
+            <g key={`v-${index}`}>
+              <line
+                x1={screenX}
+                y1={0}
+                x2={screenX}
+                y2={store.screenViewport.height}
+                stroke={line.isThick ? "#495057" : "#adb5bd"}
+                strokeWidth={line.thickness}
+              />
+              {line.isThick && (
+                <text
+                  x={screenX + 3}
+                  y={store.screenViewport.height - 5}
+                  fontSize="10"
+                  fill="#495057"
+                  fontFamily="monospace"
+                >
+                  x={line.position.toString()}
+                </text>
+                )}
+            </g>
+          );
+        })}
+      </g>
       
       {/* Equation graph */}
       {screenPoints.length > 0 && (
-        <path
-          d={createEquationPath(screenPoints)}
-          stroke="#dc3545"
-          strokeWidth={2}
-          fill="none"
-          vectorEffect="non-scaling-stroke"
-        />
+        <g style={{ transform: store.transformState.gridTransform }}>
+          <path
+            d={createEquationPath(screenPoints)}
+            stroke="#dc3545"
+            strokeWidth={2}
+            fill="none"
+            vectorEffect="non-scaling-stroke"
+          />
+        </g>
       )}
       
-      <circle
-        cx={currentPointScreen.x}
-        cy={currentPointScreen.y}
-        r={6}
-        fill="#212529"
-        stroke="#ffffff"
-        strokeWidth={2}
-      />
-      
-      <g>
-        <rect
-          x={currentPointScreen.x + 10}
-          y={currentPointScreen.y - 25}
-          width="200"
-          height="18"
-          fill="#ffffff"
-          stroke="#212529"
-          strokeWidth={1}
-          rx={3}
-        />
-        <text 
-          x={currentPointScreen.x + 15} 
-          y={currentPointScreen.y - 12}
-          fontSize="12"
+      <g style={{ transform: store.transformState.pointTransform }}>
+        <circle
+          cx={currentPointScreen.x}
+          cy={currentPointScreen.y}
+          r={6}
           fill="#212529"
-          fontFamily="monospace"
-        >
-          {store.getCurrentPointDisplay()}
-        </text>
+          stroke="#ffffff"
+          strokeWidth={2}
+        />
+        
+        <g>
+          <rect
+            x={currentPointScreen.x + 10}
+            y={currentPointScreen.y - 25}
+            width="200"
+            height="18"
+            fill="#ffffff"
+            stroke="#212529"
+            strokeWidth={1}
+            rx={3}
+          />
+          <text 
+            x={currentPointScreen.x + 15} 
+            y={currentPointScreen.y - 12}
+            fontSize="12"
+            fill="#212529"
+            fontFamily="monospace"
+          >
+            {store.getCurrentPointDisplay()}
+          </text>
+        </g>
       </g>
     </svg>
   );
