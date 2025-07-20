@@ -20,6 +20,7 @@ export const CustomZoomSlider: React.FC<CustomZoomSliderProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [circlePosition, setCirclePosition] = useState<{ x: number; y: number } | null>(null);
   const [startPosition, setStartPosition] = useState<{ x: number; y: number } | null>(null);
+  const [isFadingOut, setIsFadingOut] = useState(false);
 
   const calculateZoomFactor = useCallback((deltaX: number, sliderWidth: number): number => {
     // deltaX is the distance travelled from start position
@@ -108,10 +109,16 @@ export const CustomZoomSlider: React.FC<CustomZoomSliderProps> = ({
     // Complete zoom operation
     zoomable.completeZoom(source, finalZoomFactor);
     
-    // Reset state
+    // Start fade-out animation
+    setIsFadingOut(true);
     setIsDragging(false);
-    setCirclePosition(null);
-    setStartPosition(null);
+    
+    // Clear state after fade-out completes
+    setTimeout(() => {
+      setCirclePosition(null);
+      setStartPosition(null);
+      setIsFadingOut(false);
+    }, 200);
   }, [isDragging, startPosition, circlePosition, source, zoomable, calculateZoomFactor]);
 
   // Global event listeners for mouse/touch move and end
@@ -160,7 +167,9 @@ export const CustomZoomSlider: React.FC<CustomZoomSliderProps> = ({
     border: '2px solid white',
     boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
     pointerEvents: 'none',
-    zIndex: 10
+    zIndex: 10,
+    opacity: isFadingOut ? 0 : 1,
+    transition: 'opacity 200ms ease'
   } : {};
 
   return (
@@ -190,18 +199,21 @@ export const CustomZoomSlider: React.FC<CustomZoomSliderProps> = ({
           </div>
         )}
       </div>
-      {isDragging && startPosition && circlePosition && (
-        <div
-          style={{
-            marginTop: '8px',
-            fontSize: '12px',
-            color: '#666',
-            textAlign: 'center'
-          }}
-        >
-          Zoom: {calculateZoomFactor(circlePosition.x - startPosition.x, 300).toFixed(2)}x
-        </div>
-      )}
+      <div
+        style={{
+          marginTop: '8px',
+          fontSize: '12px',
+          color: '#666',
+          textAlign: 'center',
+          height: '18px', // Reserve space to prevent layout shifts
+          opacity: (isDragging && startPosition && circlePosition) ? 1 : 0,
+          transition: 'opacity 150ms ease'
+        }}
+      >
+        {isDragging && startPosition && circlePosition && (
+          <>Zoom: {calculateZoomFactor(circlePosition.x - startPosition.x, 300).toFixed(2)}x</>
+        )}
+      </div>
     </div>
   );
 };

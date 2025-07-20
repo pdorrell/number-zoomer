@@ -36,8 +36,8 @@ export const App: React.FC = observer(() => {
   return (
     <div className="app">
       <div className="controls">
-        <h1>Number Zoomer</h1>
         <div className="controls-row">
+          <h1>Number Zoomer</h1>
           <div className="equation-controls">
             <label>
               Equation: 

@@ -10,17 +10,19 @@
   padding: 1rem;
   border-bottom: 1px solid #dee2e6;
   
-  h1 {
-    margin: 0 0 0.5rem 0;
-    font-size: 1.5rem;
-    color: #212529;
-  }
-  
   .controls-row {
     display: flex;
     gap: 1rem;
-    align-items: flex-start;
+    align-items: center;
     margin-bottom: 1rem;
+    flex-wrap: wrap;
+    
+    h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      color: #212529;
+      white-space: nowrap;
+    }
     
     .equation-controls {
       display: flex;
@@ -85,6 +87,9 @@
       border: 1px solid #dee2e6;
       flex: 1;
       min-width: 200px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
       
       strong {
         color: #212529;
