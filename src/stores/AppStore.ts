@@ -228,14 +228,26 @@ export class AppStore implements ZoomableInterface {
   }
 
   moveCurrentPointToCenter() {
-    const centerX = this.worldWindow.bottomLeft.x.add(this.worldWindow.topRight.x).div(new PreciseDecimal(2));
-    const centerY = this.worldWindow.bottomLeft.y.add(this.worldWindow.topRight.y).div(new PreciseDecimal(2));
+    // Calculate current world window dimensions
+    const windowWidth = this.worldWindow.topRight.x.sub(this.worldWindow.bottomLeft.x);
+    const windowHeight = this.worldWindow.topRight.y.sub(this.worldWindow.bottomLeft.y);
     
-    const currentPrecision = this.calculateCurrentPrecision();
-    this.currentPoint = {
-      x: centerX.setPrecision(currentPrecision),
-      y: centerY.setPrecision(currentPrecision)
+    // Calculate half dimensions for centering
+    const halfWidth = windowWidth.div(new PreciseDecimal(2));
+    const halfHeight = windowHeight.div(new PreciseDecimal(2));
+    
+    // Calculate new world window centered on current point
+    const newBottomLeft = {
+      x: this.currentPoint.x.sub(halfWidth),
+      y: this.currentPoint.y.sub(halfHeight)
     };
+    const newTopRight = {
+      x: this.currentPoint.x.add(halfWidth),
+      y: this.currentPoint.y.add(halfHeight)
+    };
+    
+    // Update the world window to center on current point
+    this.updateWorldWindow(newBottomLeft, newTopRight);
   }
 
   // Utility methods for formatted display
