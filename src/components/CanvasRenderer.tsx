@@ -139,9 +139,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store, 
         top: 0,
         left: 0,
         transform: store.transformState.gridTransform,
-        transformOrigin: '0 0',
-        border: '1px solid #dee2e6',
-        borderRadius: '4px'
+        transformOrigin: '0 0'
       }}
     />
   );

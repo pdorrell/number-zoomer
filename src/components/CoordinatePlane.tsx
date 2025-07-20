@@ -269,7 +269,10 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
         cursor: isDraggingPoint ? 'grabbing' : isDraggingBackground ? 'grabbing' : 'grab',
         touchAction: 'none', // Prevent default touch behaviors
         opacity: isZooming ? 0.8 : 1, // Visual feedback during zoom
-        transition: isZooming ? 'none' : 'opacity 0.1s ease'
+        transition: isZooming ? 'none' : 'opacity 0.1s ease',
+        overflow: 'hidden', // Clip canvas when it transforms outside container
+        border: '1px solid #dee2e6', // Visible clipping boundary
+        borderRadius: '4px'
       }}
     >
       {/* Canvas for grid lines, coordinates, and equation */}
