@@ -13,6 +13,8 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
   const [lastTouchDistance, setLastTouchDistance] = useState<number | null>(null);
   const [lastTouchCenter, setLastTouchCenter] = useState({ x: 0, y: 0 });
+  const [isZooming, setIsZooming] = useState(false);
+  const [lastZoomTime, setLastZoomTime] = useState(0);
 
   const handleMouseDown = useCallback((event: React.MouseEvent) => {
     const rect = (event.currentTarget as SVGSVGElement).getBoundingClientRect();
@@ -142,19 +144,30 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
         setLastMousePos({ x: touchX, y: touchY });
       }
     } else if (event.touches.length === 2 && lastTouchDistance !== null) {
-      // Two touches - pinch to zoom
+      // Two touches - pinch to zoom with throttling
+      const currentTime = Date.now();
       const distance = getTouchDistance(event.touches);
       const center = getTouchCenter(event.touches, rect);
       
-      if (lastTouchDistance > 0) {
+      // Throttle zoom events to every 50ms for performance
+      if (currentTime - lastZoomTime > 50 && lastTouchDistance > 0) {
         const zoomFactor = distance / lastTouchDistance;
-        store.zoom(zoomFactor, center.x, center.y);
+        
+        // Only zoom if the change is significant (> 5% change)
+        if (Math.abs(zoomFactor - 1) > 0.05) {
+          setIsZooming(true);
+          store.zoom(zoomFactor, center.x, center.y);
+          setLastZoomTime(currentTime);
+          setLastTouchDistance(distance);
+          
+          // Clear zooming state after a delay
+          setTimeout(() => setIsZooming(false), 100);
+        }
       }
       
-      setLastTouchDistance(distance);
       setLastTouchCenter(center);
     }
-  }, [isDraggingPoint, isDraggingBackground, lastMousePos, lastTouchDistance, store]);
+  }, [isDraggingPoint, isDraggingBackground, lastMousePos, lastTouchDistance, lastZoomTime, store]);
 
   const handleTouchEnd = useCallback((event: React.TouchEvent) => {
     event.preventDefault(); // Prevent default touch behavior
@@ -164,9 +177,11 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       setIsDraggingPoint(false);
       setIsDraggingBackground(false);
       setLastTouchDistance(null);
+      setIsZooming(false);
     } else if (event.touches.length === 1) {
       // One touch remaining after pinch
       setLastTouchDistance(null);
+      setIsZooming(false);
       const rect = (event.currentTarget as SVGSVGElement).getBoundingClientRect();
       const touch = event.touches[0];
       setLastMousePos({ 
@@ -176,13 +191,17 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     }
   }, []);
   const gridRenderer = new GridRenderer(store.mapping);
-  const horizontalLines = gridRenderer.calculateHorizontalGridLines();
-  const verticalLines = gridRenderer.calculateVerticalGridLines();
+  
+  // Reduce grid calculations during zoom operations for performance
+  const shouldSkipGridCalculation = isZooming;
+  const horizontalLines = shouldSkipGridCalculation ? [] : gridRenderer.calculateHorizontalGridLines();
+  const verticalLines = shouldSkipGridCalculation ? [] : gridRenderer.calculateVerticalGridLines();
 
   const currentPointScreen = store.mapping.worldToScreen(store.currentPoint);
   
-  // Generate equation graph points
-  const equationPoints = store.currentEquation.generatePoints(store.worldWindow, store.screenViewport.width);
+  // Generate equation graph points (reduce resolution during zoom)
+  const equationScreenWidth = isZooming ? store.screenViewport.width / 4 : store.screenViewport.width;
+  const equationPoints = store.currentEquation.generatePoints(store.worldWindow, equationScreenWidth);
   const screenPoints = equationPoints.map(point => store.mapping.worldToScreen(point));
   
   // Create SVG path for equation graph
@@ -220,7 +239,9 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       onTouchCancel={handleTouchEnd}
       style={{ 
         cursor: isDraggingPoint ? 'grabbing' : isDraggingBackground ? 'grabbing' : 'grab',
-        touchAction: 'none' // Prevent default touch behaviors
+        touchAction: 'none', // Prevent default touch behaviors
+        opacity: isZooming ? 0.8 : 1, // Visual feedback during zoom
+        transition: isZooming ? 'none' : 'opacity 0.1s ease'
       }}
     >
       <rect 
