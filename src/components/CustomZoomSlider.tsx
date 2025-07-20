@@ -183,36 +183,24 @@ export const CustomZoomSlider: React.FC<CustomZoomSliderProps> = ({
         {circlePosition && (
           <div style={circleStyle} />
         )}
-        {!isDragging && (
-          <div
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              color: '#666',
-              fontSize: '14px',
-              pointerEvents: 'none'
-            }}
-          >
-            Click to zoom
-          </div>
-        )}
-      </div>
-      <div
-        style={{
-          marginTop: '8px',
-          fontSize: '12px',
-          color: '#666',
-          textAlign: 'center',
-          height: '18px', // Reserve space to prevent layout shifts
-          opacity: (isDragging && startPosition && circlePosition) ? 1 : 0,
-          transition: 'opacity 150ms ease'
-        }}
-      >
-        {isDragging && startPosition && circlePosition && (
-          <>Zoom: {calculateZoomFactor(circlePosition.x - startPosition.x, 300).toFixed(2)}x</>
-        )}
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            color: '#666',
+            fontSize: '14px',
+            pointerEvents: 'none',
+            opacity: isDragging ? 1 : 0.7,
+            transition: 'opacity 150ms ease'
+          }}
+        >
+          {isDragging && startPosition && circlePosition
+            ? `Zoom: ${calculateZoomFactor(circlePosition.x - startPosition.x, 300).toFixed(2)}x`
+            : 'Click to zoom'
+          }
+        </div>
       </div>
     </div>
   );
