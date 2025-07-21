@@ -20,21 +20,12 @@ export class GridRenderer {
     const pixelsPerXUnit = this.mapping.getPixelsPerXUnit();
     const minSeparation = 5;
     
-    let maxPrecision = -1;
+    // Direct calculation: maxPrecision = floor(log10(pixelsPerXUnit / minSeparation))
+    // This replaces the loop that finds the highest precision where separation >= minSeparation
+    const maxPrecision = Math.floor(Math.log10(pixelsPerXUnit / minSeparation));
     
-    // Find maximum precision based on X dimension only (per design spec)
-    for (let precision = 0; precision <= 50; precision++) {
-      const step = new PreciseDecimal(10, 0).pow(-precision);
-      const separation = pixelsPerXUnit * step.toNumber();
-      
-      if (separation >= minSeparation) {
-        maxPrecision = precision;
-      } else {
-        break;
-      }
-    }
-    
-    return maxPrecision;
+    // Ensure we don't exceed reasonable bounds and handle edge cases
+    return Math.max(-1, Math.min(50, maxPrecision));
   }
 
   calculateHorizontalGridLines(maxPrecision: number): GridLine[] {
