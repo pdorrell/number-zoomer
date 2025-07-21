@@ -36,7 +36,9 @@ export class GridRenderer {
     const lines: GridLine[] = [];
     
     // Generate lines with correct thickness based on grid weight hierarchy
-    for (let precision = 0; precision <= maxPrecision; precision++) {
+    // Only generate lines for the 3 precision levels that have different thicknesses
+    const minPrecision = Math.max(0, maxPrecision - 2);
+    for (let precision = minPrecision; precision <= maxPrecision; precision++) {
       const step = new PreciseDecimal(10, 0).pow(-precision);
       const thickness = this.calculateThickness(precision, maxPrecision);
       // Show labels for all grid lines except the thinnest (1px) ones
@@ -69,7 +71,9 @@ export class GridRenderer {
     const lines: GridLine[] = [];
     
     // Generate lines with correct thickness based on grid weight hierarchy
-    for (let precision = 0; precision <= maxPrecision; precision++) {
+    // Only generate lines for the 3 precision levels that have different thicknesses
+    const minPrecision = Math.max(0, maxPrecision - 2);
+    for (let precision = minPrecision; precision <= maxPrecision; precision++) {
       const step = new PreciseDecimal(10, 0).pow(-precision);
       const thickness = this.calculateThickness(precision, maxPrecision);
       // Show labels for all grid lines except the thinnest (1px) ones
