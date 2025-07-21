@@ -135,24 +135,6 @@ export class AppStore implements ZoomableInterface {
     return this.calculateWorldWindowPrecision() + 1;
   }
 
-  zoom(factor: number, centerX?: number, centerY?: number) {
-    if (centerX !== undefined && centerY !== undefined) {
-      // Mouse wheel zoom - use cursor position as zoom center
-      this.zoomAroundScreenPoint(factor, centerX, centerY);
-    } else {
-      // Button zoom - choose center based on current point visibility
-      if (this.isCurrentPointVisible()) {
-        // If current point is visible, zoom should keep it at its current screen position
-        const currentPointScreen = this.mapping.worldToScreen(this.currentPoint);
-        this.zoomAroundScreenPoint(factor, currentPointScreen.x, currentPointScreen.y);
-      } else {
-        // If current point is not visible, zoom from center of viewport
-        const centerX = this.screenViewport.width / 2;
-        const centerY = this.screenViewport.height / 2;
-        this.zoomAroundScreenPoint(factor, centerX, centerY);
-      }
-    }
-  }
 
   private zoomAroundScreenPoint(factor: number, screenX: number, screenY: number) {
     // Convert screen point to world coordinates in current view

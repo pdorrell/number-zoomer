@@ -96,15 +96,6 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
   }, [store]);
 
 
-  const handleWheel = useCallback((event: React.WheelEvent) => {
-    event.preventDefault();
-    const rect = (event.currentTarget as HTMLDivElement).getBoundingClientRect();
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
-    
-    const zoomFactor = event.deltaY > 0 ? 0.9 : 1.1;
-    store.zoom(zoomFactor, mouseX, mouseY);
-  }, [store]);
 
   // Use-gesture for both drag and pinch handling
   const bind = useGesture({
@@ -237,7 +228,6 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       ref={containerRef}
       className="coordinate-plane"
       onMouseDown={handleMouseDown}
-      onWheel={handleWheel}
       {...bind()}
       style={{ 
         position: 'relative',
