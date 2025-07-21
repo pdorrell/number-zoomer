@@ -15,16 +15,11 @@ export class GridRenderer {
     this.mapping = mapping;
   }
 
-  calculateHorizontalGridLines(): GridLine[] {
+  calculateMaxPrecision(): number {
     // Use X dimension for precision calculation to ensure consistent grid resolution
     const pixelsPerXUnit = this.mapping.getPixelsPerXUnit();
     const minSeparation = 5;
     
-    const screenViewport = this.getScreenViewport();
-    const yMin = this.mapping.screenToWorld(0, screenViewport.height).y;
-    const yMax = this.mapping.screenToWorld(0, 0).y;
-    
-    const lines: GridLine[] = [];
     let maxPrecision = -1;
     
     // Find maximum precision based on X dimension only (per design spec)
@@ -38,6 +33,16 @@ export class GridRenderer {
         break;
       }
     }
+    
+    return maxPrecision;
+  }
+
+  calculateHorizontalGridLines(maxPrecision: number): GridLine[] {
+    const screenViewport = this.getScreenViewport();
+    const yMin = this.mapping.screenToWorld(0, screenViewport.height).y;
+    const yMax = this.mapping.screenToWorld(0, 0).y;
+    
+    const lines: GridLine[] = [];
     
     // Generate lines with correct thickness based on grid weight hierarchy
     for (let precision = 0; precision <= maxPrecision; precision++) {
@@ -65,29 +70,12 @@ export class GridRenderer {
     return lines.sort((a, b) => a.precision - b.precision);
   }
 
-  calculateVerticalGridLines(): GridLine[] {
-    // Use X dimension for precision calculation to ensure consistent grid resolution
-    const pixelsPerXUnit = this.mapping.getPixelsPerXUnit();
-    const minSeparation = 5;
-    
+  calculateVerticalGridLines(maxPrecision: number): GridLine[] {
     const screenViewport = this.getScreenViewport();
     const xMin = this.mapping.screenToWorld(0, 0).x;
     const xMax = this.mapping.screenToWorld(screenViewport.width, 0).x;
     
     const lines: GridLine[] = [];
-    let maxPrecision = -1;
-    
-    // Find maximum precision based on X dimension only (per design spec)
-    for (let precision = 0; precision <= 50; precision++) {
-      const step = new PreciseDecimal(10, 0).pow(-precision);
-      const separation = pixelsPerXUnit * step.toNumber();
-      
-      if (separation >= minSeparation) {
-        maxPrecision = precision;
-      } else {
-        break;
-      }
-    }
     
     // Generate lines with correct thickness based on grid weight hierarchy
     for (let precision = 0; precision <= maxPrecision; precision++) {

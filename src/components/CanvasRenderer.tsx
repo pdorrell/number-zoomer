@@ -15,8 +15,9 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store }
   
   // Memoize grid lines and equation points calculation
   const { horizontalLines, verticalLines, screenPoints } = useMemo(() => {
-    const horizontalLines = gridRenderer.calculateHorizontalGridLines();
-    const verticalLines = gridRenderer.calculateVerticalGridLines();
+    const maxPrecision = gridRenderer.calculateMaxPrecision();
+    const horizontalLines = gridRenderer.calculateHorizontalGridLines(maxPrecision);
+    const verticalLines = gridRenderer.calculateVerticalGridLines(maxPrecision);
     const equationPoints = store.currentEquation.generatePoints(store.worldWindow, store.screenViewport.width);
     const screenPoints = equationPoints.map(point => store.mapping.worldToScreen(point));
     
