@@ -10,7 +10,10 @@
       "Bash(git commit:*)",
       "Bash(npm run build:*)",
       "Bash(npm run:*)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(find:*)",
+      "Bash(timeout 10s npm run start:claude)",
+      "Bash(true)"
     ],
     "deny": []
   }
