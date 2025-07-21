@@ -102,14 +102,7 @@ export class GridRenderer {
     // Grid weight hierarchy: 1px + min(2, trailing_zeros)
     // Per design spec: Essential precision N = 1px, N-1 = 2px, N-2 or smaller = 3px
     const precisionFromMax = maxPrecision - precision;
-    
-    if (precisionFromMax === 0) {
-      return 1; // Maximum precision (finest grid resolution)
-    } else if (precisionFromMax === 1) {
-      return 2; // One step coarser
-    } else {
-      return 3; // Two or more steps coarser
-    }
+    return Math.min(precisionFromMax + 1, 3);
   }
 
   private getScreenViewport() {
