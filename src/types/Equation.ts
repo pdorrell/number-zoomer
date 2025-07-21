@@ -31,7 +31,7 @@ export class QuadraticEquation extends Equation {
 
   shouldDrawAsCurve(worldWindow: WorldWindow): boolean {
     // At high zoom levels, y=x² appears linear within small intervals
-    const xRange = worldWindow.topRight.x.sub(worldWindow.bottomLeft.x);
+    const xRange = worldWindow.topRight[0].sub(worldWindow.bottomLeft[0]);
     const rangeSize = Math.abs(xRange.toNumber());
     
     // If the x range is very small, draw as line (appears linear at high zoom)
@@ -40,8 +40,8 @@ export class QuadraticEquation extends Equation {
 
   generatePoints(worldWindow: WorldWindow, screenWidth: number): Point[] {
     const points: Point[] = [];
-    const xMin = worldWindow.bottomLeft.x;
-    const xMax = worldWindow.topRight.x;
+    const xMin = worldWindow.bottomLeft[0];
+    const xMax = worldWindow.topRight[0];
     const xRange = xMax.sub(xMin);
     
     // Generate points across the screen width
@@ -51,7 +51,7 @@ export class QuadraticEquation extends Equation {
       const ratio = i / numPoints;
       const x = xMin.add(xRange.mul(new PreciseDecimal(ratio)));
       const y = this.evaluate(x);
-      points.push({ x, y });
+      points.push([x, y]);
     }
     
     return points;
@@ -85,12 +85,12 @@ export class LinearEquation extends Equation {
 
   generatePoints(worldWindow: WorldWindow): Point[] {
     // For linear equations, we only need two points
-    const xMin = worldWindow.bottomLeft.x;
-    const xMax = worldWindow.topRight.x;
+    const xMin = worldWindow.bottomLeft[0];
+    const xMax = worldWindow.topRight[0];
     
     return [
-      { x: xMin, y: this.evaluate(xMin) },
-      { x: xMax, y: this.evaluate(xMax) }
+      [xMin, this.evaluate(xMin)],
+      [xMax, this.evaluate(xMax)]
     ];
   }
 

@@ -38,20 +38,20 @@ export class AppStore implements ZoomableInterface {
 
   constructor() {
     this.worldWindow = {
-      bottomLeft: { 
-        x: new PreciseDecimal(-5, 2), 
-        y: new PreciseDecimal(-5, 2) 
-      },
-      topRight: { 
-        x: new PreciseDecimal(5, 2), 
-        y: new PreciseDecimal(5, 2) 
-      }
+      bottomLeft: [
+        new PreciseDecimal(-5, 2), 
+        new PreciseDecimal(-5, 2) 
+      ],
+      topRight: [
+        new PreciseDecimal(5, 2), 
+        new PreciseDecimal(5, 2) 
+      ]
     };
 
-    this.currentPoint = {
-      x: new PreciseDecimal(0, 3),
-      y: new PreciseDecimal(0, 3)
-    };
+    this.currentPoint = [
+      new PreciseDecimal(0, 3),
+      new PreciseDecimal(0, 3)
+    ];
 
     this.currentEquation = createEquation({ type: 'quadratic' });
 
@@ -78,14 +78,14 @@ export class AppStore implements ZoomableInterface {
     const worldWindowPrecision = this.calculateWorldWindowPrecision() + 1;
     
     this.worldWindow = { 
-      bottomLeft: {
-        x: bottomLeft.x.setPrecision(worldWindowPrecision),
-        y: bottomLeft.y.setPrecision(worldWindowPrecision)
-      },
-      topRight: {
-        x: topRight.x.setPrecision(worldWindowPrecision),
-        y: topRight.y.setPrecision(worldWindowPrecision)
-      }
+      bottomLeft: [
+        bottomLeft[0].setPrecision(worldWindowPrecision),
+        bottomLeft[1].setPrecision(worldWindowPrecision)
+      ],
+      topRight: [
+        topRight[0].setPrecision(worldWindowPrecision),
+        topRight[1].setPrecision(worldWindowPrecision)
+      ]
     };
     this.mapping = new CoordinateMapping(this.screenViewport, this.worldWindow);
   }
@@ -93,10 +93,10 @@ export class AppStore implements ZoomableInterface {
   updateCurrentPoint(point: Point) {
     // Point adopts current world window precision when moved by user
     const currentPrecision = this.calculateCurrentPrecision();
-    this.currentPoint = {
-      x: point.x.setPrecision(currentPrecision),
-      y: point.y.setPrecision(currentPrecision)
-    };
+    this.currentPoint = [
+      point[0].setPrecision(currentPrecision),
+      point[1].setPrecision(currentPrecision)
+    ];
   }
 
   calculateWorldWindowPrecision(): number {
@@ -129,8 +129,8 @@ export class AppStore implements ZoomableInterface {
     const zoomCenterWorld = this.mapping.screenToWorld(screenX, screenY);
 
     // Calculate new world window dimensions
-    const currentWidth = this.worldWindow.topRight.x.sub(this.worldWindow.bottomLeft.x);
-    const currentHeight = this.worldWindow.topRight.y.sub(this.worldWindow.bottomLeft.y);
+    const currentWidth = this.worldWindow.topRight[0].sub(this.worldWindow.bottomLeft[0]);
+    const currentHeight = this.worldWindow.topRight[1].sub(this.worldWindow.bottomLeft[1]);
 
     const newWidth = currentWidth.div(new PreciseDecimal(factor));
     const newHeight = currentHeight.div(new PreciseDecimal(factor));
@@ -140,15 +140,15 @@ export class AppStore implements ZoomableInterface {
     const yRatio = screenY / this.screenViewport.height;
 
     // Calculate new world window bounds so that the zoom center stays at the same screen position
-    const newBottomLeft = {
-      x: zoomCenterWorld.x.sub(newWidth.mul(new PreciseDecimal(xRatio))),
-      y: zoomCenterWorld.y.sub(newHeight.mul(new PreciseDecimal(1 - yRatio)))
-    };
+    const newBottomLeft: Point = [
+      zoomCenterWorld[0].sub(newWidth.mul(new PreciseDecimal(xRatio))),
+      zoomCenterWorld[1].sub(newHeight.mul(new PreciseDecimal(1 - yRatio)))
+    ];
 
-    const newTopRight = {
-      x: zoomCenterWorld.x.add(newWidth.mul(new PreciseDecimal(1 - xRatio))),
-      y: zoomCenterWorld.y.add(newHeight.mul(new PreciseDecimal(yRatio)))
-    };
+    const newTopRight: Point = [
+      zoomCenterWorld[0].add(newWidth.mul(new PreciseDecimal(1 - xRatio))),
+      zoomCenterWorld[1].add(newHeight.mul(new PreciseDecimal(yRatio)))
+    ];
 
     // updateWorldWindow will handle boundary coordinate rounding
     this.updateWorldWindow(newBottomLeft, newTopRight);
@@ -161,62 +161,62 @@ export class AppStore implements ZoomableInterface {
     const worldDelta = this.mapping.screenToXY(deltaX, deltaY);
     const worldOrigin = this.mapping.screenToXY(0, 0);
     
-    const dx = worldDelta.x.sub(worldOrigin.x);
-    const dy = worldDelta.y.sub(worldOrigin.y);
+    const dx = worldDelta[0].sub(worldOrigin[0]);
+    const dy = worldDelta[1].sub(worldOrigin[1]);
 
-    const newBottomLeft = {
-      x: this.worldWindow.bottomLeft.x.sub(dx),
-      y: this.worldWindow.bottomLeft.y.sub(dy)
-    };
+    const newBottomLeft: Point = [
+      this.worldWindow.bottomLeft[0].sub(dx),
+      this.worldWindow.bottomLeft[1].sub(dy)
+    ];
 
-    const newTopRight = {
-      x: this.worldWindow.topRight.x.sub(dx),
-      y: this.worldWindow.topRight.y.sub(dy)
-    };
+    const newTopRight: Point = [
+      this.worldWindow.topRight[0].sub(dx),
+      this.worldWindow.topRight[1].sub(dy)
+    ];
 
     // updateWorldWindow will handle boundary coordinate rounding
     this.updateWorldWindow(newBottomLeft, newTopRight);
   }
 
   resetView() {
-    const defaultBottomLeft = {
-      x: new PreciseDecimal(-5, 2), 
-      y: new PreciseDecimal(-5, 2) 
-    };
-    const defaultTopRight = {
-      x: new PreciseDecimal(5, 2), 
-      y: new PreciseDecimal(5, 2) 
-    };
+    const defaultBottomLeft: Point = [
+      new PreciseDecimal(-5, 2), 
+      new PreciseDecimal(-5, 2) 
+    ];
+    const defaultTopRight: Point = [
+      new PreciseDecimal(5, 2), 
+      new PreciseDecimal(5, 2) 
+    ];
     
     // Use updateWorldWindow to ensure proper boundary rounding
     this.updateWorldWindow(defaultBottomLeft, defaultTopRight);
     
     // Reset current point with appropriate precision (this counts as user action)
     const currentPrecision = this.calculateCurrentPrecision();
-    this.currentPoint = {
-      x: new PreciseDecimal(0, currentPrecision),
-      y: new PreciseDecimal(0, currentPrecision)
-    };
+    this.currentPoint = [
+      new PreciseDecimal(0, currentPrecision),
+      new PreciseDecimal(0, currentPrecision)
+    ];
   }
 
   moveCurrentPointToCenter() {
     // Calculate current world window dimensions
-    const windowWidth = this.worldWindow.topRight.x.sub(this.worldWindow.bottomLeft.x);
-    const windowHeight = this.worldWindow.topRight.y.sub(this.worldWindow.bottomLeft.y);
+    const windowWidth = this.worldWindow.topRight[0].sub(this.worldWindow.bottomLeft[0]);
+    const windowHeight = this.worldWindow.topRight[1].sub(this.worldWindow.bottomLeft[1]);
     
     // Calculate half dimensions for centering
     const halfWidth = windowWidth.div(new PreciseDecimal(2));
     const halfHeight = windowHeight.div(new PreciseDecimal(2));
     
     // Calculate new world window centered on current point
-    const newBottomLeft = {
-      x: this.currentPoint.x.sub(halfWidth),
-      y: this.currentPoint.y.sub(halfHeight)
-    };
-    const newTopRight = {
-      x: this.currentPoint.x.add(halfWidth),
-      y: this.currentPoint.y.add(halfHeight)
-    };
+    const newBottomLeft: Point = [
+      this.currentPoint[0].sub(halfWidth),
+      this.currentPoint[1].sub(halfHeight)
+    ];
+    const newTopRight: Point = [
+      this.currentPoint[0].add(halfWidth),
+      this.currentPoint[1].add(halfHeight)
+    ];
     
     // Update the world window to center on current point
     this.updateWorldWindow(newBottomLeft, newTopRight);
@@ -224,20 +224,20 @@ export class AppStore implements ZoomableInterface {
 
   // Utility methods for formatted display
   getCurrentPointDisplay(): string {
-    return `(${this.currentPoint.x.toString()}, ${this.currentPoint.y.toString()})`;
+    return `(${this.currentPoint[0].toString()}, ${this.currentPoint[1].toString()})`;
   }
 
   getWorldWindowXRangeDisplay(): string {
     const windowDP = this.calculateWorldWindowPrecision() + 1;
-    const bottomLeft = this.worldWindow.bottomLeft.x.setPrecision(windowDP).toString();
-    const topRight = this.worldWindow.topRight.x.setPrecision(windowDP).toString();
+    const bottomLeft = this.worldWindow.bottomLeft[0].setPrecision(windowDP).toString();
+    const topRight = this.worldWindow.topRight[0].setPrecision(windowDP).toString();
     return `[${bottomLeft}, ${topRight}]`;
   }
 
   getWorldWindowYRangeDisplay(): string {
     const windowDP = this.calculateWorldWindowPrecision() + 1;
-    const bottomLeft = this.worldWindow.bottomLeft.y.setPrecision(windowDP).toString();
-    const topRight = this.worldWindow.topRight.y.setPrecision(windowDP).toString();
+    const bottomLeft = this.worldWindow.bottomLeft[1].setPrecision(windowDP).toString();
+    const topRight = this.worldWindow.topRight[1].setPrecision(windowDP).toString();
     return `[${bottomLeft}, ${topRight}]`;
   }
   
@@ -247,8 +247,8 @@ export class AppStore implements ZoomableInterface {
     const previewWindow = this.previewWorldWindow || this.dragPreviewWorldWindow;
     if (previewWindow) {
       const windowDP = this.calculateWorldWindowPrecision() + 1;
-      const bottomLeft = previewWindow.bottomLeft.x.setPrecision(windowDP).toString();
-      const topRight = previewWindow.topRight.x.setPrecision(windowDP).toString();
+      const bottomLeft = previewWindow.bottomLeft[0].setPrecision(windowDP).toString();
+      const topRight = previewWindow.topRight[0].setPrecision(windowDP).toString();
       return `[${bottomLeft}, ${topRight}]`;
     }
     return this.getWorldWindowXRangeDisplay();
@@ -259,8 +259,8 @@ export class AppStore implements ZoomableInterface {
     const previewWindow = this.previewWorldWindow || this.dragPreviewWorldWindow;
     if (previewWindow) {
       const windowDP = this.calculateWorldWindowPrecision() + 1;
-      const bottomLeft = previewWindow.bottomLeft.y.setPrecision(windowDP).toString();
-      const topRight = previewWindow.topRight.y.setPrecision(windowDP).toString();
+      const bottomLeft = previewWindow.bottomLeft[1].setPrecision(windowDP).toString();
+      const topRight = previewWindow.topRight[1].setPrecision(windowDP).toString();
       return `[${bottomLeft}, ${topRight}]`;
     }
     return this.getWorldWindowYRangeDisplay();
@@ -270,7 +270,7 @@ export class AppStore implements ZoomableInterface {
   getPreviewPixelsPerXUnit(): number {
     if (this.previewWorldWindow) {
       // Calculate px/unit based on preview world window
-      const previewWidth = this.previewWorldWindow.topRight.x.sub(this.previewWorldWindow.bottomLeft.x);
+      const previewWidth = this.previewWorldWindow.topRight[0].sub(this.previewWorldWindow.bottomLeft[0]);
       return this.screenViewport.width / previewWidth.toNumber();
     }
     return this.mapping.getPixelsPerXUnit();
@@ -278,11 +278,11 @@ export class AppStore implements ZoomableInterface {
 
   isCurrentPointVisible(): boolean {
     // Check if current point is within the current world window
-    const pointX = this.currentPoint.x;
-    const pointY = this.currentPoint.y;
+    const pointX = this.currentPoint[0];
+    const pointY = this.currentPoint[1];
     
-    const withinX = pointX.isWithinInterval(this.worldWindow.bottomLeft.x, this.worldWindow.topRight.x);
-    const withinY = pointY.isWithinInterval(this.worldWindow.bottomLeft.y, this.worldWindow.topRight.y);
+    const withinX = pointX.isWithinInterval(this.worldWindow.bottomLeft[0], this.worldWindow.topRight[0]);
+    const withinY = pointY.isWithinInterval(this.worldWindow.bottomLeft[1], this.worldWindow.topRight[1]);
     
     return withinX && withinY;
   }
@@ -335,18 +335,18 @@ export class AppStore implements ZoomableInterface {
     const worldDelta = this.mapping.screenToXY(deltaX, deltaY);
     const worldOrigin = this.mapping.screenToXY(0, 0);
     
-    const dx = worldDelta.x.sub(worldOrigin.x);
-    const dy = worldDelta.y.sub(worldOrigin.y);
+    const dx = worldDelta[0].sub(worldOrigin[0]);
+    const dy = worldDelta[1].sub(worldOrigin[1]);
     
     this.dragPreviewWorldWindow = {
-      bottomLeft: {
-        x: this.worldWindow.bottomLeft.x.sub(dx),
-        y: this.worldWindow.bottomLeft.y.sub(dy)
-      },
-      topRight: {
-        x: this.worldWindow.topRight.x.sub(dx),
-        y: this.worldWindow.topRight.y.sub(dy)
-      }
+      bottomLeft: [
+        this.worldWindow.bottomLeft[0].sub(dx),
+        this.worldWindow.bottomLeft[1].sub(dy)
+      ],
+      topRight: [
+        this.worldWindow.topRight[0].sub(dx),
+        this.worldWindow.topRight[1].sub(dy)
+      ]
     };
   }
 
@@ -410,14 +410,14 @@ export class AppStore implements ZoomableInterface {
     
     // Store the starting world window for zoom calculations
     this.startingWorldWindow = {
-      bottomLeft: {
-        x: this.worldWindow.bottomLeft.x,
-        y: this.worldWindow.bottomLeft.y
-      },
-      topRight: {
-        x: this.worldWindow.topRight.x,
-        y: this.worldWindow.topRight.y
-      }
+      bottomLeft: [
+        this.worldWindow.bottomLeft[0],
+        this.worldWindow.bottomLeft[1]
+      ],
+      topRight: [
+        this.worldWindow.topRight[0],
+        this.worldWindow.topRight[1]
+      ]
     };
     
     this.zoomingSource = source;
@@ -487,8 +487,8 @@ export class AppStore implements ZoomableInterface {
     // This is for display purposes only - the actual coordinates aren't updated until completeZoom
     const zoomCenterWorld = this.mapping.screenToWorld(this.centrePoint.x, this.centrePoint.y);
     
-    const currentWidth = this.startingWorldWindow.topRight.x.sub(this.startingWorldWindow.bottomLeft.x);
-    const currentHeight = this.startingWorldWindow.topRight.y.sub(this.startingWorldWindow.bottomLeft.y);
+    const currentWidth = this.startingWorldWindow.topRight[0].sub(this.startingWorldWindow.bottomLeft[0]);
+    const currentHeight = this.startingWorldWindow.topRight[1].sub(this.startingWorldWindow.bottomLeft[1]);
     
     const newWidth = currentWidth.div(new PreciseDecimal(this.zoomFactor));
     const newHeight = currentHeight.div(new PreciseDecimal(this.zoomFactor));
@@ -497,15 +497,15 @@ export class AppStore implements ZoomableInterface {
     const yRatio = this.centrePoint.y / this.screenViewport.height;
     
     // Calculate and store preview world window bounds for immediate display
-    const previewBottomLeft = {
-      x: zoomCenterWorld.x.sub(newWidth.mul(new PreciseDecimal(xRatio))),
-      y: zoomCenterWorld.y.sub(newHeight.mul(new PreciseDecimal(1 - yRatio)))
-    };
+    const previewBottomLeft: Point = [
+      zoomCenterWorld[0].sub(newWidth.mul(new PreciseDecimal(xRatio))),
+      zoomCenterWorld[1].sub(newHeight.mul(new PreciseDecimal(1 - yRatio)))
+    ];
     
-    const previewTopRight = {
-      x: zoomCenterWorld.x.add(newWidth.mul(new PreciseDecimal(1 - xRatio))),
-      y: zoomCenterWorld.y.add(newHeight.mul(new PreciseDecimal(yRatio)))
-    };
+    const previewTopRight: Point = [
+      zoomCenterWorld[0].add(newWidth.mul(new PreciseDecimal(1 - xRatio))),
+      zoomCenterWorld[1].add(newHeight.mul(new PreciseDecimal(yRatio)))
+    ];
     
     // Store preview values as observable properties for immediate UI updates
     this.previewWorldWindow = {
