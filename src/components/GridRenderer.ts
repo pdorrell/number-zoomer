@@ -30,8 +30,8 @@ export class GridRenderer {
 
   calculateHorizontalGridLines(maxPrecision: number): GridLine[] {
     const screenViewport = this.getScreenViewport();
-    const yMin = this.mapping.screenToWorld(0, screenViewport.height).y;
-    const yMax = this.mapping.screenToWorld(0, 0).y;
+    const yMin = this.mapping.screenToWorldY(screenViewport.height);
+    const yMax = this.mapping.screenToWorldY(0);
     
     const lines: GridLine[] = [];
     
@@ -65,8 +65,8 @@ export class GridRenderer {
 
   calculateVerticalGridLines(maxPrecision: number): GridLine[] {
     const screenViewport = this.getScreenViewport();
-    const xMin = this.mapping.screenToWorld(0, 0).x;
-    const xMax = this.mapping.screenToWorld(screenViewport.width, 0).x;
+    const xMin = this.mapping.screenToWorldX(0);
+    const xMax = this.mapping.screenToWorldX(screenViewport.width);
     
     const lines: GridLine[] = [];
     

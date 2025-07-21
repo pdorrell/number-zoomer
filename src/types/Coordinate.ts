@@ -22,29 +22,41 @@ export class CoordinateMapping {
   ) {}
 
   screenToWorld(screenX: number, screenY: number): Point {
-    const xRange = this.worldWindow.topRight.x.sub(this.worldWindow.bottomLeft.x);
-    const yRange = this.worldWindow.topRight.y.sub(this.worldWindow.bottomLeft.y);
-    
-    const xRatio = screenX / this.screenViewport.width;
-    const yRatio = (this.screenViewport.height - screenY) / this.screenViewport.height;
-    
-    const x = this.worldWindow.bottomLeft.x.add(xRange.mul(new PreciseDecimal(xRatio)));
-    const y = this.worldWindow.bottomLeft.y.add(yRange.mul(new PreciseDecimal(yRatio)));
+    const x = this.screenToWorldX(screenX);
+    const y = this.screenToWorldY(screenY);
     
     return { x, y };
   }
 
-  worldToScreen(point: Point): { x: number; y: number } {
+  screenToWorldX(screenX: number): PreciseDecimal {
     const xRange = this.worldWindow.topRight.x.sub(this.worldWindow.bottomLeft.x);
+    const xRatio = screenX / this.screenViewport.width;
+    return this.worldWindow.bottomLeft.x.add(xRange.mul(new PreciseDecimal(xRatio)));
+  }
+
+  screenToWorldY(screenY: number): PreciseDecimal {
     const yRange = this.worldWindow.topRight.y.sub(this.worldWindow.bottomLeft.y);
+    const yRatio = (this.screenViewport.height - screenY) / this.screenViewport.height;
+    return this.worldWindow.bottomLeft.y.add(yRange.mul(new PreciseDecimal(yRatio)));
+  }
+
+  worldToScreen(point: Point): { x: number; y: number } {
+    const x = this.worldToScreenX(point.x);
+    const y = this.worldToScreenY(point.y);
     
-    const xOffset = point.x.sub(this.worldWindow.bottomLeft.x);
-    const yOffset = point.y.sub(this.worldWindow.bottomLeft.y);
-    
-    const screenX = xOffset.div(xRange).toNumber() * this.screenViewport.width;
-    const screenY = this.screenViewport.height - (yOffset.div(yRange).toNumber() * this.screenViewport.height);
-    
-    return { x: screenX, y: screenY };
+    return { x, y };
+  }
+
+  worldToScreenX(worldX: PreciseDecimal): number {
+    const xRange = this.worldWindow.topRight.x.sub(this.worldWindow.bottomLeft.x);
+    const xOffset = worldX.sub(this.worldWindow.bottomLeft.x);
+    return xOffset.div(xRange).toNumber() * this.screenViewport.width;
+  }
+
+  worldToScreenY(worldY: PreciseDecimal): number {
+    const yRange = this.worldWindow.topRight.y.sub(this.worldWindow.bottomLeft.y);
+    const yOffset = worldY.sub(this.worldWindow.bottomLeft.y);
+    return this.screenViewport.height - (yOffset.div(yRange).toNumber() * this.screenViewport.height);
   }
 
   getPixelsPerXUnit(): number {

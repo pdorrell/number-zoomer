@@ -41,10 +41,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store }
     // Draw grid lines
     // Horizontal lines
     horizontalLines.forEach(line => {
-      const screenY = store.mapping.worldToScreen({ 
-        x: store.worldWindow.bottomLeft.x, 
-        y: line.position 
-      }).y;
+      const screenY = store.mapping.worldToScreenY(line.position);
       
       ctx.strokeStyle = line.isThick ? "#495057" : "#adb5bd";
       ctx.lineWidth = line.thickness;
@@ -63,10 +60,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store }
     
     // Vertical lines
     verticalLines.forEach(line => {
-      const screenX = store.mapping.worldToScreen({ 
-        x: line.position, 
-        y: store.worldWindow.bottomLeft.y 
-      }).x;
+      const screenX = store.mapping.worldToScreenX(line.position);
       
       ctx.strokeStyle = line.isThick ? "#495057" : "#adb5bd";
       ctx.lineWidth = line.thickness;
