@@ -32,10 +32,11 @@ export class QuadraticEquation extends Equation {
   shouldDrawAsCurve(worldWindow: WorldWindow): boolean {
     // At high zoom levels, y=x² appears linear within small intervals
     const xRange = worldWindow.topRight[0].sub(worldWindow.bottomLeft[0]);
-    const rangeSize = Math.abs(xRange.toNumber());
+    const rangeSize = xRange.abs();
+    const threshold = new PreciseDecimal(0.01, 2);
     
     // If the x range is very small, draw as line (appears linear at high zoom)
-    return rangeSize > 0.01;
+    return rangeSize.gte(threshold);
   }
 
   generatePoints(worldWindow: WorldWindow, screenWidth: number): Point[] {

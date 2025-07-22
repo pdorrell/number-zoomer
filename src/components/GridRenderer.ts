@@ -53,16 +53,17 @@ export class GridRenderer {
       const endMultiplied = yMax.mul(multiplier);
 
 
-      const startIndex = Math.floor(startMultiplied.toNumber());
-      const endIndex = Math.ceil(endMultiplied.toNumber());
+      const startIndex = startMultiplied.floor();
+      const endIndex = endMultiplied.ceil();
 
-      const numGridLines = endIndex + 1 - startIndex;
+      const numGridLines = endIndex.toInteger() + 1 - startIndex.toInteger();
       console.log(`Y precision ${precision} numGridLines = ${numGridLines}`);
       console.log(`   step =  ${step} multiplier = ${multiplier}`);
       console.log(`   startMultiplied =  ${startMultiplied}  endMultiplied = ${endMultiplied}`);
+      console.log(`   startIndex =  ${startIndex} endIndex = ${endIndex}`);
 
-      for (let i = startIndex; i <= endIndex; i++) {
-        const position = new PreciseDecimal(i, 0).div(multiplier);
+      for (let i = startIndex; i.lte(endIndex); i = i.add(new PreciseDecimal(1, 0))) {
+        const position = i.div(multiplier);
         if (position.isWithinInterval(yMin, yMax)) {
           lines.push({ position: position.setPrecision(precision), thickness, precision, isThick });
         }
@@ -93,14 +94,14 @@ export class GridRenderer {
       const startMultiplied = xMin.mul(multiplier);
       const endMultiplied = xMax.mul(multiplier);
 
-      const startIndex = Math.floor(startMultiplied.toNumber());
-      const endIndex = Math.ceil(endMultiplied.toNumber());
+      const startIndex = startMultiplied.floor();
+      const endIndex = endMultiplied.ceil();
 
-      const numGridLines = endIndex + 1 - startIndex;
+      const numGridLines = endIndex.toInteger() + 1 - startIndex.toInteger();
       //console.debug("X numGridLines = ", numGridLines);
 
-      for (let i = startIndex; i <= endIndex; i++) {
-        const position = new PreciseDecimal(i, 0).div(multiplier);
+      for (let i = startIndex; i.lte(endIndex); i = i.add(new PreciseDecimal(1, 0))) {
+        const position = i.div(multiplier);
         if (position.isWithinInterval(xMin, xMax)) {
           lines.push({ position: position.setPrecision(precision), thickness, precision, isThick });
         }

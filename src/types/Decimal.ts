@@ -66,6 +66,30 @@ export class PreciseDecimal {
     return this.value.gte(min.value) && this.value.lte(max.value);
   }
 
+  floor(): PreciseDecimal {
+    return new PreciseDecimal(this.value.floor(), this.displayPrecision);
+  }
+
+  ceil(): PreciseDecimal {
+    return new PreciseDecimal(this.value.ceil(), this.displayPrecision);
+  }
+
+  gte(other: PreciseDecimal): boolean {
+    return this.value.gte(other.value);
+  }
+
+  lte(other: PreciseDecimal): boolean {
+    return this.value.lte(other.value);
+  }
+
+  toInteger(): number {
+    return this.value.floor().toNumber();
+  }
+
+  abs(): PreciseDecimal {
+    return new PreciseDecimal(this.value.abs(), this.displayPrecision);
+  }
+
   static fromString(str: string, precision?: number): PreciseDecimal {
     const actualPrecision = precision ?? (str.includes('.') ? str.split('.')[1].length : 0);
     return new PreciseDecimal(str, actualPrecision);
