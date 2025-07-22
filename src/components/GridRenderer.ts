@@ -25,7 +25,7 @@ export class GridRenderer {
     const maxPrecision = Math.floor(Math.log10(pixelsPerXUnit / minSeparation));
     
     // Ensure we don't exceed reasonable bounds and handle edge cases
-    return Math.max(-1, Math.min(1000, maxPrecision));
+    return Math.max(-1, Math.min(10, maxPrecision));
   }
 
   calculateHorizontalGridLines(maxPrecision: number): GridLine[] {
@@ -51,6 +51,12 @@ export class GridRenderer {
       
       const startIndex = Math.floor(startMultiplied.toNumber());
       const endIndex = Math.ceil(endMultiplied.toNumber());
+      
+      // Safety check: prevent infinite loops with excessive iterations
+      const maxIterations = 10000;
+      if (endIndex - startIndex > maxIterations) {
+        continue; // Skip this precision level if it would cause too many iterations
+      }
       
       for (let i = startIndex; i <= endIndex; i++) {
         const position = new PreciseDecimal(i, 0).div(multiplier);
@@ -86,6 +92,12 @@ export class GridRenderer {
       
       const startIndex = Math.floor(startMultiplied.toNumber());
       const endIndex = Math.ceil(endMultiplied.toNumber());
+      
+      // Safety check: prevent infinite loops with excessive iterations
+      const maxIterations = 10000;
+      if (endIndex - startIndex > maxIterations) {
+        continue; // Skip this precision level if it would cause too many iterations
+      }
       
       for (let i = startIndex; i <= endIndex; i++) {
         const position = new PreciseDecimal(i, 0).div(multiplier);

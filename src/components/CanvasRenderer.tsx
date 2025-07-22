@@ -11,10 +11,14 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store }
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
   // Memoize grid renderer to prevent recreation on every render
-  const gridRenderer = useMemo(() => new GridRenderer(store.mapping), [store.mapping]);
+  const gridRenderer = useMemo(() => {
+    console.log('CanvasRenderer: useMemo gridRenderer called');
+    return new GridRenderer(store.mapping);
+  }, [store.mapping]);
   
   // Memoize grid lines and equation points calculation
   const { horizontalLines, verticalLines, screenPoints } = useMemo(() => {
+    console.log('CanvasRenderer: useMemo grid lines and equation points called');
     const maxPrecision = gridRenderer.calculateMaxPrecision();
     const horizontalLines = gridRenderer.calculateHorizontalGridLines(maxPrecision);
     const verticalLines = gridRenderer.calculateVerticalGridLines(maxPrecision);
@@ -25,6 +29,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store }
   }, [gridRenderer, store.currentEquation, store.worldWindow, store.mapping, store.screenViewport.width]);
   
   const drawCanvas = useCallback(() => {
+    console.log('CanvasRenderer: useCallback drawCanvas called');
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -95,15 +100,17 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store }
       }
       ctx.stroke();
     }
-  }, [store, horizontalLines, verticalLines, screenPoints]);
+  }, [store.mapping, store.currentEquation, store.worldWindow, horizontalLines, verticalLines, screenPoints]);
   
   // Redraw canvas when dependencies change
   useEffect(() => {
+    console.log('CanvasRenderer: useEffect redraw canvas called');
     drawCanvas();
   }, [drawCanvas]);
   
   // Handle canvas resize
   useEffect(() => {
+    console.log('CanvasRenderer: useEffect canvas resize called');
     const canvas = canvasRef.current;
     if (!canvas) return;
     

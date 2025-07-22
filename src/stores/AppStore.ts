@@ -373,7 +373,7 @@ export class AppStore implements ZoomableInterface {
     }
     
     // Debug the transform being generated
-    console.log('Generated grid transform:', newGridTransform, 'scale:', scale);
+    console.log('Generated grid transform');
     
     // Point transform: if point is visible, don't transform; if not visible, simulate center-based zoom
     let newPointTransform = '';
