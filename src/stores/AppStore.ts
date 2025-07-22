@@ -224,9 +224,10 @@ export class AppStore implements ZoomableInterface {
 
   // Utility methods for formatted display
   getCurrentPointDisplay(): string {
-    const precision = this.calculateCurrentPrecision();
-    const x = this.currentPoint[0].quantize(precision).toString();
-    const y = this.currentPoint[1].quantize(precision).toString();
+    // Display current point at its stored precision, not quantized to current window precision
+    // Current point precision only changes when user actually moves the point
+    const x = this.currentPoint[0].toString();
+    const y = this.currentPoint[1].toString();
     return `(${x}, ${y})`;
   }
 
