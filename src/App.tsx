@@ -69,7 +69,7 @@ export const App: React.FC = observer(() => {
         </div>
         <div className="debug-info">
           <div className="info-item">
-            <strong>World Window:</strong> X: {store.getPreviewWorldWindowXRangeDisplay()}, Y: {store.getPreviewWorldWindowYRangeDisplay()}
+            <strong>World Window:</strong> DP: {store.calculateWorldWindowPrecision()} X: {store.getPreviewWorldWindowXRangeDisplay()}, Y: {store.getPreviewWorldWindowYRangeDisplay()}
           </div>
           <div className="info-item">
             <strong>Current Point:</strong> {store.getCurrentPointDisplay()} ({store.calculateCurrentPrecision()}DP)

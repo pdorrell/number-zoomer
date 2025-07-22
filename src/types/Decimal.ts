@@ -32,15 +32,7 @@ export class PreciseDecimal {
   }
 
   toString(): string {
-    // For display, show all significant digits without unnecessary trailing zeros
-    const str = this.value.toFixed(this.displayPrecision);
-    
-    // Remove trailing zeros after decimal point, but keep at least one decimal place if precision > 0
-    if (this.displayPrecision > 0 && str.includes('.')) {
-      return str.replace(/\.?0+$/, '') || str.slice(0, -1);
-    }
-    
-    return str;
+    return `${this.value.toString()}(${this.precision}DP)`;
   }
 
   toFullPrecisionString(): string {

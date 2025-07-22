@@ -33,6 +33,8 @@ export class GridRenderer {
     const yMin = this.mapping.screenToWorldY(screenViewport.height);
     const yMax = this.mapping.screenToWorldY(0);
 
+    console.log(`calculateHorizontalGridLines maxPrecision ${maxPrecision}, yMin = ${yMin} yMax = ${yMax}`)
+
     const lines: GridLine[] = [];
 
     // Generate lines with correct thickness based on grid weight hierarchy
@@ -40,6 +42,7 @@ export class GridRenderer {
     const minPrecision = Math.max(0, maxPrecision - 2);
     for (let precision = minPrecision; precision <= maxPrecision; precision++) {
       const step = new PreciseDecimal(10, 0).pow(-precision);
+
       const thickness = this.calculateThickness(precision, maxPrecision);
       // Show labels for all grid lines except the thinnest (1px) ones
       const isThick = thickness > 1;
@@ -49,11 +52,14 @@ export class GridRenderer {
       const startMultiplied = yMin.mul(multiplier);
       const endMultiplied = yMax.mul(multiplier);
 
+
       const startIndex = Math.floor(startMultiplied.toNumber());
       const endIndex = Math.ceil(endMultiplied.toNumber());
 
       const numGridLines = endIndex + 1 - startIndex;
-      console.debug("numGridLines = ", numGridLines);
+      console.log(`Y precision ${precision} numGridLines = ${numGridLines}`);
+      console.log(`   step =  ${step} multiplier = ${multiplier}`);
+      console.log(`   startMultiplied =  ${startMultiplied}  endMultiplied = ${endMultiplied}`);
 
       for (let i = startIndex; i <= endIndex; i++) {
         const position = new PreciseDecimal(i, 0).div(multiplier);
@@ -91,7 +97,7 @@ export class GridRenderer {
       const endIndex = Math.ceil(endMultiplied.toNumber());
 
       const numGridLines = endIndex + 1 - startIndex;
-      console.debug("numGridLines = ", numGridLines);
+      //console.debug("X numGridLines = ", numGridLines);
 
       for (let i = startIndex; i <= endIndex; i++) {
         const position = new PreciseDecimal(i, 0).div(multiplier);
