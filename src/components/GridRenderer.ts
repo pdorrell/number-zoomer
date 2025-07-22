@@ -25,7 +25,7 @@ export class GridRenderer {
     const maxPrecision = Math.floor(Math.log10(pixelsPerXUnit / minSeparation));
 
     // Ensure we don't exceed reasonable bounds and handle edge cases
-    return Math.max(-1, Math.min(10, maxPrecision));
+    return Math.max(-1, Math.min(1000, maxPrecision));
   }
 
   calculateHorizontalGridLines(maxPrecision: number): GridLine[] {
