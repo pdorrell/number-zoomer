@@ -74,9 +74,9 @@
   
   .debug-info {
     display: flex;
-    gap: 1rem;
+    flex-direction: column;
+    gap: 0.5rem;
     font-size: 0.85rem;
-    flex-wrap: wrap;
     
     .info-item {
       font-family: monospace;
@@ -85,11 +85,10 @@
       padding: 0.25rem 0.5rem;
       border-radius: 3px;
       border: 1px solid #dee2e6;
-      flex: 1;
-      min-width: 200px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      user-select: text;
+      -webkit-user-select: text;
+      -moz-user-select: text;
+      -ms-user-select: text;
       
       strong {
         color: #212529;

@@ -79,12 +79,12 @@ export class AppStore implements ZoomableInterface {
     
     this.worldWindow = { 
       bottomLeft: [
-        bottomLeft[0].setPrecision(worldWindowPrecision),
-        bottomLeft[1].setPrecision(worldWindowPrecision)
+        bottomLeft[0].quantize(worldWindowPrecision),
+        bottomLeft[1].quantize(worldWindowPrecision)
       ],
       topRight: [
-        topRight[0].setPrecision(worldWindowPrecision),
-        topRight[1].setPrecision(worldWindowPrecision)
+        topRight[0].quantize(worldWindowPrecision),
+        topRight[1].quantize(worldWindowPrecision)
       ]
     };
     this.mapping = new CoordinateMapping(this.screenViewport, this.worldWindow);
@@ -94,8 +94,8 @@ export class AppStore implements ZoomableInterface {
     // Point adopts current world window precision when moved by user
     const currentPrecision = this.calculateCurrentPrecision();
     this.currentPoint = [
-      point[0].setPrecision(currentPrecision),
-      point[1].setPrecision(currentPrecision)
+      point[0].quantize(currentPrecision),
+      point[1].quantize(currentPrecision)
     ];
   }
 
@@ -224,20 +224,23 @@ export class AppStore implements ZoomableInterface {
 
   // Utility methods for formatted display
   getCurrentPointDisplay(): string {
-    return `(${this.currentPoint[0].toString()}, ${this.currentPoint[1].toString()})`;
+    const precision = this.calculateCurrentPrecision();
+    const x = this.currentPoint[0].quantize(precision).toString();
+    const y = this.currentPoint[1].quantize(precision).toString();
+    return `(${x}, ${y})`;
   }
 
   getWorldWindowXRangeDisplay(): string {
-    const windowDP = this.calculateWorldWindowPrecision() + 1;
-    const bottomLeft = this.worldWindow.bottomLeft[0].setPrecision(windowDP).toString();
-    const topRight = this.worldWindow.topRight[0].setPrecision(windowDP).toString();
+    const windowDP = this.calculateWorldWindowPrecision();
+    const bottomLeft = this.worldWindow.bottomLeft[0].quantize(windowDP).toString();
+    const topRight = this.worldWindow.topRight[0].quantize(windowDP).toString();
     return `[${bottomLeft}, ${topRight}]`;
   }
 
   getWorldWindowYRangeDisplay(): string {
-    const windowDP = this.calculateWorldWindowPrecision() + 1;
-    const bottomLeft = this.worldWindow.bottomLeft[1].setPrecision(windowDP).toString();
-    const topRight = this.worldWindow.topRight[1].setPrecision(windowDP).toString();
+    const windowDP = this.calculateWorldWindowPrecision();
+    const bottomLeft = this.worldWindow.bottomLeft[1].quantize(windowDP).toString();
+    const topRight = this.worldWindow.topRight[1].quantize(windowDP).toString();
     return `[${bottomLeft}, ${topRight}]`;
   }
   
@@ -246,9 +249,9 @@ export class AppStore implements ZoomableInterface {
     // Check for zoom preview first, then drag preview
     const previewWindow = this.previewWorldWindow || this.dragPreviewWorldWindow;
     if (previewWindow) {
-      const windowDP = this.calculateWorldWindowPrecision() + 1;
-      const bottomLeft = previewWindow.bottomLeft[0].setPrecision(windowDP).toString();
-      const topRight = previewWindow.topRight[0].setPrecision(windowDP).toString();
+      const windowDP = this.calculateWorldWindowPrecision();
+      const bottomLeft = previewWindow.bottomLeft[0].quantize(windowDP).toString();
+      const topRight = previewWindow.topRight[0].quantize(windowDP).toString();
       return `[${bottomLeft}, ${topRight}]`;
     }
     return this.getWorldWindowXRangeDisplay();
@@ -258,9 +261,9 @@ export class AppStore implements ZoomableInterface {
     // Check for zoom preview first, then drag preview
     const previewWindow = this.previewWorldWindow || this.dragPreviewWorldWindow;
     if (previewWindow) {
-      const windowDP = this.calculateWorldWindowPrecision() + 1;
-      const bottomLeft = previewWindow.bottomLeft[1].setPrecision(windowDP).toString();
-      const topRight = previewWindow.topRight[1].setPrecision(windowDP).toString();
+      const windowDP = this.calculateWorldWindowPrecision();
+      const bottomLeft = previewWindow.bottomLeft[1].quantize(windowDP).toString();
+      const topRight = previewWindow.topRight[1].quantize(windowDP).toString();
       return `[${bottomLeft}, ${topRight}]`;
     }
     return this.getWorldWindowYRangeDisplay();

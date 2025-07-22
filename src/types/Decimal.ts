@@ -56,6 +56,12 @@ export class PreciseDecimal {
     return new PreciseDecimal(this.value, precision);
   }
 
+  quantize(precision: number): PreciseDecimal {
+    // Actually round/truncate the value to the specified number of decimal places
+    const quantizedValue = this.value.toDecimalPlaces(precision);
+    return new PreciseDecimal(quantizedValue, precision);
+  }
+
   isWithinInterval(min: PreciseDecimal, max: PreciseDecimal): boolean {
     return this.value.gte(min.value) && this.value.lte(max.value);
   }
