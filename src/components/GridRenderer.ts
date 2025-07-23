@@ -45,38 +45,7 @@ export class GridRenderer {
     const yMin = this.mapping.screenToWorldY(screenViewport.height);
     const yMax = this.mapping.screenToWorldY(0);
 
-    const lines: GridLine[] = [];
-
-    // Generate lines with correct thickness based on grid weight hierarchy
-    // Only generate lines for the 3 precision levels that have different thicknesses
-    const minPrecision = Math.max(0, maxPrecision - 2);
-    for (let precision = minPrecision; precision <= maxPrecision; precision++) {
-      const step = new PreciseDecimal(10, 0).pow(-precision);
-
-      const thickness = this.calculateThickness(precision, maxPrecision);
-      // Show labels for all grid lines except the thinnest (1px) ones
-      const isThick = thickness > 1;
-
-      // Use PreciseDecimal for all calculations to avoid floating-point errors
-      const multiplier = new PreciseDecimal(10, 0).pow(precision);
-      const startMultiplied = yMin.mul(multiplier);
-      const endMultiplied = yMax.mul(multiplier);
-
-
-      const startIndex = startMultiplied.floor();
-      const endIndex = endMultiplied.ceil();
-
-      const numGridLines = endIndex.toInteger() + 1 - startIndex.toInteger();
-
-      for (let i = startIndex; i.lte(endIndex); i = i.add(new PreciseDecimal(1, 0))) {
-        const position = i.div(multiplier);
-        if (position.isWithinInterval(yMin, yMax)) {
-          lines.push({ position: position.setPrecision(precision), thickness, precision, isThick });
-        }
-      }
-    }
-
-    return lines.sort((a, b) => a.precision - b.precision);
+    return this.calculateGridLines(maxPrecision, yMin, yMax);
   }
 
   calculateVerticalGridLines(maxPrecision: number): GridLine[] {
@@ -84,6 +53,10 @@ export class GridRenderer {
     const xMin = this.mapping.screenToWorldX(0);
     const xMax = this.mapping.screenToWorldX(screenViewport.width);
 
+    return this.calculateGridLines(maxPrecision, xMin, xMax);
+  }
+
+  private calculateGridLines(maxPrecision: number, dimMin: PreciseDecimal, dimMax: PreciseDecimal): GridLine[] {
     const lines: GridLine[] = [];
 
     // Generate lines with correct thickness based on grid weight hierarchy
@@ -91,14 +64,15 @@ export class GridRenderer {
     const minPrecision = Math.max(0, maxPrecision - 2);
     for (let precision = minPrecision; precision <= maxPrecision; precision++) {
       const step = new PreciseDecimal(10, 0).pow(-precision);
+
       const thickness = this.calculateThickness(precision, maxPrecision);
       // Show labels for all grid lines except the thinnest (1px) ones
       const isThick = thickness > 1;
 
       // Use PreciseDecimal for all calculations to avoid floating-point errors
       const multiplier = new PreciseDecimal(10, 0).pow(precision);
-      const startMultiplied = xMin.mul(multiplier);
-      const endMultiplied = xMax.mul(multiplier);
+      const startMultiplied = dimMin.mul(multiplier);
+      const endMultiplied = dimMax.mul(multiplier);
 
       const startIndex = startMultiplied.floor();
       const endIndex = endMultiplied.ceil();
@@ -107,7 +81,7 @@ export class GridRenderer {
 
       for (let i = startIndex; i.lte(endIndex); i = i.add(new PreciseDecimal(1, 0))) {
         const position = i.div(multiplier);
-        if (position.isWithinInterval(xMin, xMax)) {
+        if (position.isWithinInterval(dimMin, dimMax)) {
           lines.push({ position: position.setPrecision(precision), thickness, precision, isThick });
         }
       }
