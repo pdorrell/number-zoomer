@@ -1,4 +1,5 @@
 import Decimal from 'decimal.js';
+import { ScaledFloat, int } from './ScaledFloat';
 
 Decimal.set({ precision: 1000 });
 
@@ -88,6 +89,22 @@ export class PreciseDecimal {
 
   abs(): PreciseDecimal {
     return new PreciseDecimal(this.value.abs(), this.displayPrecision);
+  }
+
+  toScaledFloat(): ScaledFloat {
+    if (this.value.isZero()) {
+      return new ScaledFloat(0);
+    }
+
+    // Get the exponent from the decimal representation
+    const str = this.value.toString();
+    const [mantissaStr, exponentStr] = str.toLowerCase().split('e');
+    const exponent = exponentStr ? parseInt(exponentStr, 10) : 0;
+    
+    // Convert mantissa to a number (this is safe as mantissa should be in float range)
+    const mantissa = parseFloat(mantissaStr);
+    
+    return new ScaledFloat(mantissa, exponent);
   }
 
   static fromString(str: string, precision?: number): PreciseDecimal {

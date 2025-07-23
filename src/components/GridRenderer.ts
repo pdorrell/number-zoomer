@@ -1,5 +1,6 @@
 import { PreciseDecimal } from '../types/Decimal';
 import { CoordinateMapping, Point } from '../types/Coordinate';
+import { ScaledFloat } from '../types/ScaledFloat';
 
 export interface GridLine {
   position: PreciseDecimal;
@@ -17,12 +18,23 @@ export class GridRenderer {
 
   calculateMaxPrecision(): number {
     // Use X dimension for precision calculation to ensure consistent grid resolution
-    const pixelsPerXUnit = this.mapping.getPixelsPerXUnit();
-    const minSeparation = 5;
+    const pixelsPerXUnitScaled = this.mapping.getPixelsPerXUnitScaled();
+    const minSeparation = new ScaledFloat(5);
 
-    // Direct calculation: maxPrecision = floor(log10(pixelsPerXUnit / minSeparation))
-    // This replaces the loop that finds the highest precision where separation >= minSeparation
-    const maxPrecision = Math.floor(Math.log10(pixelsPerXUnit / minSeparation));
+    // Calculate ratio using ScaledFloat to avoid overflow/underflow
+    const ratio = ScaledFloat.fromMantissaExponent(
+      pixelsPerXUnitScaled.getMantissa() / minSeparation.getMantissa(),
+      pixelsPerXUnitScaled.getExponent() - minSeparation.getExponent()
+    );
+
+    // Convert to regular number for log calculation (safe as we're only using for precision calculation)
+    const ratioFloat = ratio.toFloatInBounds(-1e308, 1e308);
+    if (ratioFloat === null) {
+      // Handle extreme cases
+      return ratio.getExponent() > 0 ? 1000 : -1;
+    }
+
+    const maxPrecision = Math.floor(Math.log10(ratioFloat));
 
     // Ensure we don't exceed reasonable bounds and handle edge cases
     return Math.max(-1, Math.min(1000, maxPrecision));

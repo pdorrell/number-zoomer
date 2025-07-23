@@ -3,6 +3,7 @@ import { PreciseDecimal } from '../types/Decimal';
 import { Point, WorldWindow, ScreenViewport, CoordinateMapping } from '../types/Coordinate';
 import { Equation, EquationType, EquationConfig, createEquation } from '../types/Equation';
 import { ZoomableInterface, ZoomSource } from '../interfaces/ZoomableInterface';
+import { ScaledFloat } from '../types/ScaledFloat';
 
 export interface TransformState {
   pointTransform: string;
@@ -273,9 +274,19 @@ export class AppStore implements ZoomableInterface {
   // Live preview method for px/unit during zoom operations
   getPreviewPixelsPerXUnit(): number {
     if (this.previewWorldWindow) {
-      // Calculate px/unit based on preview world window
+      // Calculate px/unit based on preview world window using ScaledFloat
       const previewWidth = this.previewWorldWindow.topRight[0].sub(this.previewWorldWindow.bottomLeft[0]);
-      return this.screenViewport.width / previewWidth.toNumber();
+      const previewWidthScaled = previewWidth.toScaledFloat();
+      const screenWidth = new ScaledFloat(this.screenViewport.width);
+      
+      const ratio = ScaledFloat.fromMantissaExponent(
+        screenWidth.getMantissa() / previewWidthScaled.getMantissa(),
+        screenWidth.getExponent() - previewWidthScaled.getExponent()
+      );
+      
+      // Convert to number for UI display (safe as this is for display purposes)
+      const result = ratio.toFloatInBounds(-1e308, 1e308);
+      return result !== null ? result : this.mapping.getPixelsPerXUnit();
     }
     return this.mapping.getPixelsPerXUnit();
   }
