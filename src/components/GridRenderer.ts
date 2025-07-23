@@ -4,6 +4,7 @@ import { ScaledFloat } from '../types/ScaledFloat';
 
 export interface GridLine {
   position: PreciseDecimal;
+  screenPoint: number;
   thickness: number;
   precision: number;
   isThick: boolean;
@@ -45,7 +46,7 @@ export class GridRenderer {
     const yMin = this.mapping.screenToWorldY(screenViewport.height);
     const yMax = this.mapping.screenToWorldY(0);
 
-    return this.calculateGridLines(maxPrecision, yMin, yMax);
+    return this.calculateGridLines(maxPrecision, yMin, yMax, (position) => this.mapping.worldToScreenY(position));
   }
 
   calculateVerticalGridLines(maxPrecision: number): GridLine[] {
@@ -53,10 +54,10 @@ export class GridRenderer {
     const xMin = this.mapping.screenToWorldX(0);
     const xMax = this.mapping.screenToWorldX(screenViewport.width);
 
-    return this.calculateGridLines(maxPrecision, xMin, xMax);
+    return this.calculateGridLines(maxPrecision, xMin, xMax, (position) => this.mapping.worldToScreenX(position));
   }
 
-  private calculateGridLines(maxPrecision: number, dimMin: PreciseDecimal, dimMax: PreciseDecimal): GridLine[] {
+  private calculateGridLines(maxPrecision: number, dimMin: PreciseDecimal, dimMax: PreciseDecimal, worldToScreenPosition: (position: PreciseDecimal) => number): GridLine[] {
     const lines: GridLine[] = [];
 
     // Generate lines with correct thickness based on grid weight hierarchy
@@ -82,7 +83,8 @@ export class GridRenderer {
       for (let i = startIndex; i.lte(endIndex); i = i.add(new PreciseDecimal(1, 0))) {
         const position = i.div(multiplier);
         if (position.isWithinInterval(dimMin, dimMax)) {
-          lines.push({ position: position.setPrecision(precision), thickness, precision, isThick });
+          const screenPoint = worldToScreenPosition(position);
+          lines.push({ position: position.setPrecision(precision), screenPoint, thickness, precision, isThick });
         }
       }
     }
