@@ -58,6 +58,16 @@ export class ScaledFloat {
     return new ScaledFloat(newMantissa, this.exponent);
   }
 
+  mulScaled(other: ScaledFloat): ScaledFloat {
+    if (this.mantissa === 0 || other.mantissa === 0) {
+      return new ScaledFloat(0);
+    }
+    
+    const newMantissa = this.mantissa * other.mantissa;
+    const newExponent = this.exponent + other.exponent;
+    return new ScaledFloat(newMantissa, newExponent);
+  }
+
   add(value: float): ScaledFloat {
     if (this.mantissa === 0) {
       return new ScaledFloat(value);
@@ -70,6 +80,20 @@ export class ScaledFloat {
     const thisValue = this.mantissa * Math.pow(10, this.exponent);
     const result = thisValue + value;
     return new ScaledFloat(result);
+  }
+
+  sub(other: ScaledFloat): ScaledFloat {
+    if (other.mantissa === 0) {
+      return ScaledFloat.fromMantissaExponent(this.mantissa, this.exponent);
+    }
+    if (this.mantissa === 0) {
+      return ScaledFloat.fromMantissaExponent(-other.mantissa, other.exponent);
+    }
+
+    // Convert both to the same scale for subtraction
+    const thisValue = this.toFloat();
+    const otherValue = other.toFloat();
+    return new ScaledFloat(thisValue - otherValue);
   }
 
   toFloatInBounds(minValue: float, maxValue: float): float | null {

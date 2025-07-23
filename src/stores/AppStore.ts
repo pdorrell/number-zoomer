@@ -74,9 +74,9 @@ export class AppStore implements ZoomableInterface {
   }
 
   updateWorldWindow(bottomLeft: Point, topRight: Point) {
-    // Round boundary coordinates according to design spec (precision N+1)
-    // Use X dimension only for precision calculation to ensure aspect ratio preservation
-    const worldWindowPrecision = this.calculateWorldWindowPrecision() + 1;
+    // Use high precision for world window coordinates to avoid forcing grid alignment
+    // World window coordinates should not snap to grid lines during zoom operations
+    const worldWindowPrecision = Math.max(15, this.calculateWorldWindowPrecision() + 5);
     
     this.worldWindow = { 
       bottomLeft: [

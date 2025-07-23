@@ -53,28 +53,31 @@ export class CoordinateMapping {
   }
 
   worldToScreenX(worldX: PreciseDecimal): number {
-    const xRange = this.worldWindow.topRight[0].sub(this.worldWindow.bottomLeft[0]);
-    const xOffset = worldX.sub(this.worldWindow.bottomLeft[0]);
-    return xOffset.div(xRange).toNumber() * this.screenViewport.width;
+    const screenX = this.worldToScreenXScaled(worldX);
+    const result = screenX.toFloatInBounds(-1e10, 1e10);
+    return result !== null ? result : 0;
   }
 
   worldToScreenY(worldY: PreciseDecimal): number {
-    const yRange = this.worldWindow.topRight[1].sub(this.worldWindow.bottomLeft[1]);
-    const yOffset = worldY.sub(this.worldWindow.bottomLeft[1]);
-    return this.screenViewport.height - (yOffset.div(yRange).toNumber() * this.screenViewport.height);
+    const screenY = this.worldToScreenYScaled(worldY);
+    const result = screenY.toFloatInBounds(-1e10, 1e10);
+    return result !== null ? result : 0;
   }
 
   worldToScreenXScaled(worldX: PreciseDecimal): ScaledFloat {
     const xOffset = worldX.sub(this.worldWindow.bottomLeft[0]);
     const pixelsPerUnit = this.getPixelsPerXUnitScaled();
-    return pixelsPerUnit.mul(xOffset.toScaledFloat().toFloat());
+    const xOffsetScaled = xOffset.toScaledFloat();
+    return pixelsPerUnit.mulScaled(xOffsetScaled);
   }
 
   worldToScreenYScaled(worldY: PreciseDecimal): ScaledFloat {
     const yOffset = worldY.sub(this.worldWindow.bottomLeft[1]);
     const pixelsPerUnit = this.getPixelsPerYUnitScaled();
-    const screenY = pixelsPerUnit.mul(yOffset.toScaledFloat().toFloat());
-    return new ScaledFloat(this.screenViewport.height).add(-screenY.toFloat());
+    const yOffsetScaled = yOffset.toScaledFloat();
+    const screenY = pixelsPerUnit.mulScaled(yOffsetScaled);
+    const screenHeight = new ScaledFloat(this.screenViewport.height);
+    return screenHeight.sub(screenY);
   }
 
   getPixelsPerXUnit(): number {
