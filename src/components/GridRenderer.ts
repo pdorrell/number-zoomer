@@ -4,7 +4,7 @@ import { ScaledFloat } from '../types/ScaledFloat';
 
 export interface GridLine {
   position: PreciseDecimal;
-  screenPoint: number;
+  screenPosition: number;
   thickness: number;
   precision: number;
   isThick: boolean;
@@ -84,8 +84,8 @@ export class GridRenderer {
       for (let i = startIndex; i.lte(endIndex); i = i.add(new PreciseDecimal(1, 0))) {
         const position = i.div(multiplier);
         if (position.isWithinInterval(dimMin, dimMax)) {
-          const screenPoint = worldToScreenPosition(position);
-          lines.push({ position: position.setPrecision(precision), screenPoint, thickness, precision, isThick });
+          const screenPosition = worldToScreenPosition(position);
+          lines.push({ position: position.setPrecision(precision), screenPosition, thickness, precision, isThick });
         }
       }
     }
