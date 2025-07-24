@@ -1,5 +1,5 @@
 import { PreciseDecimal } from '../types/Decimal';
-import { CoordinateMapping, Point } from '../types/Coordinate';
+import { CoordinateMapping, CoordinateAxisMapping, Point } from '../types/Coordinate';
 import { ScaledFloat } from '../types/ScaledFloat';
 
 export interface GridLine {
@@ -42,24 +42,26 @@ export class GridRenderer {
   }
 
   calculateHorizontalGridLines(maxPrecision: number): GridLine[] {
-    const screenViewport = this.getScreenViewport();
-    const yMin = this.mapping.y.screenToWorld(screenViewport.height);
-    const yMax = this.mapping.y.screenToWorld(0);
-
-    return this.calculateGridLines(maxPrecision, yMin, yMax, (position) => this.mapping.y.worldToScreen(position));
+    return this.calculateGridLines(maxPrecision, this.mapping.y);
   }
 
   calculateVerticalGridLines(maxPrecision: number): GridLine[] {
-    const screenViewport = this.getScreenViewport();
-    const xMin = this.mapping.x.screenToWorld(0);
-    const xMax = this.mapping.x.screenToWorld(screenViewport.width);
-
-    return this.calculateGridLines(maxPrecision, xMin, xMax, (position) => this.mapping.x.worldToScreen(position));
+    return this.calculateGridLines(maxPrecision, this.mapping.x);
   }
 
-  private calculateGridLines(maxPrecision: number, minWorldPosition: PreciseDecimal, maxWorldPosition: PreciseDecimal,
-                             worldToScreenPosition: (position: PreciseDecimal) => number): GridLine[] {
+  private calculateGridLines(maxPrecision: number, axisMapping: CoordinateAxisMapping): GridLine[] {
     const lines: GridLine[] = [];
+    const screenViewport = this.getScreenViewport();
+    
+    // Calculate world bounds based on axis mapping
+    // For X axis: screen 0 to width, for Y axis: screen 0 to height
+    const screenMax = axisMapping === this.mapping.x ? screenViewport.width : screenViewport.height;
+    const worldPos1 = axisMapping.screenToWorld(0);
+    const worldPos2 = axisMapping.screenToWorld(screenMax);
+    
+    // Ensure min/max are ordered correctly (handle negative direction)
+    const minWorldPosition = worldPos1.toNumber() < worldPos2.toNumber() ? worldPos1 : worldPos2;
+    const maxWorldPosition = worldPos1.toNumber() < worldPos2.toNumber() ? worldPos2 : worldPos1;
 
     // Generate lines with correct thickness based on grid weight hierarchy
     // Only generate lines for the 3 precision levels that have different thicknesses
@@ -82,7 +84,7 @@ export class GridRenderer {
       for (let i = startIndex; i.lte(endIndex); i = i.add(new PreciseDecimal(1, 0))) {
         const worldPosition = i.div(multiplier);
         if (worldPosition.isWithinInterval(minWorldPosition, maxWorldPosition)) {
-          const screenPosition = worldToScreenPosition(worldPosition);
+          const screenPosition = axisMapping.worldToScreen(worldPosition);
           lines.push({ position: worldPosition.setPrecision(precision), screenPosition, thickness, precision, isThick });
         }
       }
