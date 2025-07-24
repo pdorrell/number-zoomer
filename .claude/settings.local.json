@@ -16,7 +16,8 @@
       "Bash(true)",
       "Bash(node:*)",
       "Bash(rm:*)",
-      "Bash(npx ts-node:*)"
+      "Bash(npx ts-node:*)",
+      "Bash(npm test)"
     ],
     "deny": []
   }
