@@ -106,48 +106,8 @@ export class CoordinateMapping {
     return [this.x.screenToWorld(screenX), this.y.screenToWorld(screenY)];
   }
 
-  screenToWorldX(screenX: number): PreciseDecimal {
-    return this.x.screenToWorld(screenX);
-  }
-
-  screenToWorldY(screenY: number): PreciseDecimal {
-    return this.y.screenToWorld(screenY);
-  }
-
   worldToScreen(point: Point): { x: number; y: number } {
     return { x: this.x.worldToScreen(point[0]), y: this.y.worldToScreen(point[1]) };
-  }
-
-  worldToScreenX(worldX: PreciseDecimal): number {
-    return this.x.worldToScreen(worldX);
-  }
-
-  worldToScreenY(worldY: PreciseDecimal): number {
-    return this.y.worldToScreen(worldY);
-  }
-
-  worldToScreenXScaled(worldX: PreciseDecimal): ScaledFloat {
-    return this.x.worldToScreenScaled(worldX);
-  }
-
-  worldToScreenYScaled(worldY: PreciseDecimal): ScaledFloat {
-    return this.y.worldToScreenScaled(worldY);
-  }
-
-  getPixelsPerXUnit(): number {
-    return this.x.getPixelsPerUnit();
-  }
-
-  getPixelsPerYUnit(): number {
-    return this.y.getPixelsPerUnit();
-  }
-
-  getPixelsPerXUnitScaled(): ScaledFloat {
-    return this.x.getPixelsPerUnitScaled();
-  }
-
-  getPixelsPerYUnitScaled(): ScaledFloat {
-    return this.y.getPixelsPerUnitScaled();
   }
 
   getScreenViewport(): ScreenViewport {

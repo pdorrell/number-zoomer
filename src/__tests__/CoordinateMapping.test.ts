@@ -80,24 +80,24 @@ describe('CoordinateMapping', () => {
   describe('Individual axis methods', () => {
     describe('X-axis methods', () => {
       it('should convert screen X to world X', () => {
-        const worldX = mapping.screenToWorldX(600);
+        const worldX = mapping.x.screenToWorld(600);
         expect(worldX.toFullPrecisionString()).toBe('2');
       });
 
       it('should convert world X to screen X', () => {
-        const screenX = mapping.worldToScreenX(new PreciseDecimal(-2, 1));
+        const screenX = mapping.x.worldToScreen(new PreciseDecimal(-2, 1));
         expect(screenX).toBe(200);
       });
     });
 
     describe('Y-axis methods', () => {
       it('should convert screen Y to world Y', () => {
-        const worldY = mapping.screenToWorldY(450);
+        const worldY = mapping.y.screenToWorld(450);
         expect(worldY.toFullPrecisionString()).toBe('-1.5');
       });
 
       it('should convert world Y to screen Y', () => {
-        const screenY = mapping.worldToScreenY(new PreciseDecimal(1.5, 1));
+        const screenY = mapping.y.worldToScreen(new PreciseDecimal(1.5, 1));
         expect(screenY).toBe(150);
       });
     });
@@ -106,14 +106,14 @@ describe('CoordinateMapping', () => {
   describe('Scaled coordinate transformations', () => {
     describe('worldToScreenXScaled', () => {
       it('should return ScaledFloat for X transformations', () => {
-        const scaledX = mapping.worldToScreenXScaled(new PreciseDecimal(2, 1));
+        const scaledX = mapping.x.worldToScreenScaled(new PreciseDecimal(2, 1));
         expect(scaledX.toFloat()).toBe(600);
       });
     });
 
     describe('worldToScreenYScaled', () => {
       it('should return ScaledFloat for Y transformations', () => {
-        const scaledY = mapping.worldToScreenYScaled(new PreciseDecimal(-1.5, 1));
+        const scaledY = mapping.y.worldToScreenScaled(new PreciseDecimal(-1.5, 1));
         expect(scaledY.toFloat()).toBe(450);
       });
     });
@@ -123,7 +123,7 @@ describe('CoordinateMapping', () => {
     describe('getPixelsPerXUnit', () => {
       it('should calculate X pixels per unit correctly', () => {
         // World X range: 8 units, Screen width: 800 pixels
-        const pixelsPerUnit = mapping.getPixelsPerXUnit();
+        const pixelsPerUnit = mapping.x.getPixelsPerUnit();
         expect(pixelsPerUnit).toBe(100);
       });
     });
@@ -131,21 +131,21 @@ describe('CoordinateMapping', () => {
     describe('getPixelsPerYUnit', () => {
       it('should calculate Y pixels per unit correctly', () => {
         // World Y range: 6 units, Screen height: 600 pixels
-        const pixelsPerUnit = mapping.getPixelsPerYUnit();
+        const pixelsPerUnit = mapping.y.getPixelsPerUnit();
         expect(pixelsPerUnit).toBe(100);
       });
     });
 
     describe('getPixelsPerXUnitScaled', () => {
       it('should return ScaledFloat for X pixels per unit', () => {
-        const scaledPixelsPerUnit = mapping.getPixelsPerXUnitScaled();
+        const scaledPixelsPerUnit = mapping.x.getPixelsPerUnitScaled();
         expect(scaledPixelsPerUnit.toFloat()).toBe(100);
       });
     });
 
     describe('getPixelsPerYUnitScaled', () => {
       it('should return ScaledFloat for Y pixels per unit', () => {
-        const scaledPixelsPerUnit = mapping.getPixelsPerYUnitScaled();
+        const scaledPixelsPerUnit = mapping.y.getPixelsPerUnitScaled();
         expect(scaledPixelsPerUnit.toFloat()).toBe(100);
       });
     });
@@ -162,8 +162,8 @@ describe('CoordinateMapping', () => {
     });
 
     it('should handle different X and Y scales correctly', () => {
-      const xPixelsPerUnit = mapping.getPixelsPerXUnit();
-      const yPixelsPerUnit = mapping.getPixelsPerYUnit();
+      const xPixelsPerUnit = mapping.x.getPixelsPerUnit();
+      const yPixelsPerUnit = mapping.y.getPixelsPerUnit();
       
       expect(xPixelsPerUnit).toBe(40);  // 800 pixels / 20 X units
       expect(yPixelsPerUnit).toBe(150); // 600 pixels / 4 Y units
@@ -187,8 +187,8 @@ describe('CoordinateMapping', () => {
       
       const tinyMapping = new CoordinateMapping(screenViewport, tinyWorldWindow);
       
-      const pixelsPerXUnit = tinyMapping.getPixelsPerXUnit();
-      const pixelsPerYUnit = tinyMapping.getPixelsPerYUnit();
+      const pixelsPerXUnit = tinyMapping.x.getPixelsPerUnit();
+      const pixelsPerYUnit = tinyMapping.y.getPixelsPerUnit();
       
       expect(pixelsPerXUnit).toBe(800000);  // 800 / 0.001
       expect(pixelsPerYUnit).toBe(600000);  // 600 / 0.001
@@ -202,8 +202,8 @@ describe('CoordinateMapping', () => {
       
       const hugeMapping = new CoordinateMapping(screenViewport, hugeWorldWindow);
       
-      const pixelsPerXUnit = hugeMapping.getPixelsPerXUnit();
-      const pixelsPerYUnit = hugeMapping.getPixelsPerYUnit();
+      const pixelsPerXUnit = hugeMapping.x.getPixelsPerUnit();
+      const pixelsPerYUnit = hugeMapping.y.getPixelsPerUnit();
       
       expect(pixelsPerXUnit).toBe(0.4);   // 800 / 2000
       expect(pixelsPerYUnit).toBeCloseTo(0.3, 10);   // 600 / 2000 (handle floating point precision)
@@ -252,8 +252,8 @@ describe('CoordinateMapping', () => {
       const xPixelsPerUnit = mapping.x.getPixelsPerUnit();
       const yPixelsPerUnit = mapping.y.getPixelsPerUnit();
       
-      expect(xPixelsPerUnit).toBe(mapping.getPixelsPerXUnit());
-      expect(yPixelsPerUnit).toBe(mapping.getPixelsPerYUnit());
+      expect(xPixelsPerUnit).toBe(mapping.x.getPixelsPerUnit());
+      expect(yPixelsPerUnit).toBe(mapping.y.getPixelsPerUnit());
     });
   });
 });
