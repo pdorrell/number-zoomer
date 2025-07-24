@@ -19,7 +19,7 @@ export class GridRenderer {
 
   calculateMaxPrecision(): number {
     // Use X dimension for precision calculation to ensure consistent grid resolution
-    const pixelsPerXUnitScaled = this.mapping.getPixelsPerXUnitScaled();
+    const pixelsPerXUnitScaled = this.mapping.x.getPixelsPerUnitScaled();
     const minSeparation = new ScaledFloat(5);
 
     // Calculate ratio using ScaledFloat to avoid overflow/underflow
@@ -43,18 +43,18 @@ export class GridRenderer {
 
   calculateHorizontalGridLines(maxPrecision: number): GridLine[] {
     const screenViewport = this.getScreenViewport();
-    const yMin = this.mapping.screenToWorldY(screenViewport.height);
-    const yMax = this.mapping.screenToWorldY(0);
+    const yMin = this.mapping.y.screenToWorld(screenViewport.height);
+    const yMax = this.mapping.y.screenToWorld(0);
 
-    return this.calculateGridLines(maxPrecision, yMin, yMax, (position) => this.mapping.worldToScreenY(position));
+    return this.calculateGridLines(maxPrecision, yMin, yMax, (position) => this.mapping.y.worldToScreen(position));
   }
 
   calculateVerticalGridLines(maxPrecision: number): GridLine[] {
     const screenViewport = this.getScreenViewport();
-    const xMin = this.mapping.screenToWorldX(0);
-    const xMax = this.mapping.screenToWorldX(screenViewport.width);
+    const xMin = this.mapping.x.screenToWorld(0);
+    const xMax = this.mapping.x.screenToWorld(screenViewport.width);
 
-    return this.calculateGridLines(maxPrecision, xMin, xMax, (position) => this.mapping.worldToScreenX(position));
+    return this.calculateGridLines(maxPrecision, xMin, xMax, (position) => this.mapping.x.worldToScreen(position));
   }
 
   private calculateGridLines(maxPrecision: number, minWorldPosition: PreciseDecimal, maxWorldPosition: PreciseDecimal,

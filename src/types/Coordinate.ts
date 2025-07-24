@@ -1,5 +1,5 @@
 import { PreciseDecimal } from './Decimal';
-import { ScaledFloat, float } from './ScaledFloat';
+import { ScaledFloat, float, int } from './ScaledFloat';
 
 export type Point = readonly [x: PreciseDecimal, y: PreciseDecimal];
 
@@ -20,94 +20,134 @@ export interface ScaledWorldMapping {
   precision: number;
 }
 
+export class CoordinateAxisMapping {
+  private windowRange: PreciseDecimal;
+
+  constructor(
+    private minWindowPosition: PreciseDecimal,
+    private maxWindowPosition: PreciseDecimal,
+    private screenBase: float,
+    private screenRange: float,
+    private screenDirection: int = 1
+  ) {
+    this.windowRange = maxWindowPosition.sub(minWindowPosition);
+  }
+
+  screenToWorld(screenPosition: float): PreciseDecimal {
+    // Convert screen position to ratio (0-1) based on screen direction
+    const screenOffset = screenPosition - this.screenBase;
+    const ratio = this.screenDirection > 0 ? 
+      screenOffset / this.screenRange : 
+      (this.screenRange - screenOffset) / this.screenRange;
+    
+    return this.minWindowPosition.add(this.windowRange.mul(new PreciseDecimal(ratio)));
+  }
+
+  worldToScreen(worldPosition: PreciseDecimal): number {
+    const worldToScreenScaled = this.worldToScreenScaled(worldPosition);
+    const result = worldToScreenScaled.toFloatInBounds(-1e10, 1e10);
+    return result !== null ? result : 0;
+  }
+
+  worldToScreenScaled(worldPosition: PreciseDecimal): ScaledFloat {
+    const worldOffset = worldPosition.sub(this.minWindowPosition);
+    const pixelsPerUnit = this.getPixelsPerUnitScaled();
+    const worldOffsetScaled = worldOffset.toScaledFloat();
+    const screenOffset = pixelsPerUnit.mulScaled(worldOffsetScaled);
+    
+    const screenBase = new ScaledFloat(this.screenBase);
+    return this.screenDirection > 0 ? 
+      screenBase.add(screenOffset.toFloat()) :
+      screenBase.add(-screenOffset.toFloat());
+  }
+
+  getPixelsPerUnit(): number {
+    const pixelsPerUnitScaled = this.getPixelsPerUnitScaled();
+    const result = pixelsPerUnitScaled.toFloatInBounds(-1e308, 1e308);
+    return result !== null ? result : 0;
+  }
+
+  getPixelsPerUnitScaled(): ScaledFloat {
+    const windowRangeScaled = this.windowRange.toScaledFloat();
+    const screenRangeScaled = new ScaledFloat(Math.abs(this.screenRange));
+    return ScaledFloat.fromMantissaExponent(
+      screenRangeScaled.getMantissa() / windowRangeScaled.getMantissa(),
+      screenRangeScaled.getExponent() - windowRangeScaled.getExponent()
+    );
+  }
+}
+
 export class CoordinateMapping {
+  public readonly x: CoordinateAxisMapping;
+  public readonly y: CoordinateAxisMapping;
+
   constructor(
     private screenViewport: ScreenViewport,
     private worldWindow: WorldWindow
-  ) {}
+  ) {
+    this.x = new CoordinateAxisMapping(
+      worldWindow.bottomLeft[0],
+      worldWindow.topRight[0],
+      0,
+      screenViewport.width,
+      1  // X increases rightward
+    );
+
+    this.y = new CoordinateAxisMapping(
+      worldWindow.bottomLeft[1],
+      worldWindow.topRight[1],
+      screenViewport.height,
+      screenViewport.height,
+      -1  // Y increases upward, screen increases downward
+    );
+  }
 
   screenToWorld(screenX: number, screenY: number): Point {
-    const x = this.screenToWorldX(screenX);
-    const y = this.screenToWorldY(screenY);
-
-    return [x, y];
+    return [this.x.screenToWorld(screenX), this.y.screenToWorld(screenY)];
   }
 
   screenToWorldX(screenX: number): PreciseDecimal {
-    const xRange = this.worldWindow.topRight[0].sub(this.worldWindow.bottomLeft[0]);
-    const xRatio = screenX / this.screenViewport.width;
-    return this.worldWindow.bottomLeft[0].add(xRange.mul(new PreciseDecimal(xRatio)));
+    return this.x.screenToWorld(screenX);
   }
 
   screenToWorldY(screenY: number): PreciseDecimal {
-    const yRange = this.worldWindow.topRight[1].sub(this.worldWindow.bottomLeft[1]);
-    const yRatio = (this.screenViewport.height - screenY) / this.screenViewport.height;
-    return this.worldWindow.bottomLeft[1].add(yRange.mul(new PreciseDecimal(yRatio)));
+    return this.y.screenToWorld(screenY);
   }
 
   worldToScreen(point: Point): { x: number; y: number } {
-    const x = this.worldToScreenX(point[0]);
-    const y = this.worldToScreenY(point[1]);
-
-    return { x, y };
+    return { x: this.x.worldToScreen(point[0]), y: this.y.worldToScreen(point[1]) };
   }
 
   worldToScreenX(worldX: PreciseDecimal): number {
-    const screenX = this.worldToScreenXScaled(worldX);
-    const result = screenX.toFloatInBounds(-1e10, 1e10);
-    return result !== null ? result : 0;
+    return this.x.worldToScreen(worldX);
   }
 
   worldToScreenY(worldY: PreciseDecimal): number {
-    const screenY = this.worldToScreenYScaled(worldY);
-    const result = screenY.toFloatInBounds(-1e10, 1e10);
-    return result !== null ? result : 0;
+    return this.y.worldToScreen(worldY);
   }
 
   worldToScreenXScaled(worldX: PreciseDecimal): ScaledFloat {
-    const xOffset = worldX.sub(this.worldWindow.bottomLeft[0]);
-    const pixelsPerUnit = this.getPixelsPerXUnitScaled();
-    const xOffsetScaled = xOffset.toScaledFloat();
-    return pixelsPerUnit.mulScaled(xOffsetScaled);
+    return this.x.worldToScreenScaled(worldX);
   }
 
   worldToScreenYScaled(worldY: PreciseDecimal): ScaledFloat {
-    const yOffset = worldY.sub(this.worldWindow.bottomLeft[1]);
-    const pixelsPerUnit = this.getPixelsPerYUnitScaled();
-    const yOffsetScaled = yOffset.toScaledFloat();
-    const screenY = pixelsPerUnit.mulScaled(yOffsetScaled);
-    const screenHeight = new ScaledFloat(this.screenViewport.height);
-    return screenHeight.sub(screenY);
+    return this.y.worldToScreenScaled(worldY);
   }
 
   getPixelsPerXUnit(): number {
-    const xRange = this.worldWindow.topRight[0].sub(this.worldWindow.bottomLeft[0]);
-    return this.screenViewport.width / xRange.toNumber();
+    return this.x.getPixelsPerUnit();
   }
 
   getPixelsPerYUnit(): number {
-    const yRange = this.worldWindow.topRight[1].sub(this.worldWindow.bottomLeft[1]);
-    return this.screenViewport.height / yRange.toNumber();
+    return this.y.getPixelsPerUnit();
   }
 
   getPixelsPerXUnitScaled(): ScaledFloat {
-    const xRange = this.worldWindow.topRight[0].sub(this.worldWindow.bottomLeft[0]);
-    const xRangeScaled = xRange.toScaledFloat();
-    const screenWidth = new ScaledFloat(this.screenViewport.width);
-    return ScaledFloat.fromMantissaExponent(
-      screenWidth.getMantissa() / xRangeScaled.getMantissa(),
-      screenWidth.getExponent() - xRangeScaled.getExponent()
-    );
+    return this.x.getPixelsPerUnitScaled();
   }
 
   getPixelsPerYUnitScaled(): ScaledFloat {
-    const yRange = this.worldWindow.topRight[1].sub(this.worldWindow.bottomLeft[1]);
-    const yRangeScaled = yRange.toScaledFloat();
-    const screenHeight = new ScaledFloat(this.screenViewport.height);
-    return ScaledFloat.fromMantissaExponent(
-      screenHeight.getMantissa() / yRangeScaled.getMantissa(),
-      screenHeight.getExponent() - yRangeScaled.getExponent()
-    );
+    return this.y.getPixelsPerUnitScaled();
   }
 
   getScreenViewport(): ScreenViewport {

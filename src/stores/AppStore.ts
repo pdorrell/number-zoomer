@@ -103,7 +103,7 @@ export class AppStore implements ZoomableInterface {
   calculateWorldWindowPrecision(): number {
     // Calculate world window precision N based on X dimension only (per design spec)
     // This ensures aspect ratio preservation and identical grid resolution for both axes
-    const pixelsPerXUnit = this.mapping.getPixelsPerXUnit();
+    const pixelsPerXUnit = this.mapping.x.getPixelsPerUnit();
     const minSeparation = 5;
 
     // Direct calculation: maxPrecision = floor(log10(pixelsPerXUnit / minSeparation))
@@ -286,9 +286,9 @@ export class AppStore implements ZoomableInterface {
 
       // Convert to number for UI display (safe as this is for display purposes)
       const result = ratio.toFloatInBounds(-1e308, 1e308);
-      return result !== null ? result : this.mapping.getPixelsPerXUnit();
+      return result !== null ? result : this.mapping.x.getPixelsPerUnit();
     }
-    return this.mapping.getPixelsPerXUnit();
+    return this.mapping.x.getPixelsPerUnit();
   }
 
   isCurrentPointVisible(): boolean {
