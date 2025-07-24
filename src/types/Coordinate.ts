@@ -24,11 +24,11 @@ export class CoordinateAxisMapping {
   private windowRange: PreciseDecimal;
 
   constructor(
-    private minWindowPosition: PreciseDecimal,
-    private maxWindowPosition: PreciseDecimal,
-    private screenBase: float,
-    private screenRange: float,
-    private screenDirection: int = 1
+    public readonly minWindowPosition: PreciseDecimal,
+    public readonly maxWindowPosition: PreciseDecimal,
+    public readonly screenBase: float,
+    public readonly screenRange: float,
+    public readonly screenDirection: int = 1
   ) {
     this.windowRange = maxWindowPosition.sub(minWindowPosition);
   }

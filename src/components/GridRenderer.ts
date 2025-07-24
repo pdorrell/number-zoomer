@@ -51,17 +51,10 @@ export class GridRenderer {
 
   private calculateGridLines(maxPrecision: number, axisMapping: CoordinateAxisMapping): GridLine[] {
     const lines: GridLine[] = [];
-    const screenViewport = this.getScreenViewport();
     
-    // Calculate world bounds based on axis mapping
-    // For X axis: screen 0 to width, for Y axis: screen 0 to height
-    const screenMax = axisMapping === this.mapping.x ? screenViewport.width : screenViewport.height;
-    const worldPos1 = axisMapping.screenToWorld(0);
-    const worldPos2 = axisMapping.screenToWorld(screenMax);
-    
-    // Ensure min/max are ordered correctly (handle negative direction)
-    const minWorldPosition = worldPos1.toNumber() < worldPos2.toNumber() ? worldPos1 : worldPos2;
-    const maxWorldPosition = worldPos1.toNumber() < worldPos2.toNumber() ? worldPos2 : worldPos1;
+    // Use the world bounds directly from the axis mapping
+    const minWorldPosition = axisMapping.minWindowPosition;
+    const maxWorldPosition = axisMapping.maxWindowPosition;
 
     // Generate lines with correct thickness based on grid weight hierarchy
     // Only generate lines for the 3 precision levels that have different thicknesses
