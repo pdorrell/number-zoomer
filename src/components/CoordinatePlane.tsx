@@ -3,6 +3,8 @@ import { observer } from 'mobx-react-lite';
 import { useGesture } from '@use-gesture/react';
 import { AppStore } from '../stores/AppStore';
 import { CanvasRenderer } from './CanvasRenderer';
+import { CoordinateLabels } from './CoordinateLabels';
+import { GridRenderer } from './GridRenderer';
 
 interface CoordinatePlaneProps {
   store: AppStore;
@@ -222,6 +224,57 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
 
   
   const currentPointScreen = store.mapping.worldToScreen(store.currentPoint);
+  
+  // Calculate grid lines for coordinate labels
+  const gridRenderer = new GridRenderer(store.mapping);
+  const maxPrecision = gridRenderer.calculateMaxPrecision();
+  const horizontalLines = gridRenderer.calculateHorizontalGridLines(maxPrecision);
+  const verticalLines = gridRenderer.calculateVerticalGridLines(maxPrecision);
+  
+  // Calculate transforms for coordinate labels during drag/zoom
+  const calculateLabelTransforms = () => {
+    const gridTransform = store.transformState.gridTransform;
+    
+    if (!gridTransform) {
+      return { xLabelsTransform: '', yLabelsTransform: '' };
+    }
+    
+    // Parse transform to extract translate values
+    const translateMatch = gridTransform.match(/translate\(([^,]+)px,\s*([^)]+)px\)/);
+    if (translateMatch) {
+      const deltaX = parseFloat(translateMatch[1]);
+      const deltaY = parseFloat(translateMatch[2]);
+      
+      return {
+        xLabelsTransform: `translate(${deltaX}, 0)`, // X labels move horizontally only
+        yLabelsTransform: `translate(0, ${deltaY})`   // Y labels move vertically only
+      };
+    }
+    
+    // Handle zoom transforms - labels don't scale, but they should move to stay aligned
+    const scaleMatch = gridTransform.match(/translate\(([^,]+)px,\s*([^)]+)px\)\s*scale\(([^)]+)\)\s*translate\(([^,]+)px,\s*([^)]+)px\)/);
+    if (scaleMatch) {
+      // Extract the translation components for label positioning
+      const centerX = parseFloat(scaleMatch[1]);
+      const centerY = parseFloat(scaleMatch[2]);
+      const scale = parseFloat(scaleMatch[3]);
+      const offsetX = parseFloat(scaleMatch[4]);
+      const offsetY = parseFloat(scaleMatch[5]);
+      
+      // Calculate net translation for labels (no scaling)
+      const netX = centerX + offsetX * (scale - 1);
+      const netY = centerY + offsetY * (scale - 1);
+      
+      return {
+        xLabelsTransform: `translate(${netX}, 0)`, // X labels move horizontally
+        yLabelsTransform: `translate(0, ${netY})`   // Y labels move vertically
+      };
+    }
+    
+    return { xLabelsTransform: '', yLabelsTransform: '' };
+  };
+  
+  const { xLabelsTransform, yLabelsTransform } = calculateLabelTransforms();
 
   return (
     <div 
@@ -245,6 +298,16 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       {/* Canvas for grid lines, coordinates, and equation */}
       <CanvasRenderer 
         store={store}
+      />
+      
+      {/* SVG coordinate labels above canvas */}
+      <CoordinateLabels
+        horizontalLines={horizontalLines}
+        verticalLines={verticalLines}
+        canvasWidth={store.screenViewport.width}
+        canvasHeight={store.screenViewport.height}
+        xLabelsTransform={xLabelsTransform}
+        yLabelsTransform={yLabelsTransform}
       />
       
       {/* SVG overlay for current point circle */}

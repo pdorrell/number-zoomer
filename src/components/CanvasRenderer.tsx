@@ -55,12 +55,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store }
       ctx.lineTo(canvas.width, screenY);
       ctx.stroke();
       
-      // Draw coordinate labels for thick lines
-      if (line.isThick) {
-        ctx.fillStyle = "#495057";
-        ctx.font = "10px monospace";
-        ctx.fillText(`y=${line.position.toString()}`, 5, screenY - 3);
-      }
+      // Coordinate labels now rendered by SVG component
     });
     
     // Vertical lines
@@ -74,12 +69,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store }
       ctx.lineTo(screenX, canvas.height);
       ctx.stroke();
       
-      // Draw coordinate labels for thick lines
-      if (line.isThick) {
-        ctx.fillStyle = "#495057";
-        ctx.font = "10px monospace";
-        ctx.fillText(`x=${line.position.toString()}`, screenX + 3, canvas.height - 5);
-      }
+      // Coordinate labels now rendered by SVG component
     });
     
     // Draw equation graph
