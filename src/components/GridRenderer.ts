@@ -57,7 +57,8 @@ export class GridRenderer {
     return this.calculateGridLines(maxPrecision, xMin, xMax, (position) => this.mapping.worldToScreenX(position));
   }
 
-  private calculateGridLines(maxPrecision: number, dimMin: PreciseDecimal, dimMax: PreciseDecimal, worldToScreenPosition: (position: PreciseDecimal) => number): GridLine[] {
+  private calculateGridLines(maxPrecision: number, dimMin: PreciseDecimal, dimMax: PreciseDecimal,
+                             worldToScreenPosition: (position: PreciseDecimal) => number): GridLine[] {
     const lines: GridLine[] = [];
 
     // Generate lines with correct thickness based on grid weight hierarchy
