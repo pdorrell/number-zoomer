@@ -57,7 +57,7 @@ export class GridRenderer {
     return this.calculateGridLines(maxPrecision, xMin, xMax, (position) => this.mapping.worldToScreenX(position));
   }
 
-  private calculateGridLines(maxPrecision: number, dimMin: PreciseDecimal, dimMax: PreciseDecimal,
+  private calculateGridLines(maxPrecision: number, minWorldPosition: PreciseDecimal, maxWorldPosition: PreciseDecimal,
                              worldToScreenPosition: (position: PreciseDecimal) => number): GridLine[] {
     const lines: GridLine[] = [];
 
@@ -65,16 +65,14 @@ export class GridRenderer {
     // Only generate lines for the 3 precision levels that have different thicknesses
     const minPrecision = Math.max(0, maxPrecision - 2);
     for (let precision = minPrecision; precision <= maxPrecision; precision++) {
-      const step = new PreciseDecimal(10, 0).pow(-precision);
-
       const thickness = this.calculateThickness(precision, maxPrecision);
       // Show labels for all grid lines except the thinnest (1px) ones
       const isThick = thickness > 1;
 
       // Use PreciseDecimal for all calculations to avoid floating-point errors
       const multiplier = new PreciseDecimal(10, 0).pow(precision);
-      const startMultiplied = dimMin.mul(multiplier);
-      const endMultiplied = dimMax.mul(multiplier);
+      const startMultiplied = minWorldPosition.mul(multiplier);
+      const endMultiplied = maxWorldPosition.mul(multiplier);
 
       const startIndex = startMultiplied.floor();
       const endIndex = endMultiplied.ceil();
@@ -82,10 +80,10 @@ export class GridRenderer {
       const numGridLines = endIndex.toInteger() + 1 - startIndex.toInteger();
 
       for (let i = startIndex; i.lte(endIndex); i = i.add(new PreciseDecimal(1, 0))) {
-        const position = i.div(multiplier);
-        if (position.isWithinInterval(dimMin, dimMax)) {
-          const screenPosition = worldToScreenPosition(position);
-          lines.push({ position: position.setPrecision(precision), screenPosition, thickness, precision, isThick });
+        const worldPosition = i.div(multiplier);
+        if (worldPosition.isWithinInterval(minWorldPosition, maxWorldPosition)) {
+          const screenPosition = worldToScreenPosition(worldPosition);
+          lines.push({ position: worldPosition.setPrecision(precision), screenPosition, thickness, precision, isThick });
         }
       }
     }
