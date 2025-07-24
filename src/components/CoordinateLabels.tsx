@@ -9,6 +9,9 @@ interface CoordinateLabelsProps {
   canvasHeight: number;
   xLabelsTransform?: string;
   yLabelsTransform?: string;
+  // Individual transforms for zoom operations
+  getYLabelTransform?: (screenY: number) => string;
+  getXLabelTransform?: (screenX: number) => string;
 }
 
 export const CoordinateLabels: React.FC<CoordinateLabelsProps> = observer(({
@@ -17,7 +20,9 @@ export const CoordinateLabels: React.FC<CoordinateLabelsProps> = observer(({
   canvasWidth,
   canvasHeight,
   xLabelsTransform = '',
-  yLabelsTransform = ''
+  yLabelsTransform = '',
+  getYLabelTransform,
+  getXLabelTransform
 }) => {
   // Filter only thick lines that should have coordinate labels
   const thickHorizontalLines = horizontalLines.filter(line => line.isThick);
@@ -40,9 +45,10 @@ export const CoordinateLabels: React.FC<CoordinateLabelsProps> = observer(({
         {thickHorizontalLines.map((line, index) => {
           const screenY = line.screenPosition;
           const labelText = line.position.toFullPrecisionString();
+          const individualTransform = getYLabelTransform ? getYLabelTransform(screenY) : '';
           
           return (
-            <g key={`y-${index}-${line.position.toString()}`}>
+            <g key={`y-${index}-${line.position.toString()}`} transform={individualTransform}>
               <rect
                 x={2}
                 y={screenY - 12}
@@ -73,9 +79,10 @@ export const CoordinateLabels: React.FC<CoordinateLabelsProps> = observer(({
         {thickVerticalLines.map((line, index) => {
           const screenX = line.screenPosition;
           const labelText = line.position.toFullPrecisionString();
+          const individualTransform = getXLabelTransform ? getXLabelTransform(screenX) : '';
           
           return (
-            <g key={`x-${index}-${line.position.toString()}`}>
+            <g key={`x-${index}-${line.position.toString()}`} transform={individualTransform}>
               <rect
                 x={screenX + 1}
                 y={canvasHeight - 18}
