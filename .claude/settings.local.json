@@ -18,7 +18,8 @@
       "Bash(rm:*)",
       "Bash(npx ts-node:*)",
       "Bash(npm test)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(npm test:*)"
     ],
     "deny": []
   }

@@ -80,9 +80,10 @@ export class GridRenderer {
       const windowStep = new PreciseDecimal(1, 0).div(multiplier); // reciprocal of multiplier
       const screenStep = axisMapping.worldToScreenRange(windowStep);
 
+
       // Use incremental arithmetic instead of repeated coordinate transformations
       let i = startIndex;
-      while (i.lte(endIndex) && axisMapping.positionIsInScreen(screenPosition)) {
+      while (i.lte(endIndex)) {
         if (windowPosition.isWithinInterval(minWorldPosition, maxWorldPosition)) {
           lines.push({ position: windowPosition.setPrecision(precision), screenPosition, thickness, precision, isThick });
         }
