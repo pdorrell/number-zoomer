@@ -29,7 +29,7 @@ export class CoordinateMapping {
   screenToWorld(screenX: number, screenY: number): Point {
     const x = this.screenToWorldX(screenX);
     const y = this.screenToWorldY(screenY);
-    
+
     return [x, y];
   }
 
@@ -48,7 +48,7 @@ export class CoordinateMapping {
   worldToScreen(point: Point): { x: number; y: number } {
     const x = this.worldToScreenX(point[0]);
     const y = this.worldToScreenY(point[1]);
-    
+
     return { x, y };
   }
 
@@ -114,8 +114,4 @@ export class CoordinateMapping {
     return this.screenViewport;
   }
 
-  // Legacy methods for backward compatibility during transition
-  screenToXY = this.screenToWorld;
-  xyToScreen = this.worldToScreen;
-  getScreenDimensions = this.getScreenViewport;
 }

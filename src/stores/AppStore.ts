@@ -19,19 +19,19 @@ export class AppStore implements ZoomableInterface {
   mapping: CoordinateMapping;
   currentEquation: Equation;
   transformState: TransformState;
-  
+
   // New zoom state management
   centrePoint: { x: number; y: number } | null = null;
   zoomingSource: ZoomSource | null = null;
   zoomFactor: number = 1.0;
   private startingWorldWindow: WorldWindow | null = null;
-  
+
   // Preview values for immediate display during zoom
   previewWorldWindow: WorldWindow | null = null;
-  
+
   // Preview values for immediate display during world window drag
   dragPreviewWorldWindow: WorldWindow | null = null;
-  
+
   // Computed property for backward compatibility
   get isZooming(): boolean {
     return this.zoomingSource !== null;
@@ -40,12 +40,12 @@ export class AppStore implements ZoomableInterface {
   constructor() {
     this.worldWindow = {
       bottomLeft: [
-        new PreciseDecimal(-5, 2), 
-        new PreciseDecimal(-5, 2) 
+        new PreciseDecimal(-5, 2),
+        new PreciseDecimal(-5, 2)
       ],
       topRight: [
-        new PreciseDecimal(5, 2), 
-        new PreciseDecimal(5, 2) 
+        new PreciseDecimal(5, 2),
+        new PreciseDecimal(5, 2)
       ]
     };
 
@@ -64,7 +64,7 @@ export class AppStore implements ZoomableInterface {
     };
 
     this.mapping = new CoordinateMapping(this.screenViewport, this.worldWindow);
-    
+
     makeAutoObservable(this);
   }
 
@@ -77,8 +77,8 @@ export class AppStore implements ZoomableInterface {
     // Use high precision for world window coordinates to avoid forcing grid alignment
     // World window coordinates should not snap to grid lines during zoom operations
     const worldWindowPrecision = Math.max(15, this.calculateWorldWindowPrecision() + 5);
-    
-    this.worldWindow = { 
+
+    this.worldWindow = {
       bottomLeft: [
         bottomLeft[0].quantize(worldWindowPrecision),
         bottomLeft[1].quantize(worldWindowPrecision)
@@ -105,11 +105,11 @@ export class AppStore implements ZoomableInterface {
     // This ensures aspect ratio preservation and identical grid resolution for both axes
     const pixelsPerXUnit = this.mapping.getPixelsPerXUnit();
     const minSeparation = 5;
-    
+
     // Direct calculation: maxPrecision = floor(log10(pixelsPerXUnit / minSeparation))
     // This replaces the loop that finds the highest precision where separation >= minSeparation
     const maxPrecision = Math.floor(Math.log10(pixelsPerXUnit / minSeparation));
-    
+
     // Ensure we don't exceed reasonable bounds and handle edge cases
     return Math.max(0, Math.min(1000, maxPrecision));
   }
@@ -153,15 +153,15 @@ export class AppStore implements ZoomableInterface {
 
     // updateWorldWindow will handle boundary coordinate rounding
     this.updateWorldWindow(newBottomLeft, newTopRight);
-    
+
     // Note: Current point precision is NOT updated during zoom
     // It only changes when the user moves the point (per design spec)
   }
 
   pan(deltaX: number, deltaY: number) {
-    const worldDelta = this.mapping.screenToXY(deltaX, deltaY);
-    const worldOrigin = this.mapping.screenToXY(0, 0);
-    
+    const worldDelta = this.mapping.screenToWorld(deltaX, deltaY);
+    const worldOrigin = this.mapping.screenToWorld(0, 0);
+
     const dx = worldDelta[0].sub(worldOrigin[0]);
     const dy = worldDelta[1].sub(worldOrigin[1]);
 
@@ -181,17 +181,17 @@ export class AppStore implements ZoomableInterface {
 
   resetView() {
     const defaultBottomLeft: Point = [
-      new PreciseDecimal(-5, 2), 
-      new PreciseDecimal(-5, 2) 
+      new PreciseDecimal(-5, 2),
+      new PreciseDecimal(-5, 2)
     ];
     const defaultTopRight: Point = [
-      new PreciseDecimal(5, 2), 
-      new PreciseDecimal(5, 2) 
+      new PreciseDecimal(5, 2),
+      new PreciseDecimal(5, 2)
     ];
-    
+
     // Use updateWorldWindow to ensure proper boundary rounding
     this.updateWorldWindow(defaultBottomLeft, defaultTopRight);
-    
+
     // Reset current point with appropriate precision (this counts as user action)
     const currentPrecision = this.calculateCurrentPrecision();
     this.currentPoint = [
@@ -204,11 +204,11 @@ export class AppStore implements ZoomableInterface {
     // Calculate current world window dimensions
     const windowWidth = this.worldWindow.topRight[0].sub(this.worldWindow.bottomLeft[0]);
     const windowHeight = this.worldWindow.topRight[1].sub(this.worldWindow.bottomLeft[1]);
-    
+
     // Calculate half dimensions for centering
     const halfWidth = windowWidth.div(new PreciseDecimal(2));
     const halfHeight = windowHeight.div(new PreciseDecimal(2));
-    
+
     // Calculate new world window centered on current point
     const newBottomLeft: Point = [
       this.currentPoint[0].sub(halfWidth),
@@ -218,7 +218,7 @@ export class AppStore implements ZoomableInterface {
       this.currentPoint[0].add(halfWidth),
       this.currentPoint[1].add(halfHeight)
     ];
-    
+
     // Update the world window to center on current point
     this.updateWorldWindow(newBottomLeft, newTopRight);
   }
@@ -245,7 +245,7 @@ export class AppStore implements ZoomableInterface {
     const topRight = this.worldWindow.topRight[1].quantize(windowDP).toString();
     return `[${bottomLeft}, ${topRight}]`;
   }
-  
+
   // Live preview methods for zoom and drag operations
   getPreviewWorldWindowXRangeDisplay(): string {
     // Check for zoom preview first, then drag preview
@@ -258,7 +258,7 @@ export class AppStore implements ZoomableInterface {
     }
     return this.getWorldWindowXRangeDisplay();
   }
-  
+
   getPreviewWorldWindowYRangeDisplay(): string {
     // Check for zoom preview first, then drag preview
     const previewWindow = this.previewWorldWindow || this.dragPreviewWorldWindow;
@@ -270,7 +270,7 @@ export class AppStore implements ZoomableInterface {
     }
     return this.getWorldWindowYRangeDisplay();
   }
-  
+
   // Live preview method for px/unit during zoom operations
   getPreviewPixelsPerXUnit(): number {
     if (this.previewWorldWindow) {
@@ -278,12 +278,12 @@ export class AppStore implements ZoomableInterface {
       const previewWidth = this.previewWorldWindow.topRight[0].sub(this.previewWorldWindow.bottomLeft[0]);
       const previewWidthScaled = previewWidth.toScaledFloat();
       const screenWidth = new ScaledFloat(this.screenViewport.width);
-      
+
       const ratio = ScaledFloat.fromMantissaExponent(
         screenWidth.getMantissa() / previewWidthScaled.getMantissa(),
         screenWidth.getExponent() - previewWidthScaled.getExponent()
       );
-      
+
       // Convert to number for UI display (safe as this is for display purposes)
       const result = ratio.toFloatInBounds(-1e308, 1e308);
       return result !== null ? result : this.mapping.getPixelsPerXUnit();
@@ -295,10 +295,10 @@ export class AppStore implements ZoomableInterface {
     // Check if current point is within the current world window
     const pointX = this.currentPoint[0];
     const pointY = this.currentPoint[1];
-    
+
     const withinX = pointX.isWithinInterval(this.worldWindow.bottomLeft[0], this.worldWindow.topRight[0]);
     const withinY = pointY.isWithinInterval(this.worldWindow.bottomLeft[1], this.worldWindow.topRight[1]);
-    
+
     return withinX && withinY;
   }
 
@@ -330,14 +330,14 @@ export class AppStore implements ZoomableInterface {
     this.transformState.transformType = 'pan';
     this.transformState.pointTransform = '';
     this.transformState.gridTransform = '';
-    
+
     // Store the starting world window for drag preview calculations
     this.dragPreviewWorldWindow = null; // Will be calculated in updateWorldWindowDragTransform
   }
 
   updateWorldWindowDragTransform(deltaX: number, deltaY: number) {
     const newTransform = `translate(${deltaX}px, ${deltaY}px)`;
-    
+
     // Only update if transform actually changed to avoid unnecessary re-renders
     if (this.transformState.gridTransform !== newTransform) {
       this.transformState.gridTransform = newTransform;
@@ -345,14 +345,14 @@ export class AppStore implements ZoomableInterface {
     if (this.transformState.pointTransform !== newTransform) {
       this.transformState.pointTransform = newTransform; // Point moves with world window
     }
-    
+
     // Calculate drag preview world window for live coordinate display
-    const worldDelta = this.mapping.screenToXY(deltaX, deltaY);
-    const worldOrigin = this.mapping.screenToXY(0, 0);
-    
+    const worldDelta = this.mapping.screenToWorld(deltaX, deltaY);
+    const worldOrigin = this.mapping.screenToWorld(0, 0);
+
     const dx = worldDelta[0].sub(worldOrigin[0]);
     const dy = worldDelta[1].sub(worldOrigin[1]);
-    
+
     this.dragPreviewWorldWindow = {
       bottomLeft: [
         this.worldWindow.bottomLeft[0].sub(dx),
@@ -370,26 +370,26 @@ export class AppStore implements ZoomableInterface {
     this.transformState.transformType = undefined;
     this.transformState.pointTransform = '';
     this.transformState.gridTransform = '';
-    
+
     // Clear drag preview
     this.dragPreviewWorldWindow = null;
   }
-  
+
   updateZoomTransform(zoomFactor: number, centerScreen: { x: number; y: number }) {
     const scale = zoomFactor;
     const centerX = centerScreen.x;
     const centerY = centerScreen.y;
-    
+
     // Only apply transform if scale is meaningfully different from 1
     // This prevents tiny scale changes from showing as translations
     let newGridTransform = '';
     if (Math.abs(scale - 1) > 0.01) {
       newGridTransform = `translate(${centerX}px, ${centerY}px) scale(${scale}) translate(${-centerX}px, ${-centerY}px)`;
     }
-    
+
     // Debug the transform being generated
     console.log('Generated grid transform');
-    
+
     // Point transform: if point is visible, don't transform; if not visible, simulate center-based zoom
     let newPointTransform = '';
     if (!this.isCurrentPointVisible()) {
@@ -399,7 +399,7 @@ export class AppStore implements ZoomableInterface {
       const deltaY = (currentPointScreen.y - centerY) * (scale - 1);
       newPointTransform = `translate(${deltaX}px, ${deltaY}px)`;
     }
-    
+
     // Only update if transforms actually changed to avoid unnecessary re-renders
     if (this.transformState.gridTransform !== newGridTransform) {
       this.transformState.gridTransform = newGridTransform;
@@ -422,7 +422,7 @@ export class AppStore implements ZoomableInterface {
         y: this.screenViewport.height / 2
       };
     }
-    
+
     // Store the starting world window for zoom calculations
     this.startingWorldWindow = {
       bottomLeft: [
@@ -434,10 +434,10 @@ export class AppStore implements ZoomableInterface {
         this.worldWindow.topRight[1]
       ]
     };
-    
+
     this.zoomingSource = source;
     this.zoomFactor = 1.0;
-    
+
     // Set up transform state
     this.transformState.isTransforming = true;
     this.transformState.transformType = transformType || 'zoom';
@@ -450,17 +450,17 @@ export class AppStore implements ZoomableInterface {
       console.warn('setZoomFactor called without active zoom operation');
       return;
     }
-    
+
     if (this.zoomingSource !== source) {
       console.warn(`setZoomFactor called with source '${source}' but current zooming source is '${this.zoomingSource}'`);
       return;
     }
-    
+
     this.zoomFactor = zoomFactor;
-    
+
     // Update CSS transforms for immediate visual feedback
     this.updateZoomTransform(zoomFactor, this.centrePoint);
-    
+
     // Update World Window X&Y display immediately
     this.updateWorldWindowDisplay();
   }
@@ -470,58 +470,58 @@ export class AppStore implements ZoomableInterface {
       console.warn('completeZoom called without active zoom operation');
       return;
     }
-    
+
     if (this.zoomingSource !== source) {
       console.warn(`completeZoom called with source '${source}' but current zooming source is '${this.zoomingSource}'`);
       return;
     }
-    
+
     const finalZoomFactor = zoomFactor ?? this.zoomFactor;
-    
+
     // Apply the actual coordinate transformation
     this.zoomAroundScreenPoint(finalZoomFactor, this.centrePoint.x, this.centrePoint.y);
-    
+
     // Reset zoom state
     this.zoomingSource = null;
     this.zoomFactor = 1.0;
     this.centrePoint = null;
     this.startingWorldWindow = null;
     this.previewWorldWindow = null;
-    
+
     // Complete transform state
     this.completeTransform();
   }
-  
+
   private updateWorldWindowDisplay(): void {
     if (!this.zoomingSource || !this.centrePoint || !this.startingWorldWindow) {
       this.previewWorldWindow = null;
       return;
     }
-    
+
     // Calculate what the new world window would be based on current zoom factor
     // This is for display purposes only - the actual coordinates aren't updated until completeZoom
     const zoomCenterWorld = this.mapping.screenToWorld(this.centrePoint.x, this.centrePoint.y);
-    
+
     const currentWidth = this.startingWorldWindow.topRight[0].sub(this.startingWorldWindow.bottomLeft[0]);
     const currentHeight = this.startingWorldWindow.topRight[1].sub(this.startingWorldWindow.bottomLeft[1]);
-    
+
     const newWidth = currentWidth.div(new PreciseDecimal(this.zoomFactor));
     const newHeight = currentHeight.div(new PreciseDecimal(this.zoomFactor));
-    
+
     const xRatio = this.centrePoint.x / this.screenViewport.width;
     const yRatio = this.centrePoint.y / this.screenViewport.height;
-    
+
     // Calculate and store preview world window bounds for immediate display
     const previewBottomLeft: Point = [
       zoomCenterWorld[0].sub(newWidth.mul(new PreciseDecimal(xRatio))),
       zoomCenterWorld[1].sub(newHeight.mul(new PreciseDecimal(1 - yRatio)))
     ];
-    
+
     const previewTopRight: Point = [
       zoomCenterWorld[0].add(newWidth.mul(new PreciseDecimal(1 - xRatio))),
       zoomCenterWorld[1].add(newHeight.mul(new PreciseDecimal(yRatio)))
     ];
-    
+
     // Store preview values as observable properties for immediate UI updates
     this.previewWorldWindow = {
       bottomLeft: previewBottomLeft,
