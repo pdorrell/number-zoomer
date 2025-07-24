@@ -48,8 +48,8 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
   // Global mouse up handler for ending drags outside the component
   const handleGlobalMouseUp = useCallback(() => {
     if (isDraggingBackground) {
-      // Complete the pan with actual update
-      store.pan(accumulatedPanDelta.x, accumulatedPanDelta.y);
+      // Complete the drag with remaining delta (accounts for intermediate redraws)
+      store.completeDragWithDelta(accumulatedPanDelta.x, accumulatedPanDelta.y);
     }
     // Point dragging doesn't need completion since it updates continuously
     
@@ -153,7 +153,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     
     onDragEnd: () => {
       if (isDraggingBackground) {
-        store.pan(accumulatedPanDelta.x, accumulatedPanDelta.y);
+        store.completeDragWithDelta(accumulatedPanDelta.x, accumulatedPanDelta.y);
       }
       
       store.completeTransform();
@@ -165,7 +165,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     onPinchStart: () => {
       // Cancel any active drag operations when pinch starts
       if (isDraggingBackground) {
-        store.pan(accumulatedPanDelta.x, accumulatedPanDelta.y);
+        store.completeDragWithDelta(accumulatedPanDelta.x, accumulatedPanDelta.y);
         store.completeTransform();
       } else if (isDraggingPoint) {
         store.completeTransform();

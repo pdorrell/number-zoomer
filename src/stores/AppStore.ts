@@ -32,6 +32,12 @@ export class AppStore implements ZoomableInterface {
   // Preview values for immediate display during world window drag
   dragPreviewWorldWindow: WorldWindow | null = null;
 
+  // State for intermediate redraws during drag
+  private lastIntermediateRedrawTime: number = 0;
+  private dragStartTime: number = 0;
+  private appliedIntermediateDelta: { x: number; y: number } = { x: 0, y: 0 };
+  private readonly INTERMEDIATE_REDRAW_INTERVAL_MS = 300;
+
   // Computed property for backward compatibility
   get isZooming(): boolean {
     return this.zoomingSource !== null;
@@ -333,21 +339,58 @@ export class AppStore implements ZoomableInterface {
 
     // Store the starting world window for drag preview calculations
     this.dragPreviewWorldWindow = null; // Will be calculated in updateWorldWindowDragTransform
+    
+    // Initialize intermediate redraw timing
+    const now = Date.now();
+    this.dragStartTime = now;
+    this.lastIntermediateRedrawTime = now;
+    this.appliedIntermediateDelta = { x: 0, y: 0 };
   }
 
   updateWorldWindowDragTransform(deltaX: number, deltaY: number) {
-    const newTransform = `translate(${deltaX}px, ${deltaY}px)`;
+    // Check if enough time has passed for an intermediate redraw
+    const now = Date.now();
+    const timeSinceLastRedraw = now - this.lastIntermediateRedrawTime;
+    
+    if (timeSinceLastRedraw >= this.INTERMEDIATE_REDRAW_INTERVAL_MS) {
+      // Perform intermediate redraw: apply current delta to actual coordinates
+      this.performIntermediateDragRedraw(deltaX, deltaY);
+      this.lastIntermediateRedrawTime = now;
+      
+      // After intermediate redraw, CSS transforms should show remaining delta from new baseline
+      const remainingDeltaX = deltaX - this.appliedIntermediateDelta.x;
+      const remainingDeltaY = deltaY - this.appliedIntermediateDelta.y;
+      
+      if (remainingDeltaX !== 0 || remainingDeltaY !== 0) {
+        const newTransform = `translate(${remainingDeltaX}px, ${remainingDeltaY}px)`;
+        this.transformState.gridTransform = newTransform;
+        this.transformState.pointTransform = newTransform;
+      } else {
+        this.transformState.gridTransform = '';
+        this.transformState.pointTransform = '';
+      }
+    } else {
+      // Continue with CSS transforms for immediate feedback  
+      // CSS transform should show delta relative to what's already been applied
+      const effectiveDeltaX = deltaX - this.appliedIntermediateDelta.x;
+      const effectiveDeltaY = deltaY - this.appliedIntermediateDelta.y;
+      const newTransform = `translate(${effectiveDeltaX}px, ${effectiveDeltaY}px)`;
 
-    // Only update if transform actually changed to avoid unnecessary re-renders
-    if (this.transformState.gridTransform !== newTransform) {
-      this.transformState.gridTransform = newTransform;
-    }
-    if (this.transformState.pointTransform !== newTransform) {
-      this.transformState.pointTransform = newTransform; // Point moves with world window
+      // Only update if transform actually changed to avoid unnecessary re-renders
+      if (this.transformState.gridTransform !== newTransform) {
+        this.transformState.gridTransform = newTransform;
+      }
+      if (this.transformState.pointTransform !== newTransform) {
+        this.transformState.pointTransform = newTransform; // Point moves with world window
+      }
     }
 
-    // Calculate drag preview world window for live coordinate display
-    const worldDelta = this.mapping.screenToWorld(deltaX, deltaY);
+    // Always calculate drag preview world window for live coordinate display
+    // Use the remaining delta (not applied through intermediate redraws) for preview
+    const remainingDeltaX = deltaX - this.appliedIntermediateDelta.x;
+    const remainingDeltaY = deltaY - this.appliedIntermediateDelta.y;
+    
+    const worldDelta = this.mapping.screenToWorld(remainingDeltaX, remainingDeltaY);
     const worldOrigin = this.mapping.screenToWorld(0, 0);
 
     const dx = worldDelta[0].sub(worldOrigin[0]);
@@ -373,6 +416,40 @@ export class AppStore implements ZoomableInterface {
 
     // Clear drag preview
     this.dragPreviewWorldWindow = null;
+    
+    // Reset intermediate redraw timing state
+    this.lastIntermediateRedrawTime = 0;
+    this.dragStartTime = 0;
+    this.appliedIntermediateDelta = { x: 0, y: 0 };
+  }
+
+  private performIntermediateDragRedraw(deltaX: number, deltaY: number) {
+    // Calculate the incremental delta since last intermediate redraw
+    const incrementalDeltaX = deltaX - this.appliedIntermediateDelta.x;
+    const incrementalDeltaY = deltaY - this.appliedIntermediateDelta.y;
+    
+    // Apply only the incremental delta to actual coordinates, triggering a redraw
+    this.pan(incrementalDeltaX, incrementalDeltaY);
+    
+    // Track what we've applied so far
+    this.appliedIntermediateDelta = { x: deltaX, y: deltaY };
+    
+    // Don't clear dragPreviewWorldWindow here - it will be recalculated correctly
+    // in the main updateWorldWindowDragTransform method with the new baseline
+  }
+
+  completeDragWithDelta(deltaX: number, deltaY: number) {
+    // Calculate the remaining delta that hasn't been applied through intermediate redraws
+    const remainingDeltaX = deltaX - this.appliedIntermediateDelta.x;
+    const remainingDeltaY = deltaY - this.appliedIntermediateDelta.y;
+    
+    // Apply only the remaining delta
+    if (remainingDeltaX !== 0 || remainingDeltaY !== 0) {
+      this.pan(remainingDeltaX, remainingDeltaY);
+    }
+    
+    // Reset intermediate drag state
+    this.appliedIntermediateDelta = { x: 0, y: 0 };
   }
 
   updateZoomTransform(zoomFactor: number, centerScreen: { x: number; y: number }) {
