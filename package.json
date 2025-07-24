@@ -8,16 +8,22 @@
     "start:claude": "webpack serve --mode development --config webpack.config.claude.js",
     "build": "webpack --mode production",
     "type-check": "tsc --noEmit",
-    "check-code": "tsc --noEmit"
+    "check-code": "tsc --noEmit",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "css-loader": "^6.8.1",
     "html-webpack-plugin": "^5.5.3",
+    "jest": "^30.0.5",
     "sass": "^1.69.5",
     "sass-loader": "^13.3.2",
     "style-loader": "^3.3.3",
+    "ts-jest": "^29.4.0",
     "ts-loader": "^9.5.0",
     "typescript": "^5.2.2",
     "webpack": "^5.89.0",
