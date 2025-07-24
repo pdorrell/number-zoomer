@@ -38,7 +38,7 @@ export class CoordinateAxisMapping {
     const screenOffset = screenPosition - this.screenBase;
     const ratio = this.screenDirection > 0 ? 
       screenOffset / this.screenRange : 
-      (this.screenRange - screenOffset) / this.screenRange;
+      -screenOffset / this.screenRange;
     
     return this.minWindowPosition.add(this.windowRange.mul(new PreciseDecimal(ratio)));
   }
