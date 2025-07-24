@@ -36,6 +36,12 @@ export class AppStore implements ZoomableInterface {
   private lastIntermediateRedrawTime: number = 0;
   private dragStartTime: number = 0;
   private appliedIntermediateDelta: { x: number; y: number } = { x: 0, y: 0 };
+  
+  // State for intermediate redraws during zoom
+  private lastIntermediateZoomRedrawTime: number = 0;
+  private zoomStartTime: number = 0;
+  private appliedIntermediateZoomFactor: number = 1.0;
+  
   private readonly INTERMEDIATE_REDRAW_INTERVAL_MS = 300;
 
   // Computed property for backward compatibility
@@ -452,6 +458,22 @@ export class AppStore implements ZoomableInterface {
     this.appliedIntermediateDelta = { x: 0, y: 0 };
   }
 
+  private performIntermediateZoomRedraw(zoomFactor: number) {
+    // Calculate the incremental zoom factor since last intermediate redraw
+    const incrementalZoomFactor = zoomFactor / this.appliedIntermediateZoomFactor;
+    
+    // Apply only the incremental zoom to actual coordinates, triggering a redraw
+    if (this.centrePoint && incrementalZoomFactor !== 1.0) {
+      this.zoomAroundScreenPoint(incrementalZoomFactor, this.centrePoint.x, this.centrePoint.y);
+    }
+    
+    // Track what we've applied so far
+    this.appliedIntermediateZoomFactor = zoomFactor;
+    
+    // Clear preview window as it will be recalculated with new baseline
+    this.previewWorldWindow = null;
+  }
+
   updateZoomTransform(zoomFactor: number, centerScreen: { x: number; y: number }) {
     const scale = zoomFactor;
     const centerX = centerScreen.x;
@@ -520,6 +542,12 @@ export class AppStore implements ZoomableInterface {
     this.transformState.transformType = transformType || 'zoom';
     this.transformState.pointTransform = '';
     this.transformState.gridTransform = '';
+    
+    // Initialize intermediate zoom redraw timing
+    const now = Date.now();
+    this.zoomStartTime = now;
+    this.lastIntermediateZoomRedrawTime = now;
+    this.appliedIntermediateZoomFactor = 1.0;
   }
 
   setZoomFactor(source: ZoomSource, zoomFactor: number): void {
@@ -535,8 +563,24 @@ export class AppStore implements ZoomableInterface {
 
     this.zoomFactor = zoomFactor;
 
-    // Update CSS transforms for immediate visual feedback
-    this.updateZoomTransform(zoomFactor, this.centrePoint);
+    // Check if enough time has passed for an intermediate redraw
+    const now = Date.now();
+    const timeSinceLastRedraw = now - this.lastIntermediateZoomRedrawTime;
+    
+    if (timeSinceLastRedraw >= this.INTERMEDIATE_REDRAW_INTERVAL_MS) {
+      // Perform intermediate redraw: apply current zoom factor to actual coordinates
+      this.performIntermediateZoomRedraw(zoomFactor);
+      this.lastIntermediateZoomRedrawTime = now;
+      
+      // After intermediate redraw, CSS transforms should show remaining zoom from new baseline
+      const remainingZoomFactor = zoomFactor / this.appliedIntermediateZoomFactor;
+      this.updateZoomTransform(remainingZoomFactor, this.centrePoint);
+    } else {
+      // Continue with CSS transforms for immediate feedback
+      // CSS transform should show zoom relative to what's already been applied
+      const effectiveZoomFactor = zoomFactor / this.appliedIntermediateZoomFactor;
+      this.updateZoomTransform(effectiveZoomFactor, this.centrePoint);
+    }
 
     // Update World Window X&Y display immediately
     this.updateWorldWindowDisplay();
@@ -555,8 +599,13 @@ export class AppStore implements ZoomableInterface {
 
     const finalZoomFactor = zoomFactor ?? this.zoomFactor;
 
-    // Apply the actual coordinate transformation
-    this.zoomAroundScreenPoint(finalZoomFactor, this.centrePoint.x, this.centrePoint.y);
+    // Calculate the remaining zoom factor that hasn't been applied through intermediate redraws
+    const remainingZoomFactor = finalZoomFactor / this.appliedIntermediateZoomFactor;
+    
+    // Apply only the remaining zoom factor
+    if (Math.abs(remainingZoomFactor - 1.0) > 0.001) {
+      this.zoomAroundScreenPoint(remainingZoomFactor, this.centrePoint.x, this.centrePoint.y);
+    }
 
     // Reset zoom state
     this.zoomingSource = null;
@@ -564,6 +613,9 @@ export class AppStore implements ZoomableInterface {
     this.centrePoint = null;
     this.startingWorldWindow = null;
     this.previewWorldWindow = null;
+    this.appliedIntermediateZoomFactor = 1.0;
+    this.lastIntermediateZoomRedrawTime = 0;
+    this.zoomStartTime = 0;
 
     // Complete transform state
     this.completeTransform();
