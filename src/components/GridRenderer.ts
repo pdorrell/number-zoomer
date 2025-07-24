@@ -72,14 +72,25 @@ export class GridRenderer {
       const startIndex = startMultiplied.floor();
       const endIndex = endMultiplied.ceil();
 
-      const numGridLines = endIndex.toInteger() + 1 - startIndex.toInteger();
+      // Calculate initial window position and screen position
+      let windowPosition = startIndex.div(multiplier);
+      let screenPosition = axisMapping.worldToScreen(windowPosition);
+      
+      // Calculate steps for incremental arithmetic
+      const windowStep = new PreciseDecimal(1, 0).div(multiplier); // reciprocal of multiplier
+      const screenStep = axisMapping.worldToScreenRange(windowStep);
 
-      for (let i = startIndex; i.lte(endIndex); i = i.add(new PreciseDecimal(1, 0))) {
-        const worldPosition = i.div(multiplier);
-        if (worldPosition.isWithinInterval(minWorldPosition, maxWorldPosition)) {
-          const screenPosition = axisMapping.worldToScreen(worldPosition);
-          lines.push({ position: worldPosition.setPrecision(precision), screenPosition, thickness, precision, isThick });
+      // Use incremental arithmetic instead of repeated coordinate transformations
+      let i = startIndex;
+      while (i.lte(endIndex) && axisMapping.positionIsInScreen(screenPosition)) {
+        if (windowPosition.isWithinInterval(minWorldPosition, maxWorldPosition)) {
+          lines.push({ position: windowPosition.setPrecision(precision), screenPosition, thickness, precision, isThick });
         }
+        
+        // Increment for next iteration
+        i = i.add(new PreciseDecimal(1, 0));
+        windowPosition = windowPosition.add(windowStep);
+        screenPosition += screenStep;
       }
     }
 

@@ -75,6 +75,24 @@ export class CoordinateAxisMapping {
       screenRangeScaled.getExponent() - windowRangeScaled.getExponent()
     );
   }
+
+  worldToScreenRange(worldRange: PreciseDecimal): number {
+    // Convert world distance to screen distance, accounting for screen direction
+    const pixelsPerUnit = this.getPixelsPerUnit();
+    const screenDistance = worldRange.toNumber() * pixelsPerUnit;
+    return this.screenDirection > 0 ? screenDistance : -screenDistance;
+  }
+
+  positionIsInScreen(screenPosition: float): boolean {
+    // Check if screen position is within the axis range
+    if (this.screenDirection > 0) {
+      // Positive direction: screen goes from screenBase to screenBase + screenRange
+      return screenPosition >= this.screenBase && screenPosition <= this.screenBase + this.screenRange;
+    } else {
+      // Negative direction: screen goes from screenBase to screenBase - screenRange
+      return screenPosition <= this.screenBase && screenPosition >= this.screenBase - this.screenRange;
+    }
+  }
 }
 
 export class CoordinateMapping {
