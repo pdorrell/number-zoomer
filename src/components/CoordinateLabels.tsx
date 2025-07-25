@@ -55,8 +55,8 @@ export const CoordinateLabels: React.FC<CoordinateLabelsProps> = observer(({
                 y={screenY - 12}
                 width={labelText.length * 6 + 6}
                 height={16}
-                fill="white"
-                stroke="#d3d3d3"
+                fill="#e3f2fd"
+                stroke="#000000"
                 strokeWidth={1}
                 rx={2}
               />
@@ -89,8 +89,8 @@ export const CoordinateLabels: React.FC<CoordinateLabelsProps> = observer(({
                 y={canvasHeight - 18}
                 width={labelText.length * 6 + 6}
                 height={16}
-                fill="white"
-                stroke="#d3d3d3"
+                fill="#e8f5e8"
+                stroke="#000000"
                 strokeWidth={1}
                 rx={2}
               />

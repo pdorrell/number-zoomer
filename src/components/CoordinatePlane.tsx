@@ -500,6 +500,64 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
         <CanvasRenderer 
           store={store}
         />
+        
+        {/* Clipped SVG overlay for current point circle */}
+        <svg 
+          width={store.screenViewport.width} 
+          height={store.screenViewport.height} 
+          style={{ 
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            pointerEvents: 'none' // Let mouse events pass through to the div
+          }}
+        >
+          <g style={{ transform: store.transformState.pointTransform }}>
+            <circle
+              cx={currentPointScreen.x}
+              cy={currentPointScreen.y}
+              r={6}
+              fill="#212529"
+              stroke="#ffffff"
+              strokeWidth={2}
+            />
+          </g>
+        </svg>
+        
+        {/* Clipped expandable div for coordinate display */}
+        <div
+          onMouseDown={handleCoordinateMouseDown}
+          onTouchStart={handleCoordinateTouchStart}
+          className={`coordinate-display ${isDraggingPoint ? 'dragging' : ''}`}
+          style={{
+            position: 'absolute',
+            left: currentPointScreen.x + 10,
+            top: currentPointScreen.y - 25,
+            border: '1px solid #212529',
+            borderRadius: '3px',
+            padding: '4px 6px',
+            fontSize: '12px',
+            fontFamily: 'monospace',
+            color: '#212529',
+            pointerEvents: 'auto',
+            whiteSpace: 'nowrap',
+            transform: store.transformState.pointTransform,
+            cursor: isDraggingPoint ? 'grabbing' : 'grab',
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            msUserSelect: 'none',
+            minHeight: '20px', // Minimum touch target size
+            minWidth: '40px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: isDraggingPoint ? '0 2px 4px rgba(0,0,0,0.2)' : '0 1px 2px rgba(0,0,0,0.1)',
+            zIndex: 10, // Ensure it's above other elements
+            touchAction: 'none' // Prevent default touch behaviors
+          }}
+        >
+          {store.getCurrentPointDisplay()}
+        </div>
       </div>
       
       {/* Unclipped coordinate labels positioned above the clipped container */}
@@ -513,65 +571,6 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
         getXLabelTransform={getXLabelTransform}
         getYLabelTransform={getYLabelTransform}
       />
-      
-      {/* Unclipped SVG overlay for current point circle */}
-      <svg 
-        width={store.screenViewport.width} 
-        height={store.screenViewport.height} 
-        style={{ 
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          pointerEvents: 'none', // Let mouse events pass through to the div
-          overflow: 'visible' // Allow content to extend beyond SVG boundaries
-        }}
-      >
-        <g style={{ transform: store.transformState.pointTransform }}>
-          <circle
-            cx={currentPointScreen.x}
-            cy={currentPointScreen.y}
-            r={6}
-            fill="#212529"
-            stroke="#ffffff"
-            strokeWidth={2}
-          />
-        </g>
-      </svg>
-      
-      {/* Unclipped expandable div for coordinate display */}
-      <div
-        onMouseDown={handleCoordinateMouseDown}
-        onTouchStart={handleCoordinateTouchStart}
-        className={`coordinate-display ${isDraggingPoint ? 'dragging' : ''}`}
-        style={{
-          position: 'absolute',
-          left: currentPointScreen.x + 10,
-          top: currentPointScreen.y - 25,
-          border: '1px solid #212529',
-          borderRadius: '3px',
-          padding: '4px 6px',
-          fontSize: '12px',
-          fontFamily: 'monospace',
-          color: '#212529',
-          pointerEvents: 'auto',
-          whiteSpace: 'nowrap',
-          transform: store.transformState.pointTransform,
-          cursor: isDraggingPoint ? 'grabbing' : 'grab',
-          userSelect: 'none',
-          WebkitUserSelect: 'none',
-          msUserSelect: 'none',
-          minHeight: '20px', // Minimum touch target size
-          minWidth: '40px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: isDraggingPoint ? '0 2px 4px rgba(0,0,0,0.2)' : '0 1px 2px rgba(0,0,0,0.1)',
-          zIndex: 10, // Ensure it's above other elements
-          touchAction: 'none' // Prevent default touch behaviors
-        }}
-      >
-        {store.getCurrentPointDisplay()}
-      </div>
     </div>
   );
 });
