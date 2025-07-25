@@ -37,7 +37,8 @@ export const CoordinateLabels: React.FC<CoordinateLabelsProps> = observer(({
         top: 0,
         left: 0,
         pointerEvents: 'none',
-        zIndex: 10
+        zIndex: 10,
+        overflow: 'visible' // Allow content to extend beyond SVG boundaries
       }}
     >
       {/* Y-axis labels (horizontal grid lines) */}

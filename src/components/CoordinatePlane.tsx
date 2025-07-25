@@ -468,29 +468,41 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
 
   return (
     <div 
-      ref={containerRef}
-      className="coordinate-plane"
-      onMouseDown={handleMouseDown}
-      {...bind()}
+      className="coordinate-plane-container"
       style={{ 
         position: 'relative',
         width: store.screenViewport.width,
-        height: store.screenViewport.height,
-        cursor: isDraggingPoint ? 'grabbing' : isDraggingBackground ? 'grabbing' : 'grab',
-        touchAction: 'none', // Prevent default touch behaviors
-        opacity: isZooming ? 0.8 : 1, // Visual feedback during zoom
-        transition: isZooming ? 'none' : 'opacity 0.1s ease',
-        overflow: 'hidden', // Clip canvas when it transforms outside container
-        border: '1px solid #dee2e6', // Visible clipping boundary
-        borderRadius: '4px'
+        height: store.screenViewport.height
       }}
     >
-      {/* Canvas for grid lines, coordinates, and equation */}
-      <CanvasRenderer 
-        store={store}
-      />
+      {/* Clipped inner container for canvas and grid content */}
+      <div 
+        ref={containerRef}
+        className="coordinate-plane"
+        onMouseDown={handleMouseDown}
+        {...bind()}
+        style={{ 
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: store.screenViewport.width,
+          height: store.screenViewport.height,
+          cursor: isDraggingPoint ? 'grabbing' : isDraggingBackground ? 'grabbing' : 'grab',
+          touchAction: 'none', // Prevent default touch behaviors
+          opacity: isZooming ? 0.8 : 1, // Visual feedback during zoom
+          transition: isZooming ? 'none' : 'opacity 0.1s ease',
+          overflow: 'hidden', // Clip canvas when it transforms outside container
+          border: '1px solid #dee2e6', // Visible clipping boundary
+          borderRadius: '4px'
+        }}
+      >
+        {/* Canvas for grid lines, coordinates, and equation */}
+        <CanvasRenderer 
+          store={store}
+        />
+      </div>
       
-      {/* SVG coordinate labels above canvas */}
+      {/* Unclipped coordinate labels positioned above the clipped container */}
       <CoordinateLabels
         horizontalLines={horizontalLines}
         verticalLines={verticalLines}
@@ -502,7 +514,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
         getYLabelTransform={getYLabelTransform}
       />
       
-      {/* SVG overlay for current point circle */}
+      {/* Unclipped SVG overlay for current point circle */}
       <svg 
         width={store.screenViewport.width} 
         height={store.screenViewport.height} 
@@ -510,7 +522,8 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
           position: 'absolute',
           top: 0,
           left: 0,
-          pointerEvents: 'none' // Let mouse events pass through to the div
+          pointerEvents: 'none', // Let mouse events pass through to the div
+          overflow: 'visible' // Allow content to extend beyond SVG boundaries
         }}
       >
         <g style={{ transform: store.transformState.pointTransform }}>
@@ -525,7 +538,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
         </g>
       </svg>
       
-      {/* Expandable div for coordinate display */}
+      {/* Unclipped expandable div for coordinate display */}
       <div
         onMouseDown={handleCoordinateMouseDown}
         onTouchStart={handleCoordinateTouchStart}
