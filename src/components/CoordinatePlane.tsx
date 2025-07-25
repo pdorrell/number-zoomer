@@ -23,6 +23,15 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
   const [pinchStartScale, setPinchStartScale] = useState(1);
   const [hasMovedDuringDrag, setHasMovedDuringDrag] = useState(false);
   const [draggedPointStartPosition, setDraggedPointStartPosition] = useState<{ x: number; y: number } | null>(null);
+  const dragStateRef = useRef<{
+    isDragging: boolean;
+    startPosition: { x: number; y: number } | null;
+    hasMovedDuringDrag: boolean;
+  }>({
+    isDragging: false,
+    startPosition: null,
+    hasMovedDuringDrag: false
+  });
 
   // Global mouse move handler for dragging outside the component
   const handleGlobalMouseMove = useCallback((event: MouseEvent) => {
@@ -156,8 +165,75 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     const touchX = touch.clientX - rect.left;
     const touchY = touch.clientY - rect.top;
     
+    // Store touch identifier to track this specific touch
+    const touchId = touch.identifier;
+    
     startPointDrag(touchX, touchY);
-  }, [startPointDrag]);
+    
+    // Update ref with current drag state
+    dragStateRef.current.isDragging = true;
+    dragStateRef.current.startPosition = store.mapping.worldToScreen(store.currentPoint);
+    dragStateRef.current.hasMovedDuringDrag = false;
+    
+    // Add touch move and end handlers specifically for this coordinate touch
+    const handleTouchMove = (moveEvent: TouchEvent) => {
+      moveEvent.preventDefault();
+      const movingTouch = Array.from(moveEvent.touches).find(t => t.identifier === touchId);
+      if (!movingTouch || !containerRef.current || !dragStateRef.current.startPosition) return;
+      
+      const rect = containerRef.current.getBoundingClientRect();
+      const moveX = movingTouch.clientX - rect.left;
+      const moveY = movingTouch.clientY - rect.top;
+      
+      // Check if we've moved enough to start dragging
+      const dragDistance = Math.sqrt(
+        Math.pow(moveX - touchX, 2) + 
+        Math.pow(moveY - touchY, 2)
+      );
+      
+      if (dragDistance >= 3 || dragStateRef.current.hasMovedDuringDrag) {
+        dragStateRef.current.hasMovedDuringDrag = true;
+        setHasMovedDuringDrag(true);
+        
+        // Apply relative movement from drag start position
+        const deltaX = moveX - touchX;
+        const deltaY = moveY - touchY;
+        
+        const newScreenX = dragStateRef.current.startPosition.x + deltaX;
+        const newScreenY = dragStateRef.current.startPosition.y + deltaY;
+        
+        const newPoint = store.mapping.screenToWorld(newScreenX, newScreenY);
+        store.updateCurrentPoint(newPoint);
+      }
+    };
+    
+    const handleTouchEnd = (endEvent: TouchEvent) => {
+      // Check if our specific touch ended
+      const endedTouch = Array.from(endEvent.changedTouches).find(t => t.identifier === touchId);
+      if (!endedTouch) return;
+      
+      // Clean up touch handlers
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleTouchEnd);
+      
+      // Reset ref state
+      dragStateRef.current.isDragging = false;
+      dragStateRef.current.startPosition = null;
+      dragStateRef.current.hasMovedDuringDrag = false;
+      
+      // Complete the drag
+      store.completeTransform();
+      setIsDraggingPoint(false);
+      setIsDraggingBackground(false);
+      setAccumulatedPanDelta({ x: 0, y: 0 });
+      setHasMovedDuringDrag(false);
+      setDraggedPointStartPosition(null);
+    };
+    
+    // Add document-level touch handlers for this specific touch
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleTouchEnd, { passive: false });
+  }, [startPointDrag, startDragPos, hasMovedDuringDrag, draggedPointStartPosition, store]);
 
 
 
@@ -168,6 +244,12 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       
       // Block new drag operations during pinch zoom
       if (isZooming) return;
+      
+      // Check if the event target is the coordinate display - if so, let its handler deal with it
+      const target = event.target as Element;
+      if (target && target.closest('.coordinate-display')) {
+        return;
+      }
       
       const rect = containerRef.current.getBoundingClientRect();
       const clientX = 'touches' in event && event.touches.length > 0 ? event.touches[0].clientX : 'clientX' in event ? event.clientX : 0;
