@@ -22,6 +22,9 @@ export class AppStore implements ZoomableInterface {
   
   // Canvas extension beyond viewport for smoother drag/zoom (20% = 0.2)
   extension: number = 0.2;
+  
+  // Ratio of extension that triggers redraw based on movement distance (50% = 0.50)
+  extensionRedrawOnRatio: number = 0.50;
 
   // New zoom state management
   centrePoint: { x: number; y: number } | null = null;
@@ -361,17 +364,26 @@ export class AppStore implements ZoomableInterface {
     const now = Date.now();
     const timeSinceLastRedraw = now - this.lastIntermediateRedrawTime;
     
-    if (timeSinceLastRedraw >= this.INTERMEDIATE_REDRAW_INTERVAL_MS) {
+    // Check if movement distance exceeds threshold for redraw
+    const remainingDeltaX = deltaX - this.appliedIntermediateDelta.x;
+    const remainingDeltaY = deltaY - this.appliedIntermediateDelta.y;
+    const distanceThreshold = this.screenViewport.width * this.extension * this.extensionRedrawOnRatio;
+    const movementDistance = Math.sqrt(remainingDeltaX * remainingDeltaX + remainingDeltaY * remainingDeltaY);
+    const shouldRedrawByDistance = movementDistance >= distanceThreshold;
+    
+    // Temporarily suppress time-based criterion for testing
+    // if (timeSinceLastRedraw >= this.INTERMEDIATE_REDRAW_INTERVAL_MS) {
+    if (shouldRedrawByDistance) {
       // Perform intermediate redraw: apply current delta to actual coordinates
       this.performIntermediateDragRedraw(deltaX, deltaY);
       this.lastIntermediateRedrawTime = now;
       
       // After intermediate redraw, CSS transforms should show remaining delta from new baseline
-      const remainingDeltaX = deltaX - this.appliedIntermediateDelta.x;
-      const remainingDeltaY = deltaY - this.appliedIntermediateDelta.y;
+      const newRemainingDeltaX = deltaX - this.appliedIntermediateDelta.x;
+      const newRemainingDeltaY = deltaY - this.appliedIntermediateDelta.y;
       
-      if (remainingDeltaX !== 0 || remainingDeltaY !== 0) {
-        const newTransform = `translate(${remainingDeltaX}px, ${remainingDeltaY}px)`;
+      if (newRemainingDeltaX !== 0 || newRemainingDeltaY !== 0) {
+        const newTransform = `translate(${newRemainingDeltaX}px, ${newRemainingDeltaY}px)`;
         this.transformState.gridTransform = newTransform;
         this.transformState.pointTransform = newTransform;
       } else {
@@ -396,8 +408,7 @@ export class AppStore implements ZoomableInterface {
 
     // Always calculate drag preview world window for live coordinate display
     // Use the remaining delta (not applied through intermediate redraws) for preview
-    const remainingDeltaX = deltaX - this.appliedIntermediateDelta.x;
-    const remainingDeltaY = deltaY - this.appliedIntermediateDelta.y;
+    // remainingDeltaX and remainingDeltaY already calculated above
     
     const worldDelta = this.mapping.screenToWorld(remainingDeltaX, remainingDeltaY);
     const worldOrigin = this.mapping.screenToWorld(0, 0);
@@ -568,7 +579,15 @@ export class AppStore implements ZoomableInterface {
     const now = Date.now();
     const timeSinceLastRedraw = now - this.lastIntermediateZoomRedrawTime;
     
-    if (timeSinceLastRedraw >= this.INTERMEDIATE_REDRAW_INTERVAL_MS) {
+    // Check if zoom factor change exceeds threshold for redraw
+    const remainingZoomFactor = zoomFactor / this.appliedIntermediateZoomFactor;
+    // For zoom, use a much smaller threshold since visual impact is greater
+    const zoomThreshold = this.extensionRedrawOnRatio * 0.2; // 0.1 means redraw when zoom changes by 10%
+    const shouldRedrawByZoom = Math.abs(remainingZoomFactor - 1.0) >= zoomThreshold;
+    
+    // Temporarily suppress time-based criterion for testing
+    // if (timeSinceLastRedraw >= this.INTERMEDIATE_REDRAW_INTERVAL_MS) {
+    if (shouldRedrawByZoom) {
       // Perform intermediate redraw: apply current zoom factor to actual coordinates
       this.performIntermediateZoomRedraw(zoomFactor);
       this.lastIntermediateZoomRedrawTime = now;
