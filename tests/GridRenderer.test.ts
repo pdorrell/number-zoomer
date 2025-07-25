@@ -11,8 +11,8 @@ describe('GridRenderer', () => {
   beforeEach(() => {
     screenViewport = { width: 800, height: 600 };
     worldWindow = {
-      bottomLeft: [new PreciseDecimal(-4, 1), new PreciseDecimal(-3, 1)],
-      topRight: [new PreciseDecimal(4, 1), new PreciseDecimal(3, 1)]
+      bottomLeft: [new PreciseDecimal(-4), new PreciseDecimal(-3)],
+      topRight: [new PreciseDecimal(4), new PreciseDecimal(3)]
     };
     mapping = new CoordinateMapping(screenViewport, worldWindow);
     renderer = new GridRenderer(mapping);
@@ -307,6 +307,147 @@ describe('GridRenderer', () => {
       // Both should include their respective zero lines
       expect(horizontalLines.some(line => line.position.toNumber() === 0)).toBe(true);
       expect(verticalLines.some(line => line.position.toNumber() === 0)).toBe(true);
+    });
+  });
+
+  describe('Negative precision grid lines (zoomed out)', () => {
+    it('should generate grid lines with spacing of 10 units for precision -1', () => {
+      // Create a zoomed-out world window that should result in precision -1
+      const zoomedOutWorldWindow: WorldWindow = {
+        bottomLeft: [new PreciseDecimal(-50), new PreciseDecimal(-50)],
+        topRight: [new PreciseDecimal(50), new PreciseDecimal(50)]
+      };
+      
+      const zoomedOutMapping = new CoordinateMapping(screenViewport, zoomedOutWorldWindow);
+      const zoomedOutRenderer = new GridRenderer(zoomedOutMapping);
+      
+      // Test horizontal lines with precision -1
+      const horizontalLines = zoomedOutRenderer.calculateHorizontalGridLines(-1);
+      expect(horizontalLines.length).toBeGreaterThan(0);
+      
+      // Check that grid lines are at multiples of 10
+      const flatLines = horizontalLines.flat();
+      const positions = flatLines.map(line => line.position.toNumber());
+      
+      // Should include 0, ±10, ±20, ±30, ±40, ±50
+      expect(positions).toContain(0);
+      expect(positions).toContain(10);
+      expect(positions).toContain(-10);
+      expect(positions).toContain(20);
+      expect(positions).toContain(-20);
+      
+      // All positions should be multiples of 10
+      positions.forEach(pos => {
+        expect(Math.abs(pos % 10)).toBeLessThan(0.0001);
+      });
+    });
+
+    it('should generate grid lines with spacing of 100 units for precision -2', () => {
+      // Create a very zoomed-out world window that should result in precision -2
+      const veryZoomedOutWorldWindow: WorldWindow = {
+        bottomLeft: [new PreciseDecimal(-500), new PreciseDecimal(-500)],
+        topRight: [new PreciseDecimal(500), new PreciseDecimal(500)]
+      };
+      
+      const veryZoomedOutMapping = new CoordinateMapping(screenViewport, veryZoomedOutWorldWindow);
+      const veryZoomedOutRenderer = new GridRenderer(veryZoomedOutMapping);
+      
+      // Test vertical lines with precision -2
+      const verticalLines = veryZoomedOutRenderer.calculateVerticalGridLines(-2);
+      expect(verticalLines.length).toBeGreaterThan(0);
+      
+      // Check that grid lines are at multiples of 100
+      const flatLines = verticalLines.flat();
+      const positions = flatLines.map(line => line.position.toNumber());
+      
+      // Should include 0, ±100, ±200, ±300, ±400, ±500
+      expect(positions).toContain(0);
+      expect(positions).toContain(100);
+      expect(positions).toContain(-100);
+      expect(positions).toContain(200);
+      expect(positions).toContain(-200);
+      
+      // All positions should be multiples of 100
+      positions.forEach(pos => {
+        expect(Math.abs(pos % 100)).toBeLessThan(0.0001);
+      });
+    });
+
+    it('should generate grid lines with spacing of 1000 units for precision -3', () => {
+      // Create an extremely zoomed-out world window
+      const extremeZoomedOutWorldWindow: WorldWindow = {
+        bottomLeft: [new PreciseDecimal(-5000), new PreciseDecimal(-3000)],
+        topRight: [new PreciseDecimal(5000), new PreciseDecimal(3000)]
+      };
+      
+      const extremeZoomedOutMapping = new CoordinateMapping(screenViewport, extremeZoomedOutWorldWindow);
+      const extremeZoomedOutRenderer = new GridRenderer(extremeZoomedOutMapping);
+      
+      // Test both horizontal and vertical lines with precision -3
+      const horizontalLines = extremeZoomedOutRenderer.calculateHorizontalGridLines(-3);
+      const verticalLines = extremeZoomedOutRenderer.calculateVerticalGridLines(-3);
+      
+      expect(horizontalLines.length).toBeGreaterThan(0);
+      expect(verticalLines.length).toBeGreaterThan(0);
+      
+      // Check horizontal lines
+      const hPositions = horizontalLines.flat().map(line => line.position.toNumber());
+      expect(hPositions).toContain(0);
+      expect(hPositions).toContain(1000);
+      expect(hPositions).toContain(-1000);
+      expect(hPositions).toContain(2000);
+      expect(hPositions).toContain(-2000);
+      
+      // Check vertical lines  
+      const vPositions = verticalLines.flat().map(line => line.position.toNumber());
+      expect(vPositions).toContain(0);
+      expect(vPositions).toContain(1000);
+      expect(vPositions).toContain(-1000);
+      expect(vPositions).toContain(2000);
+      expect(vPositions).toContain(-2000);
+      
+      // All positions should be multiples of 1000
+      [...hPositions, ...vPositions].forEach(pos => {
+        expect(Math.abs(pos % 1000)).toBeLessThan(0.0001);
+      });
+    });
+
+    it('should work correctly with mixed positive and negative coordinates at negative precision', () => {
+      // Test a world window that spans both positive and negative coordinates
+      const mixedWorldWindow: WorldWindow = {
+        bottomLeft: [new PreciseDecimal(-250), new PreciseDecimal(-150)],
+        topRight: [new PreciseDecimal(350), new PreciseDecimal(250)]
+      };
+      
+      const mixedMapping = new CoordinateMapping(screenViewport, mixedWorldWindow);
+      const mixedRenderer = new GridRenderer(mixedMapping);
+      
+      // Test with precision -2 (spacing of 100)
+      const horizontalLines = mixedRenderer.calculateHorizontalGridLines(-2);
+      const verticalLines = mixedRenderer.calculateVerticalGridLines(-2);
+      
+      const hPositions = horizontalLines.flat().map(line => line.position.toNumber()).sort((a, b) => a - b);
+      const vPositions = verticalLines.flat().map(line => line.position.toNumber()).sort((a, b) => a - b);
+      
+      // Should include zero
+      expect(hPositions).toContain(0);
+      expect(vPositions).toContain(0);
+      
+      // Should include negative multiples of 100 within range
+      expect(hPositions).toContain(-100);
+      expect(vPositions).toContain(-200);
+      
+      // Should include positive multiples of 100 within range  
+      expect(hPositions).toContain(100);
+      expect(hPositions).toContain(200);
+      expect(vPositions).toContain(100);
+      expect(vPositions).toContain(200);
+      expect(vPositions).toContain(300);
+      
+      // All positions should be multiples of 100
+      [...hPositions, ...vPositions].forEach(pos => {
+        expect(Math.abs(pos % 100)).toBeLessThan(0.0001);
+      });
     });
   });
 });

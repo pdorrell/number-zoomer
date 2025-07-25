@@ -5,39 +5,32 @@ Decimal.set({ precision: 1000 });
 
 export class PreciseDecimal {
   private value: Decimal;
-  private displayPrecision: number;
 
-  constructor(value: string | number | Decimal, precision: number = 10) {
+  constructor(value: string | number | Decimal) {
     this.value = new Decimal(value);
-    this.displayPrecision = precision;
   }
 
   add(other: PreciseDecimal): PreciseDecimal {
-    return new PreciseDecimal(this.value.add(other.value), Math.max(this.displayPrecision, other.displayPrecision));
+    return new PreciseDecimal(this.value.add(other.value));
   }
 
   sub(other: PreciseDecimal): PreciseDecimal {
-    return new PreciseDecimal(this.value.sub(other.value), Math.max(this.displayPrecision, other.displayPrecision));
+    return new PreciseDecimal(this.value.sub(other.value));
   }
 
   mul(other: PreciseDecimal): PreciseDecimal {
-    return new PreciseDecimal(this.value.mul(other.value), Math.max(this.displayPrecision, other.displayPrecision));
+    return new PreciseDecimal(this.value.mul(other.value));
   }
 
   div(other: PreciseDecimal): PreciseDecimal {
-    return new PreciseDecimal(this.value.div(other.value), Math.max(this.displayPrecision, other.displayPrecision));
+    return new PreciseDecimal(this.value.div(other.value));
   }
 
   pow(exponent: number): PreciseDecimal {
-    return new PreciseDecimal(this.value.pow(exponent), this.displayPrecision);
+    return new PreciseDecimal(this.value.pow(exponent));
   }
 
   toString(): string {
-    return `${this.value.toString()}(${this.precision}DP)`;
-  }
-
-  toFullPrecisionString(): string {
-    // Returns the full precision string without any truncation
     return this.value.toString();
   }
 
@@ -49,18 +42,17 @@ export class PreciseDecimal {
     return this.value;
   }
 
-  get precision(): number {
-    return this.displayPrecision;
-  }
-
-  setPrecision(precision: number): PreciseDecimal {
-    return new PreciseDecimal(this.value, precision);
-  }
-
   quantize(precision: number): PreciseDecimal {
-    // Actually round/truncate the value to the specified number of decimal places
+    // Handle negative precision by rounding to nearest power of 10
+    if (precision < 0) {
+      const power = Math.pow(10, -precision);
+      const rounded = this.value.div(power).round().mul(power);
+      return new PreciseDecimal(rounded);
+    }
+    
+    // Positive precision: round to decimal places
     const quantizedValue = this.value.toDecimalPlaces(precision);
-    return new PreciseDecimal(quantizedValue, precision);
+    return new PreciseDecimal(quantizedValue);
   }
 
   isWithinInterval(min: PreciseDecimal, max: PreciseDecimal): boolean {
@@ -68,11 +60,11 @@ export class PreciseDecimal {
   }
 
   floor(): PreciseDecimal {
-    return new PreciseDecimal(this.value.floor(), this.displayPrecision);
+    return new PreciseDecimal(this.value.floor());
   }
 
   ceil(): PreciseDecimal {
-    return new PreciseDecimal(this.value.ceil(), this.displayPrecision);
+    return new PreciseDecimal(this.value.ceil());
   }
 
   gte(other: PreciseDecimal): boolean {
@@ -88,7 +80,7 @@ export class PreciseDecimal {
   }
 
   abs(): PreciseDecimal {
-    return new PreciseDecimal(this.value.abs(), this.displayPrecision);
+    return new PreciseDecimal(this.value.abs());
   }
 
   toScaledFloat(): ScaledFloat {
@@ -107,8 +99,7 @@ export class PreciseDecimal {
     return new ScaledFloat(mantissa, exponent);
   }
 
-  static fromString(str: string, precision?: number): PreciseDecimal {
-    const actualPrecision = precision ?? (str.includes('.') ? str.split('.')[1].length : 0);
-    return new PreciseDecimal(str, actualPrecision);
+  static fromString(str: string): PreciseDecimal {
+    return new PreciseDecimal(str);
   }
 }

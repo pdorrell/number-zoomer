@@ -33,7 +33,7 @@ export class QuadraticEquation extends Equation {
     // At high zoom levels, y=x² appears linear within small intervals
     const xRange = worldWindow.topRight[0].sub(worldWindow.bottomLeft[0]);
     const rangeSize = xRange.abs();
-    const threshold = new PreciseDecimal(0.01, 2);
+    const threshold = new PreciseDecimal(0.01);
     
     // If the x range is very small, draw as line (appears linear at high zoom)
     return rangeSize.gte(threshold);

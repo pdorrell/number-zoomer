@@ -56,18 +56,18 @@ export class AppStore implements ZoomableInterface {
   constructor() {
     this.worldWindow = {
       bottomLeft: [
-        new PreciseDecimal(-5, 2),
-        new PreciseDecimal(-5, 2)
+        new PreciseDecimal(-5),
+        new PreciseDecimal(-5)
       ],
       topRight: [
-        new PreciseDecimal(5, 2),
-        new PreciseDecimal(5, 2)
+        new PreciseDecimal(5),
+        new PreciseDecimal(5)
       ]
     };
 
     this.currentPoint = [
-      new PreciseDecimal(0, 3),
-      new PreciseDecimal(0, 3)
+      new PreciseDecimal(0),
+      new PreciseDecimal(0)
     ];
 
     this.currentEquation = createEquation({ type: 'quadratic' });
@@ -127,7 +127,8 @@ export class AppStore implements ZoomableInterface {
     const maxPrecision = Math.floor(Math.log10(pixelsPerXUnit / minSeparation));
 
     // Ensure we don't exceed reasonable bounds and handle edge cases
-    return Math.max(0, Math.min(1000, maxPrecision));
+    // Allow negative precision for zoomed-out views (grid spacing of 10, 100, 1000, etc.)
+    return Math.max(-10, Math.min(1000, maxPrecision));
   }
 
   // Legacy method name for backward compatibility
@@ -197,12 +198,12 @@ export class AppStore implements ZoomableInterface {
 
   resetView() {
     const defaultBottomLeft: Point = [
-      new PreciseDecimal(-5, 2),
-      new PreciseDecimal(-5, 2)
+      new PreciseDecimal(-5),
+      new PreciseDecimal(-5)
     ];
     const defaultTopRight: Point = [
-      new PreciseDecimal(5, 2),
-      new PreciseDecimal(5, 2)
+      new PreciseDecimal(5),
+      new PreciseDecimal(5)
     ];
 
     // Use updateWorldWindow to ensure proper boundary rounding
@@ -211,8 +212,8 @@ export class AppStore implements ZoomableInterface {
     // Reset current point with appropriate precision (this counts as user action)
     const currentPrecision = this.calculateCurrentPrecision();
     this.currentPoint = [
-      new PreciseDecimal(0, currentPrecision),
-      new PreciseDecimal(0, currentPrecision)
+      new PreciseDecimal(0).quantize(currentPrecision),
+      new PreciseDecimal(0).quantize(currentPrecision)
     ];
   }
 
@@ -242,8 +243,8 @@ export class AppStore implements ZoomableInterface {
   // Utility methods for formatted display
   getCurrentPointDisplay(): string {
     // Display current point as simple decimal fractions without precision info
-    const x = this.currentPoint[0].toFullPrecisionString();
-    const y = this.currentPoint[1].toFullPrecisionString();
+    const x = this.currentPoint[0].toString();
+    const y = this.currentPoint[1].toString();
     return `${x}, ${y}`;
   }
 

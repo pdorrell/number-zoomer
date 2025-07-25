@@ -44,7 +44,7 @@ export const CoordinateLabels: React.FC<CoordinateLabelsProps> = observer(({
       <g transform={yLabelsTransform}>
         {thickHorizontalLines.map((line, index) => {
           const screenY = line.screenPosition;
-          const labelText = line.position.toFullPrecisionString();
+          const labelText = line.position.toString();
           const individualTransform = getYLabelTransform ? getYLabelTransform(screenY) : '';
           
           return (
@@ -78,7 +78,7 @@ export const CoordinateLabels: React.FC<CoordinateLabelsProps> = observer(({
       <g transform={xLabelsTransform}>
         {thickVerticalLines.map((line, index) => {
           const screenX = line.screenPosition;
-          const labelText = line.position.toFullPrecisionString();
+          const labelText = line.position.toString();
           const individualTransform = getXLabelTransform ? getXLabelTransform(screenX) : '';
           
           return (

@@ -60,7 +60,7 @@ export class GridRenderer {
 
     // Generate lines with correct thickness based on grid weight hierarchy
     // Only generate lines for the 3 precision levels that have different thicknesses
-    const minPrecision = Math.max(0, maxPrecision - 2);
+    const minPrecision = maxPrecision - 2;
     for (let precision = minPrecision; precision <= maxPrecision; precision++) {
       const thickness = this.calculateThickness(precision, maxPrecision);
       // Show labels for all grid lines except the thinnest (1px) ones
@@ -72,19 +72,23 @@ export class GridRenderer {
       }
 
       // Use PreciseDecimal for all calculations to avoid floating-point errors
-      const multiplier = new PreciseDecimal(10, 0).pow(precision);
-      const startMultiplied = minWorldPosition.mul(multiplier);
-      const endMultiplied = maxWorldPosition.mul(multiplier);
+      // For negative precision, we need the step size, not the multiplier
+      const stepSize = precision >= 0 
+        ? new PreciseDecimal(1).div(new PreciseDecimal(10).pow(precision))  // 0.1, 0.01, 0.001, etc.
+        : new PreciseDecimal(10).pow(-precision);  // 10, 100, 1000, etc.
+      
+      const startDivided = minWorldPosition.div(stepSize);
+      const endDivided = maxWorldPosition.div(stepSize);
 
-      const startIndex = startMultiplied.floor();
-      const endIndex = endMultiplied.ceil();
+      const startIndex = startDivided.floor();
+      const endIndex = endDivided.ceil();
 
       // Calculate initial window position and screen position
-      let windowPosition = startIndex.div(multiplier);
+      let windowPosition = startIndex.mul(stepSize);
       let screenPosition = axisMapping.worldToScreen(windowPosition);
       
       // Calculate steps for incremental arithmetic
-      const windowStep = new PreciseDecimal(1, 0).div(multiplier); // reciprocal of multiplier
+      const windowStep = stepSize;
       const screenStep = axisMapping.worldToScreenRange(windowStep);
 
       // Use incremental arithmetic instead of repeated coordinate transformations
@@ -92,12 +96,12 @@ export class GridRenderer {
       while (i.lte(endIndex)) {
         if (windowPosition.isWithinInterval(minWorldPosition, maxWorldPosition)) {
           const color = this.calculateGridLineColor(precision, maxPrecision);
-          const line = { position: windowPosition.setPrecision(precision), screenPosition, thickness, precision, isThick, color };
+          const line = { position: windowPosition.quantize(precision), screenPosition, thickness, precision, isThick, color };
           linesByThickness.get(thickness)!.push(line);
         }
         
         // Increment for next iteration
-        i = i.add(new PreciseDecimal(1, 0));
+        i = i.add(new PreciseDecimal(1));
         windowPosition = windowPosition.add(windowStep);
         screenPosition += screenStep;
       }

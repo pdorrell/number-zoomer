@@ -132,11 +132,11 @@ export class ScaledFloat {
     const { PreciseDecimal } = require('./Decimal');
     
     if (this.mantissa === 0) {
-      return new PreciseDecimal(0, precision);
+      return new PreciseDecimal(0).quantize(precision);
     }
     
     const valueStr = this.toString();
-    return PreciseDecimal.fromString(valueStr, precision);
+    return PreciseDecimal.fromString(valueStr).quantize(precision);
   }
 
   toString(): string {
