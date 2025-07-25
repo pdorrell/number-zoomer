@@ -59,12 +59,17 @@ export class GridRenderer {
     const maxWorldPosition = axisMapping.getExtendedMaxWindowPosition();
 
     // Generate lines with correct thickness based on grid weight hierarchy
-    // Only generate lines for the 3 precision levels that have different thicknesses
-    const minPrecision = maxPrecision - 2;
-    for (let precision = minPrecision; precision <= maxPrecision; precision++) {
+    // For negative precision (zoomed out), only generate 2 levels to avoid overwhelming the display
+    // For positive precision (zoomed in), generate 3 levels as before
+    const precisionLevels = maxPrecision >= 0 
+      ? [Math.max(0, maxPrecision - 2), Math.max(0, maxPrecision - 1), maxPrecision].filter(p => p >= 0)
+      : [maxPrecision - 1, maxPrecision].filter(p => p >= -10); // Limit how far negative we go
+    
+    for (const precision of precisionLevels) {
       const thickness = this.calculateThickness(precision, maxPrecision);
-      // Show labels for all grid lines except the thinnest (1px) ones
-      const isThick = thickness > 1;
+      // For negative precision, only show labels for the most essential lines (maxPrecision level)
+      // For positive precision, show labels for medium and thick lines  
+      const isThick = maxPrecision >= 0 ? thickness > 1 : precision === maxPrecision;
 
       // Initialize thickness group if not exists
       if (!linesByThickness.has(thickness)) {
