@@ -20,6 +20,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
   const [accumulatedPanDelta, setAccumulatedPanDelta] = useState({ x: 0, y: 0 });
   const [initialZoomFactor, setInitialZoomFactor] = useState(1);
   const [zoomCenter, setZoomCenter] = useState({ x: 0, y: 0 });
+  const [pinchStartScale, setPinchStartScale] = useState(1);
 
   // Global mouse move handler for dragging outside the component
   const handleGlobalMouseMove = useCallback((event: MouseEvent) => {
@@ -164,7 +165,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       setAccumulatedPanDelta({ x: 0, y: 0 });
     },
     
-    onPinchStart: () => {
+    onPinchStart: ({ offset: [initialScale] }) => {
       // Cancel any active drag operations when pinch starts
       if (isDraggingBackground) {
         store.completeDragWithDelta(accumulatedPanDelta.x, accumulatedPanDelta.y);
@@ -178,6 +179,8 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       setIsDraggingBackground(false);
       setAccumulatedPanDelta({ x: 0, y: 0 });
       
+      // Store the initial scale from the gesture library
+      setPinchStartScale(initialScale);
       setInitialZoomFactor(1);
       setIsZooming(true);
       store.startZoom('pinch');
@@ -191,12 +194,15 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     onPinch: ({ offset: [scale] }) => {
       if (!isZooming) return;
       
-      // Debug the scale value
-      console.log('Pinch scale:', scale, 'Center:', zoomCenter);
+      // Calculate the relative scale from the pinch start
+      const relativeScale = scale / pinchStartScale;
       
-      // Use the new ZoomableInterface method
-      store.setZoomFactor('pinch', scale);
-      setInitialZoomFactor(scale);
+      // Debug the scale values
+      console.log('Pinch scale:', scale, 'Start scale:', pinchStartScale, 'Relative:', relativeScale);
+      
+      // Use the relative scale for the zoom factor
+      store.setZoomFactor('pinch', relativeScale);
+      setInitialZoomFactor(relativeScale);
     },
     
     onPinchEnd: () => {
@@ -206,6 +212,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       store.completeZoom('pinch', initialZoomFactor);
       setIsZooming(false);
       setInitialZoomFactor(1);
+      setPinchStartScale(1);
     }
   }, {
     eventOptions: { passive: false },
@@ -217,7 +224,8 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     pinch: {
       scaleBounds: { min: 0.1, max: 10 },
       rubberband: true,
-      pointer: { touch: true }
+      pointer: { touch: true },
+      from: () => [1, 0]
     }
   });
 
