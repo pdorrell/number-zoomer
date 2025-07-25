@@ -99,6 +99,7 @@ export const App: React.FC = observer(() => {
         </div>
       </div>
       <div className="main-area">
+        <h2 className="equation-heading">{store.currentEquation.getDisplayName()}</h2>
         <CoordinatePlane store={store} />
         <CustomZoomSlider 
           zoomable={store}
