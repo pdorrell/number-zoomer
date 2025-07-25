@@ -21,6 +21,8 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
   const [initialZoomFactor, setInitialZoomFactor] = useState(1);
   const [zoomCenter, setZoomCenter] = useState({ x: 0, y: 0 });
   const [pinchStartScale, setPinchStartScale] = useState(1);
+  const [hasMovedDuringDrag, setHasMovedDuringDrag] = useState(false);
+  const [draggedPointStartPosition, setDraggedPointStartPosition] = useState<{ x: number; y: number } | null>(null);
 
   // Global mouse move handler for dragging outside the component
   const handleGlobalMouseMove = useCallback((event: MouseEvent) => {
@@ -30,10 +32,27 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     const mouseX = event.clientX - rect.left;
     const mouseY = event.clientY - rect.top;
     
-    if (isDraggingPoint) {
-      // Continuously update point position for real-time coordinate display
-      const newPoint = store.mapping.screenToWorld(mouseX, mouseY);
-      store.updateCurrentPoint(newPoint);
+    if (isDraggingPoint && draggedPointStartPosition) {
+      // Check if we've moved enough to start dragging
+      const dragDistance = Math.sqrt(
+        Math.pow(mouseX - startDragPos.x, 2) + 
+        Math.pow(mouseY - startDragPos.y, 2)
+      );
+      
+      if (dragDistance >= 3 || hasMovedDuringDrag) { // 3px minimum drag distance
+        // Mark that we've moved during the drag
+        setHasMovedDuringDrag(true);
+        
+        // Apply relative movement from drag start position
+        const deltaX = mouseX - startDragPos.x;
+        const deltaY = mouseY - startDragPos.y;
+        
+        const newScreenX = draggedPointStartPosition.x + deltaX;
+        const newScreenY = draggedPointStartPosition.y + deltaY;
+        
+        const newPoint = store.mapping.screenToWorld(newScreenX, newScreenY);
+        store.updateCurrentPoint(newPoint);
+      }
     } else if (isDraggingBackground) {
       // Use CSS transform for immediate feedback
       const deltaX = mouseX - lastMousePos.x;
@@ -46,7 +65,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       store.updateWorldWindowDragTransform(newAccumulatedDelta.x, newAccumulatedDelta.y);
       setLastMousePos({ x: mouseX, y: mouseY });
     }
-  }, [isDraggingPoint, isDraggingBackground, lastMousePos, accumulatedPanDelta, store]);
+  }, [isDraggingPoint, isDraggingBackground, lastMousePos, accumulatedPanDelta, store, startDragPos, hasMovedDuringDrag, draggedPointStartPosition]);
 
   // Global mouse up handler for ending drags outside the component
   const handleGlobalMouseUp = useCallback(() => {
@@ -60,6 +79,8 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     setIsDraggingPoint(false);
     setIsDraggingBackground(false);
     setAccumulatedPanDelta({ x: 0, y: 0 });
+    setHasMovedDuringDrag(false);
+    setDraggedPointStartPosition(null);
   }, [isDraggingPoint, isDraggingBackground, accumulatedPanDelta, store]);
 
   // Add/remove global event listeners when dragging state changes
@@ -74,6 +95,20 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     }
   }, [isDraggingPoint, isDraggingBackground, handleGlobalMouseMove, handleGlobalMouseUp]);
 
+  // Helper function to start point dragging
+  const startPointDrag = useCallback((mouseX: number, mouseY: number) => {
+    setIsDraggingPoint(true);
+    setHasMovedDuringDrag(false); // Reset movement flag
+    
+    // Store the current screen position of the point at drag start
+    const currentPointScreen = store.mapping.worldToScreen(store.currentPoint);
+    setDraggedPointStartPosition({ x: currentPointScreen.x, y: currentPointScreen.y });
+    
+    store.startPointDrag({ x: mouseX, y: mouseY });
+    setStartDragPos({ x: mouseX, y: mouseY });
+    setLastMousePos({ x: mouseX, y: mouseY });
+  }, [store]);
+
   const handleMouseDown = useCallback((event: React.MouseEvent) => {
     const rect = (event.currentTarget as HTMLDivElement).getBoundingClientRect();
     const mouseX = event.clientX - rect.left;
@@ -86,17 +121,41 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     );
     
     if (distanceToPoint <= 10) {
-      setIsDraggingPoint(true);
-      store.startPointDrag({ x: mouseX, y: mouseY });
-      setStartDragPos({ x: mouseX, y: mouseY });
+      startPointDrag(mouseX, mouseY);
     } else {
       setIsDraggingBackground(true);
       store.startWorldWindowDrag();
       setAccumulatedPanDelta({ x: 0, y: 0 });
+      setLastMousePos({ x: mouseX, y: mouseY });
     }
+  }, [store, startPointDrag]);
+
+  // Handler for coordinate display mouse down
+  const handleCoordinateMouseDown = useCallback((event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent triggering the background handler
     
-    setLastMousePos({ x: mouseX, y: mouseY });
-  }, [store]);
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
+    
+    startPointDrag(mouseX, mouseY);
+  }, [startPointDrag]);
+
+  // Handler for coordinate display touch start
+  const handleCoordinateTouchStart = useCallback((event: React.TouchEvent) => {
+    event.stopPropagation(); // Prevent triggering the background handler
+    
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    
+    const touch = event.touches[0];
+    const touchX = touch.clientX - rect.left;
+    const touchY = touch.clientY - rect.top;
+    
+    startPointDrag(touchX, touchY);
+  }, [startPointDrag]);
 
 
 
@@ -121,16 +180,13 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       );
       
       if (distanceToPoint <= 15) { // Touch target for point
-        setIsDraggingPoint(true);
-        store.startPointDrag({ x: touchX, y: touchY });
-        setStartDragPos({ x: touchX, y: touchY });
+        startPointDrag(touchX, touchY);
       } else {
         setIsDraggingBackground(true);
         store.startWorldWindowDrag();
         setAccumulatedPanDelta({ x: 0, y: 0 });
+        setLastMousePos({ x: touchX, y: touchY });
       }
-      
-      setLastMousePos({ x: touchX, y: touchY });
     },
     
     onDrag: ({ event, movement: [movementX, movementY], xy: [currentX, currentY] }) => {
@@ -139,14 +195,31 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       // Block drag operations during pinch zoom
       if (isZooming) return;
       
-      if (isDraggingPoint) {
+      if (isDraggingPoint && draggedPointStartPosition) {
         // For point dragging, use current absolute position relative to container
         const rect = containerRef.current.getBoundingClientRect();
         const touchX = currentX - rect.left;
         const touchY = currentY - rect.top;
         
-        const newPoint = store.mapping.screenToWorld(touchX, touchY);
-        store.updateCurrentPoint(newPoint);
+        // Check if we've moved enough to start dragging
+        const dragDistance = Math.sqrt(
+          Math.pow(touchX - startDragPos.x, 2) + 
+          Math.pow(touchY - startDragPos.y, 2)
+        );
+        
+        if (dragDistance >= 3 || hasMovedDuringDrag) { // 3px minimum drag distance
+          setHasMovedDuringDrag(true);
+          
+          // Apply relative movement from drag start position
+          const deltaX = touchX - startDragPos.x;
+          const deltaY = touchY - startDragPos.y;
+          
+          const newScreenX = draggedPointStartPosition.x + deltaX;
+          const newScreenY = draggedPointStartPosition.y + deltaY;
+          
+          const newPoint = store.mapping.screenToWorld(newScreenX, newScreenY);
+          store.updateCurrentPoint(newPoint);
+        }
       } else if (isDraggingBackground) {
         // For background dragging, use movement (total distance from start)
         setAccumulatedPanDelta({ x: movementX, y: movementY });
@@ -163,6 +236,8 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       setIsDraggingPoint(false);
       setIsDraggingBackground(false);
       setAccumulatedPanDelta({ x: 0, y: 0 });
+      setHasMovedDuringDrag(false);
+      setDraggedPointStartPosition(null);
     },
     
     onPinchStart: ({ offset: [initialScale] }) => {
@@ -368,6 +443,8 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       
       {/* Expandable div for coordinate display */}
       <div
+        onMouseDown={handleCoordinateMouseDown}
+        onTouchStart={handleCoordinateTouchStart}
         style={{
           position: 'absolute',
           left: currentPointScreen.x + 10,
@@ -375,13 +452,23 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
           background: '#ffffff',
           border: '1px solid #212529',
           borderRadius: '3px',
-          padding: '2px 5px',
+          padding: '4px 6px',
           fontSize: '12px',
           fontFamily: 'monospace',
           color: '#212529',
-          pointerEvents: 'none',
+          pointerEvents: 'auto',
           whiteSpace: 'nowrap',
-          transform: store.transformState.pointTransform
+          transform: store.transformState.pointTransform,
+          cursor: isDraggingPoint ? 'grabbing' : 'grab',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          msUserSelect: 'none',
+          minHeight: '20px', // Minimum touch target size
+          minWidth: '40px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: isDraggingPoint ? '0 2px 4px rgba(0,0,0,0.2)' : '0 1px 2px rgba(0,0,0,0.1)'
         }}
       >
         {store.getCurrentPointDisplay()}
