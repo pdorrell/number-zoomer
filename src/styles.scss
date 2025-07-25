@@ -74,7 +74,8 @@
   
   .debug-info {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     gap: 0.5rem;
     font-size: 0.85rem;
     
@@ -89,9 +90,20 @@
       -webkit-user-select: text;
       -moz-user-select: text;
       -ms-user-select: text;
+      flex: 0 0 calc(50% - 0.25rem); // 50% width minus half the gap
       
       strong {
         color: #212529;
+      }
+      
+      &.drag-zoom-display {
+        .completed {
+          color: #007bff; // Blue for completed operations
+        }
+        
+        .active {
+          color: #dc3545; // Red for active operations
+        }
       }
     }
   }

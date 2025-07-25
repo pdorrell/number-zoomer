@@ -26,6 +26,9 @@ export class AppStore implements ZoomableInterface {
   // Ratio of extension that triggers redraw based on movement distance (50% = 0.50)
   extensionRedrawOnRatio: number = 0.50;
 
+  // Debug information for drag & zoom operations
+  lastCompletedOperation: { type: 'drag' | 'zoom'; value: string } | null = null;
+
   // New zoom state management
   centrePoint: { x: number; y: number } | null = null;
   zoomingSource: ZoomSource | null = null;
@@ -40,6 +43,7 @@ export class AppStore implements ZoomableInterface {
 
   // State for intermediate redraws during drag
   private appliedIntermediateDelta: { x: number; y: number } = { x: 0, y: 0 };
+  private currentDragDelta: { x: number; y: number } = { x: 0, y: 0 };
   
   // State for intermediate redraws during zoom
   private appliedIntermediateZoomFactor: number = 1.0;
@@ -351,6 +355,9 @@ export class AppStore implements ZoomableInterface {
   }
 
   updateWorldWindowDragTransform(deltaX: number, deltaY: number) {
+    // Track current drag delta for debug display
+    this.currentDragDelta = { x: deltaX, y: deltaY };
+    
     // Check if movement distance exceeds threshold for redraw
     const remainingDeltaX = deltaX - this.appliedIntermediateDelta.x;
     const remainingDeltaY = deltaY - this.appliedIntermediateDelta.y;
@@ -423,6 +430,7 @@ export class AppStore implements ZoomableInterface {
     
     // Reset intermediate redraw state
     this.appliedIntermediateDelta = { x: 0, y: 0 };
+    this.currentDragDelta = { x: 0, y: 0 };
   }
 
   private performIntermediateDragRedraw(deltaX: number, deltaY: number) {
@@ -449,6 +457,10 @@ export class AppStore implements ZoomableInterface {
     if (remainingDeltaX !== 0 || remainingDeltaY !== 0) {
       this.pan(remainingDeltaX, remainingDeltaY);
     }
+    
+    // Track completed drag operation for debug display
+    const totalDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    this.lastCompletedOperation = { type: 'drag', value: `${Math.round(totalDistance)}px` };
     
     // Reset intermediate drag state
     this.appliedIntermediateDelta = { x: 0, y: 0 };
@@ -599,6 +611,9 @@ export class AppStore implements ZoomableInterface {
       this.zoomAroundScreenPoint(remainingZoomFactor, this.centrePoint.x, this.centrePoint.y);
     }
 
+    // Track completed zoom operation for debug display
+    this.lastCompletedOperation = { type: 'zoom', value: this.formatZoomFactor(finalZoomFactor) };
+
     // Reset zoom state
     this.zoomingSource = null;
     this.zoomFactor = 1.0;
@@ -646,6 +661,50 @@ export class AppStore implements ZoomableInterface {
       bottomLeft: previewBottomLeft,
       topRight: previewTopRight
     };
+  }
+
+  // Helper method to format zoom factor with at least 3 significant digits
+  private formatZoomFactor(zoomFactor: number): string {
+    if (zoomFactor >= 100) {
+      return zoomFactor.toFixed(0); // 100, 200, etc.
+    } else if (zoomFactor >= 10) {
+      return zoomFactor.toFixed(1); // 10.0, 15.5, etc.
+    } else if (zoomFactor >= 1) {
+      return zoomFactor.toFixed(2); // 1.00, 2.34, etc.
+    } else if (zoomFactor >= 0.1) {
+      return zoomFactor.toFixed(3); // 0.100, 0.234, etc.
+    } else if (zoomFactor >= 0.01) {
+      return zoomFactor.toFixed(4); // 0.0100, 0.0234, etc.
+    } else if (zoomFactor >= 0.001) {
+      return zoomFactor.toFixed(5); // 0.00100, 0.00718, etc.
+    } else {
+      return zoomFactor.toFixed(6); // 0.000100, 0.000718, etc.
+    }
+  }
+
+  // Debug methods for drag & zoom operations display
+  getCurrentDragDistance(): number | null {
+    // Only show drag distance for world window drags, not point drags
+    if (this.transformState.isTransforming && this.transformState.transformType === 'pan') {
+      const deltaX = this.currentDragDelta.x;
+      const deltaY = this.currentDragDelta.y;
+      return Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+    }
+    return null;
+  }
+
+  getCurrentZoomFactor(): number | null {
+    if (this.isZooming) {
+      return this.zoomFactor;
+    }
+    return null;
+  }
+
+  getCurrentZoomFactorFormatted(): string | null {
+    if (this.isZooming) {
+      return this.formatZoomFactor(this.zoomFactor);
+    }
+    return null;
   }
 
   // Legacy methods for backward compatibility
