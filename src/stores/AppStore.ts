@@ -39,16 +39,10 @@ export class AppStore implements ZoomableInterface {
   dragPreviewWorldWindow: WorldWindow | null = null;
 
   // State for intermediate redraws during drag
-  private lastIntermediateRedrawTime: number = 0;
-  private dragStartTime: number = 0;
   private appliedIntermediateDelta: { x: number; y: number } = { x: 0, y: 0 };
   
   // State for intermediate redraws during zoom
-  private lastIntermediateZoomRedrawTime: number = 0;
-  private zoomStartTime: number = 0;
   private appliedIntermediateZoomFactor: number = 1.0;
-  
-  private readonly INTERMEDIATE_REDRAW_INTERVAL_MS = 300;
 
   // Computed property for backward compatibility
   get isZooming(): boolean {
@@ -352,18 +346,11 @@ export class AppStore implements ZoomableInterface {
     // Store the starting world window for drag preview calculations
     this.dragPreviewWorldWindow = null; // Will be calculated in updateWorldWindowDragTransform
     
-    // Initialize intermediate redraw timing
-    const now = Date.now();
-    this.dragStartTime = now;
-    this.lastIntermediateRedrawTime = now;
+    // Initialize intermediate redraw state
     this.appliedIntermediateDelta = { x: 0, y: 0 };
   }
 
   updateWorldWindowDragTransform(deltaX: number, deltaY: number) {
-    // Check if enough time has passed for an intermediate redraw
-    const now = Date.now();
-    const timeSinceLastRedraw = now - this.lastIntermediateRedrawTime;
-    
     // Check if movement distance exceeds threshold for redraw
     const remainingDeltaX = deltaX - this.appliedIntermediateDelta.x;
     const remainingDeltaY = deltaY - this.appliedIntermediateDelta.y;
@@ -371,12 +358,9 @@ export class AppStore implements ZoomableInterface {
     const movementDistance = Math.sqrt(remainingDeltaX * remainingDeltaX + remainingDeltaY * remainingDeltaY);
     const shouldRedrawByDistance = movementDistance >= distanceThreshold;
     
-    // Temporarily suppress time-based criterion for testing
-    // if (timeSinceLastRedraw >= this.INTERMEDIATE_REDRAW_INTERVAL_MS) {
     if (shouldRedrawByDistance) {
       // Perform intermediate redraw: apply current delta to actual coordinates
       this.performIntermediateDragRedraw(deltaX, deltaY);
-      this.lastIntermediateRedrawTime = now;
       
       // After intermediate redraw, CSS transforms should show remaining delta from new baseline
       const newRemainingDeltaX = deltaX - this.appliedIntermediateDelta.x;
@@ -437,9 +421,7 @@ export class AppStore implements ZoomableInterface {
     // Clear drag preview
     this.dragPreviewWorldWindow = null;
     
-    // Reset intermediate redraw timing state
-    this.lastIntermediateRedrawTime = 0;
-    this.dragStartTime = 0;
+    // Reset intermediate redraw state
     this.appliedIntermediateDelta = { x: 0, y: 0 };
   }
 
@@ -555,10 +537,7 @@ export class AppStore implements ZoomableInterface {
     this.transformState.pointTransform = '';
     this.transformState.gridTransform = '';
     
-    // Initialize intermediate zoom redraw timing
-    const now = Date.now();
-    this.zoomStartTime = now;
-    this.lastIntermediateZoomRedrawTime = now;
+    // Initialize intermediate zoom redraw state
     this.appliedIntermediateZoomFactor = 1.0;
   }
 
@@ -575,22 +554,15 @@ export class AppStore implements ZoomableInterface {
 
     this.zoomFactor = zoomFactor;
 
-    // Check if enough time has passed for an intermediate redraw
-    const now = Date.now();
-    const timeSinceLastRedraw = now - this.lastIntermediateZoomRedrawTime;
-    
     // Check if zoom factor change exceeds threshold for redraw
     const remainingZoomFactor = zoomFactor / this.appliedIntermediateZoomFactor;
     // For zoom, use a much smaller threshold since visual impact is greater
     const zoomThreshold = this.extensionRedrawOnRatio * 0.2; // 0.1 means redraw when zoom changes by 10%
     const shouldRedrawByZoom = Math.abs(remainingZoomFactor - 1.0) >= zoomThreshold;
     
-    // Temporarily suppress time-based criterion for testing
-    // if (timeSinceLastRedraw >= this.INTERMEDIATE_REDRAW_INTERVAL_MS) {
     if (shouldRedrawByZoom) {
       // Perform intermediate redraw: apply current zoom factor to actual coordinates
       this.performIntermediateZoomRedraw(zoomFactor);
-      this.lastIntermediateZoomRedrawTime = now;
       
       // After intermediate redraw, CSS transforms should show remaining zoom from new baseline
       const remainingZoomFactor = zoomFactor / this.appliedIntermediateZoomFactor;
@@ -634,8 +606,6 @@ export class AppStore implements ZoomableInterface {
     this.startingWorldWindow = null;
     this.previewWorldWindow = null;
     this.appliedIntermediateZoomFactor = 1.0;
-    this.lastIntermediateZoomRedrawTime = 0;
-    this.zoomStartTime = 0;
 
     // Complete transform state
     this.completeTransform();

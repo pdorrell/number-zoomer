@@ -309,7 +309,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
         touchAction: 'none', // Prevent default touch behaviors
         opacity: isZooming ? 0.8 : 1, // Visual feedback during zoom
         transition: isZooming ? 'none' : 'opacity 0.1s ease',
-        overflow: 'visible', // Temporarily unclip to see redraw effects
+        overflow: 'hidden', // Clip canvas when it transforms outside container
         border: '1px solid #dee2e6', // Visible clipping boundary
         borderRadius: '4px'
       }}
