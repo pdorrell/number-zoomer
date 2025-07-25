@@ -126,9 +126,7 @@ export class AppStore implements ZoomableInterface {
     // This replaces the loop that finds the highest precision where separation >= minSeparation
     const maxPrecision = Math.floor(Math.log10(pixelsPerXUnit / minSeparation));
 
-    // Ensure we don't exceed reasonable bounds and handle edge cases
-    // Allow negative precision for zoomed-out views (grid spacing of 10, 100, 1000, etc.)
-    return Math.max(-10, Math.min(1000, maxPrecision));
+    return maxPrecision;
   }
 
   // Legacy method name for backward compatibility

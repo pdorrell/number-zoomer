@@ -146,6 +146,18 @@ export class ScaledFloat {
     return `${this.mantissa}e${this.exponent}`;
   }
 
+  log10(): number {
+    if (this.mantissa === 0) {
+      return -Infinity;
+    }
+    if (this.mantissa < 0) {
+      throw new Error("Cannot take log10 of negative number");
+    }
+    
+    // log10(mantissa * 10^exponent) = log10(mantissa) + exponent
+    return Math.log10(this.mantissa) + this.exponent;
+  }
+
   // Vector operations for 2D points/vectors
   static addVector(point: [ScaledFloat, ScaledFloat], vector: [ScaledFloat, ScaledFloat]): [ScaledFloat, ScaledFloat] {
     return [
