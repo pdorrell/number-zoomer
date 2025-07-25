@@ -228,8 +228,12 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
   // Calculate grid lines for coordinate labels
   const gridRenderer = new GridRenderer(store.mapping);
   const maxPrecision = gridRenderer.calculateMaxPrecision();
-  const horizontalLines = gridRenderer.calculateHorizontalGridLines(maxPrecision);
-  const verticalLines = gridRenderer.calculateVerticalGridLines(maxPrecision);
+  const horizontalLineGroups = gridRenderer.calculateHorizontalGridLines(maxPrecision);
+  const verticalLineGroups = gridRenderer.calculateVerticalGridLines(maxPrecision);
+  
+  // Flatten for coordinate labels (labels only use thick lines anyway)
+  const horizontalLines = horizontalLineGroups.flat();
+  const verticalLines = verticalLineGroups.flat();
   
   // Calculate transforms for coordinate labels during drag/zoom
   const calculateLabelTransforms = () => {

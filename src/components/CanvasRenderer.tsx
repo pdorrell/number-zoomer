@@ -42,36 +42,41 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store }
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Draw grid lines
-    // Horizontal lines
-    horizontalLines.forEach(line => {
-      // Adjust screen coordinates for canvas offset
-      const screenY = line.screenPosition + store.screenViewport.height * store.extension;
-      
-      ctx.strokeStyle = line.color;
-      ctx.lineWidth = line.thickness;
-      ctx.beginPath();
-      ctx.moveTo(0, screenY);
-      ctx.lineTo(canvas.width, screenY);
-      ctx.stroke();
-      
-      // Coordinate labels now rendered by SVG component
-    });
+    // Draw grid lines in interleaved thickness order (thickest last)
+    // This ensures thicker lines are drawn over thinner lines in the other direction
+    const maxThicknessLevels = Math.max(horizontalLines.length, verticalLines.length);
     
-    // Vertical lines
-    verticalLines.forEach(line => {
-      // Adjust screen coordinates for canvas offset
-      const screenX = line.screenPosition + store.screenViewport.width * store.extension;
+    for (let thicknessLevel = 0; thicknessLevel < maxThicknessLevels; thicknessLevel++) {
+      // Draw horizontal lines of this thickness level
+      if (horizontalLines[thicknessLevel]) {
+        horizontalLines[thicknessLevel].forEach(line => {
+          // Adjust screen coordinates for canvas offset
+          const screenY = line.screenPosition + store.screenViewport.height * store.extension;
+          
+          ctx.strokeStyle = line.color;
+          ctx.lineWidth = line.thickness;
+          ctx.beginPath();
+          ctx.moveTo(0, screenY);
+          ctx.lineTo(canvas.width, screenY);
+          ctx.stroke();
+        });
+      }
       
-      ctx.strokeStyle = line.color;
-      ctx.lineWidth = line.thickness;
-      ctx.beginPath();
-      ctx.moveTo(screenX, 0);
-      ctx.lineTo(screenX, canvas.height);
-      ctx.stroke();
-      
-      // Coordinate labels now rendered by SVG component
-    });
+      // Draw vertical lines of this thickness level
+      if (verticalLines[thicknessLevel]) {
+        verticalLines[thicknessLevel].forEach(line => {
+          // Adjust screen coordinates for canvas offset
+          const screenX = line.screenPosition + store.screenViewport.width * store.extension;
+          
+          ctx.strokeStyle = line.color;
+          ctx.lineWidth = line.thickness;
+          ctx.beginPath();
+          ctx.moveTo(screenX, 0);
+          ctx.lineTo(screenX, canvas.height);
+          ctx.stroke();
+        });
+      }
+    }
     
     // Draw equation graph
     if (screenPoints.length > 0) {

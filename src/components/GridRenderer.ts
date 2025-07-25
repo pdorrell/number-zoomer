@@ -42,16 +42,17 @@ export class GridRenderer {
     return Math.max(-1, Math.min(1000, maxPrecision));
   }
 
-  calculateHorizontalGridLines(maxPrecision: number): GridLine[] {
+  calculateHorizontalGridLines(maxPrecision: number): GridLine[][] {
     return this.calculateGridLines(maxPrecision, this.mapping.y);
   }
 
-  calculateVerticalGridLines(maxPrecision: number): GridLine[] {
+  calculateVerticalGridLines(maxPrecision: number): GridLine[][] {
     return this.calculateGridLines(maxPrecision, this.mapping.x);
   }
 
-  private calculateGridLines(maxPrecision: number, axisMapping: CoordinateAxisMapping): GridLine[] {
-    const lines: GridLine[] = [];
+  private calculateGridLines(maxPrecision: number, axisMapping: CoordinateAxisMapping): GridLine[][] {
+    // Group lines by thickness - thinnest first
+    const linesByThickness = new Map<number, GridLine[]>();
     
     // Use the extended world bounds for rendering beyond viewport
     const minWorldPosition = axisMapping.getExtendedMinWindowPosition();
@@ -64,6 +65,11 @@ export class GridRenderer {
       const thickness = this.calculateThickness(precision, maxPrecision);
       // Show labels for all grid lines except the thinnest (1px) ones
       const isThick = thickness > 1;
+
+      // Initialize thickness group if not exists
+      if (!linesByThickness.has(thickness)) {
+        linesByThickness.set(thickness, []);
+      }
 
       // Use PreciseDecimal for all calculations to avoid floating-point errors
       const multiplier = new PreciseDecimal(10, 0).pow(precision);
@@ -81,13 +87,13 @@ export class GridRenderer {
       const windowStep = new PreciseDecimal(1, 0).div(multiplier); // reciprocal of multiplier
       const screenStep = axisMapping.worldToScreenRange(windowStep);
 
-
       // Use incremental arithmetic instead of repeated coordinate transformations
       let i = startIndex;
       while (i.lte(endIndex)) {
         if (windowPosition.isWithinInterval(minWorldPosition, maxWorldPosition)) {
           const color = this.calculateGridLineColor(precision, maxPrecision);
-          lines.push({ position: windowPosition.setPrecision(precision), screenPosition, thickness, precision, isThick, color });
+          const line = { position: windowPosition.setPrecision(precision), screenPosition, thickness, precision, isThick, color };
+          linesByThickness.get(thickness)!.push(line);
         }
         
         // Increment for next iteration
@@ -97,7 +103,9 @@ export class GridRenderer {
       }
     }
 
-    return lines.sort((a, b) => a.precision - b.precision);
+    // Convert to array sorted by thickness (thinnest first)
+    const sortedThicknesses = Array.from(linesByThickness.keys()).sort((a, b) => a - b);
+    return sortedThicknesses.map(thickness => linesByThickness.get(thickness)!);
   }
 
   private calculateThickness(precision: number, maxPrecision: number): number {
