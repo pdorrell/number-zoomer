@@ -52,9 +52,9 @@ export class GridRenderer {
   private calculateGridLines(maxPrecision: number, axisMapping: CoordinateAxisMapping): GridLine[] {
     const lines: GridLine[] = [];
     
-    // Use the world bounds directly from the axis mapping
-    const minWorldPosition = axisMapping.minWindowPosition;
-    const maxWorldPosition = axisMapping.maxWindowPosition;
+    // Use the extended world bounds for rendering beyond viewport
+    const minWorldPosition = axisMapping.getExtendedMinWindowPosition();
+    const maxWorldPosition = axisMapping.getExtendedMaxWindowPosition();
 
     // Generate lines with correct thickness based on grid weight hierarchy
     // Only generate lines for the 3 precision levels that have different thicknesses

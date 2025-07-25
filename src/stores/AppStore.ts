@@ -19,6 +19,9 @@ export class AppStore implements ZoomableInterface {
   mapping: CoordinateMapping;
   currentEquation: Equation;
   transformState: TransformState;
+  
+  // Canvas extension beyond viewport for smoother drag/zoom (20% = 0.2)
+  extension: number = 0.2;
 
   // New zoom state management
   centrePoint: { x: number; y: number } | null = null;
@@ -75,14 +78,14 @@ export class AppStore implements ZoomableInterface {
       transformType: undefined
     };
 
-    this.mapping = new CoordinateMapping(this.screenViewport, this.worldWindow);
+    this.mapping = new CoordinateMapping(this.screenViewport, this.worldWindow, this.extension);
 
     makeAutoObservable(this);
   }
 
   updateScreenViewport(width: number, height: number) {
     this.screenViewport = { width, height };
-    this.mapping = new CoordinateMapping(this.screenViewport, this.worldWindow);
+    this.mapping = new CoordinateMapping(this.screenViewport, this.worldWindow, this.extension);
   }
 
   updateWorldWindow(bottomLeft: Point, topRight: Point) {
@@ -100,7 +103,7 @@ export class AppStore implements ZoomableInterface {
         topRight[1].quantize(worldWindowPrecision)
       ]
     };
-    this.mapping = new CoordinateMapping(this.screenViewport, this.worldWindow);
+    this.mapping = new CoordinateMapping(this.screenViewport, this.worldWindow, this.extension);
   }
 
   updateCurrentPoint(point: Point) {

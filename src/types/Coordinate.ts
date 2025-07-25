@@ -28,7 +28,8 @@ export class CoordinateAxisMapping {
     public readonly maxWindowPosition: PreciseDecimal,
     public readonly screenBase: float,
     public readonly screenRange: float,
-    public readonly screenDirection: int = 1
+    public readonly screenDirection: int = 1,
+    public readonly extension: number = 0
   ) {
     this.windowRange = maxWindowPosition.sub(minWindowPosition);
   }
@@ -83,6 +84,17 @@ export class CoordinateAxisMapping {
     return this.screenDirection > 0 ? screenDistance : -screenDistance;
   }
 
+  // Get extended world window bounds for rendering beyond viewport
+  getExtendedMinWindowPosition(): PreciseDecimal {
+    const extensionAmount = this.windowRange.mul(new PreciseDecimal(this.extension));
+    return this.minWindowPosition.sub(extensionAmount);
+  }
+
+  getExtendedMaxWindowPosition(): PreciseDecimal {
+    const extensionAmount = this.windowRange.mul(new PreciseDecimal(this.extension));
+    return this.maxWindowPosition.add(extensionAmount);
+  }
+
 }
 
 export class CoordinateMapping {
@@ -91,14 +103,16 @@ export class CoordinateMapping {
 
   constructor(
     private screenViewport: ScreenViewport,
-    private worldWindow: WorldWindow
+    private worldWindow: WorldWindow,
+    private extension: number = 0
   ) {
     this.x = new CoordinateAxisMapping(
       worldWindow.bottomLeft[0],
       worldWindow.topRight[0],
       0,
       screenViewport.width,
-      1  // X increases rightward
+      1,  // X increases rightward
+      extension
     );
 
     this.y = new CoordinateAxisMapping(
@@ -106,7 +120,8 @@ export class CoordinateMapping {
       worldWindow.topRight[1],
       screenViewport.height,
       screenViewport.height,
-      -1  // Y increases upward, screen increases downward
+      -1,  // Y increases upward, screen increases downward
+      extension
     );
   }
 
@@ -120,6 +135,20 @@ export class CoordinateMapping {
 
   getScreenViewport(): ScreenViewport {
     return this.screenViewport;
+  }
+
+  // Get extended world window for rendering beyond viewport
+  getExtendedWorldWindow(): WorldWindow {
+    return {
+      bottomLeft: [
+        this.x.getExtendedMinWindowPosition(),
+        this.y.getExtendedMinWindowPosition()
+      ],
+      topRight: [
+        this.x.getExtendedMaxWindowPosition(),
+        this.y.getExtendedMaxWindowPosition()
+      ]
+    };
   }
 
 }
