@@ -8,6 +8,7 @@ export interface GridLine {
   thickness: number;
   precision: number;
   isThick: boolean;
+  color: string;
 }
 
 export class GridRenderer {
@@ -85,7 +86,8 @@ export class GridRenderer {
       let i = startIndex;
       while (i.lte(endIndex)) {
         if (windowPosition.isWithinInterval(minWorldPosition, maxWorldPosition)) {
-          lines.push({ position: windowPosition.setPrecision(precision), screenPosition, thickness, precision, isThick });
+          const color = this.calculateGridLineColor(precision, maxPrecision);
+          lines.push({ position: windowPosition.setPrecision(precision), screenPosition, thickness, precision, isThick, color });
         }
         
         // Increment for next iteration
@@ -103,6 +105,60 @@ export class GridRenderer {
     // Per design spec: Essential precision N = 1px, N-1 = 2px, N-2 or smaller = 3px
     const precisionFromMax = maxPrecision - precision;
     return Math.min(precisionFromMax + 1, 3);
+  }
+
+  private calculateGridLineColor(precision: number, maxPrecision: number): string {
+    const thickness = this.calculateThickness(precision, maxPrecision);
+    
+    // Calculate pixels per unit for the current precision level
+    const pixelsPerUnit = this.mapping.x.getPixelsPerUnit();
+    const multiplier = Math.pow(10, precision);
+    const pixelsSeparation = pixelsPerUnit / multiplier;
+    
+    // Define color transition: 10% grey at 5px to normal grey at 10px
+    const thinColor = "#495057";  // Normal grey (thick lines)
+    const lightColor = "#adb5bd"; // Light grey (thin lines)
+    
+    if (thickness > 1) {
+      // Thick lines use normal colors
+      return thinColor;
+    } else {
+      // Thin lines use color interpolation based on pixel separation
+      if (pixelsSeparation <= 5) {
+        // At 5px or less, use 10% of normal grey (almost white)
+        return this.interpolateColor(lightColor, "#ffffff", 0.9); // 10% grey, 90% white
+      } else if (pixelsSeparation >= 10) {
+        // At 10px or more, use normal light grey
+        return lightColor;
+      } else {
+        // Linear interpolation between 5px and 10px
+        const ratio = (pixelsSeparation - 5) / (10 - 5); // 0 to 1
+        const whiteAmount = 0.9 * (1 - ratio); // 90% white at 5px, 0% white at 10px
+        return this.interpolateColor(lightColor, "#ffffff", whiteAmount);
+      }
+    }
+  }
+
+  private interpolateColor(color1: string, color2: string, ratio: number): string {
+    // Convert hex colors to RGB
+    const hex1 = color1.replace('#', '');
+    const hex2 = color2.replace('#', '');
+    
+    const r1 = parseInt(hex1.substr(0, 2), 16);
+    const g1 = parseInt(hex1.substr(2, 2), 16);
+    const b1 = parseInt(hex1.substr(4, 2), 16);
+    
+    const r2 = parseInt(hex2.substr(0, 2), 16);
+    const g2 = parseInt(hex2.substr(2, 2), 16);
+    const b2 = parseInt(hex2.substr(4, 2), 16);
+    
+    // Interpolate
+    const r = Math.round(r1 + (r2 - r1) * ratio);
+    const g = Math.round(g1 + (g2 - g1) * ratio);
+    const b = Math.round(b1 + (b2 - b1) * ratio);
+    
+    // Convert back to hex
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
   }
 
   private getScreenViewport() {
