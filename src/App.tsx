@@ -8,15 +8,6 @@ import { EquationType } from './types/Equation';
 export const App: React.FC = observer(() => {
   const [store] = useState(() => new AppStore());
 
-  const handleZoomIn = () => {
-    store.startZoom('zoomInButton');
-    store.completeZoom('zoomInButton', 2);
-  };
-
-  const handleZoomOut = () => {
-    store.startZoom('zoomOutButton');
-    store.completeZoom('zoomOutButton', 0.5);
-  };
 
   const handleEquationTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const type = event.target.value as EquationType;
@@ -61,8 +52,6 @@ export const App: React.FC = observer(() => {
             </span>
           </div>
           <div className="control-buttons">
-            <button onClick={handleZoomIn}>Zoom In (+)</button>
-            <button onClick={handleZoomOut}>Zoom Out (-)</button>
             <button onClick={() => store.resetView()}>Reset View</button>
             <button onClick={() => store.moveCurrentPointToCenter()}>Center Point</button>
           </div>
