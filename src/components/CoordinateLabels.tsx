@@ -52,7 +52,7 @@ export const CoordinateLabels: React.FC<CoordinateLabelsProps> = observer(({
             <g key={`y-${index}-${line.position.toString()}`} transform={individualTransform}>
               <rect
                 x={-10}
-                y={screenY - 12}
+                y={screenY - 8}
                 width={labelText.length * 6 + 6}
                 height={16}
                 fill="#e3f2fd"
@@ -62,7 +62,7 @@ export const CoordinateLabels: React.FC<CoordinateLabelsProps> = observer(({
               />
               <text
                 x={-7}
-                y={screenY - 2}
+                y={screenY + 4}
                 fontSize="10"
                 fontFamily="monospace"
                 fill="#495057"
@@ -85,7 +85,7 @@ export const CoordinateLabels: React.FC<CoordinateLabelsProps> = observer(({
           return (
             <g key={`x-${index}-${line.position.toString()}`} transform={individualTransform}>
               <rect
-                x={screenX - 11}
+                x={screenX - (labelText.length * 6 + 6) / 2}
                 y={canvasHeight - 18}
                 width={labelText.length * 6 + 6}
                 height={16}
@@ -95,8 +95,9 @@ export const CoordinateLabels: React.FC<CoordinateLabelsProps> = observer(({
                 rx={2}
               />
               <text
-                x={screenX - 8}
+                x={screenX}
                 y={canvasHeight - 6}
+                textAnchor="middle"
                 fontSize="10"
                 fontFamily="monospace"
                 fill="#495057"
