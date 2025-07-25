@@ -143,8 +143,10 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     startPointDrag(mouseX, mouseY);
   }, [startPointDrag]);
 
+
   // Handler for coordinate display touch start
   const handleCoordinateTouchStart = useCallback((event: React.TouchEvent) => {
+    event.preventDefault(); // Prevent default touch behavior
     event.stopPropagation(); // Prevent triggering the background handler
     
     const rect = containerRef.current?.getBoundingClientRect();
@@ -445,11 +447,11 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       <div
         onMouseDown={handleCoordinateMouseDown}
         onTouchStart={handleCoordinateTouchStart}
+        className={`coordinate-display ${isDraggingPoint ? 'dragging' : ''}`}
         style={{
           position: 'absolute',
           left: currentPointScreen.x + 10,
           top: currentPointScreen.y - 25,
-          background: '#ffffff',
           border: '1px solid #212529',
           borderRadius: '3px',
           padding: '4px 6px',
@@ -468,7 +470,9 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          boxShadow: isDraggingPoint ? '0 2px 4px rgba(0,0,0,0.2)' : '0 1px 2px rgba(0,0,0,0.1)'
+          boxShadow: isDraggingPoint ? '0 2px 4px rgba(0,0,0,0.2)' : '0 1px 2px rgba(0,0,0,0.1)',
+          zIndex: 10, // Ensure it's above other elements
+          touchAction: 'none' // Prevent default touch behaviors
         }}
       >
         {store.getCurrentPointDisplay()}

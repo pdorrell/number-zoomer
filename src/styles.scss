@@ -127,3 +127,15 @@
   margin-top: 0.5em;
 }
 
+.coordinate-display {
+  background: #ffffff; // White background by default
+  
+  &:hover:not(.dragging) {
+    background: #fffacd !important; // Light yellow on hover when not dragging
+  }
+  
+  &.dragging {
+    background: #ffd8a8 !important; // Light orange when dragging
+  }
+}
+
