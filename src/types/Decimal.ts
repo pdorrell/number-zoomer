@@ -34,6 +34,38 @@ export class PreciseDecimal {
     return this.value.toString();
   }
 
+  toStringPadded(minDecimalPlaces: number): string {
+    const str = this.value.toString();
+    
+    // Handle scientific notation - just return as-is
+    if (str.includes('e') || str.includes('E')) {
+      return str;
+    }
+    
+    // Find decimal point
+    const decimalIndex = str.indexOf('.');
+    
+    if (decimalIndex === -1) {
+      // No decimal point, add one with required padding
+      if (minDecimalPlaces > 0) {
+        return str + '.' + '0'.repeat(minDecimalPlaces);
+      }
+      return str;
+    }
+    
+    // Count existing decimal places
+    const existingDecimalPlaces = str.length - decimalIndex - 1;
+    
+    if (existingDecimalPlaces >= minDecimalPlaces) {
+      // Already has enough or more decimal places, return as-is
+      return str;
+    }
+    
+    // Pad with zeros to reach minimum decimal places
+    const paddingNeeded = minDecimalPlaces - existingDecimalPlaces;
+    return str + '0'.repeat(paddingNeeded);
+  }
+
   toNumber(): number {
     return this.value.toNumber();
   }

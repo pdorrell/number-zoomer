@@ -243,9 +243,12 @@ export class AppStore implements ZoomableInterface {
 
   // Utility methods for formatted display
   getCurrentPointDisplay(): string {
-    // Display current point as simple decimal fractions without precision info
-    const x = this.currentPoint[0].toString();
-    const y = this.currentPoint[1].toString();
+    // Display current point with consistent decimal places based on current point precision
+    const currentDP = this.calculateCurrentPrecision(); // World window DP + 1
+    const minDecimalPlaces = Math.max(0, currentDP); // Don't pad if negative precision
+    
+    const x = this.currentPoint[0].toStringPadded(minDecimalPlaces);
+    const y = this.currentPoint[1].toStringPadded(minDecimalPlaces);
     return `${x}, ${y}`;
   }
 
