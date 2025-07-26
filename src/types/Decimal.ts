@@ -48,7 +48,7 @@ export class PreciseDecimal {
     if (decimalIndex === -1) {
       // No decimal point, add one with required padding
       if (minDecimalPlaces > 0) {
-        return str + '.' + '0'.repeat(minDecimalPlaces);
+        return str + '.' + ' '.repeat(minDecimalPlaces) + '\u200B'; // Add zero-width space to preserve trailing spaces
       }
       return str;
     }
@@ -61,9 +61,9 @@ export class PreciseDecimal {
       return str;
     }
     
-    // Pad with zeros to reach minimum decimal places
+    // Pad with spaces to reach minimum decimal places
     const paddingNeeded = minDecimalPlaces - existingDecimalPlaces;
-    return str + '0'.repeat(paddingNeeded);
+    return str + ' '.repeat(paddingNeeded) + '\u200B'; // Add zero-width space to preserve trailing spaces
   }
 
   toNumber(): number {

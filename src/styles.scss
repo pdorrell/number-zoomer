@@ -149,6 +149,7 @@
 
 .coordinate-display {
   background: #ffd8a8 !important; // Always light orange background
+  white-space: pre-wrap; // Preserve multiple spaces including trailing spaces
   
   // Only show hover effects on devices that support true hovering (not touch devices)
   @media (hover: hover) and (pointer: fine) {
