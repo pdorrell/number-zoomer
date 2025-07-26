@@ -129,7 +129,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 1rem 0;
+  padding: 0.5rem 0;
   
   .equation-heading {
     margin: 0;
@@ -156,8 +156,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-width: 400px;
-    min-height: 300px;
+    min-width: 200px;
+    min-height: 150px;
   }
 }
 

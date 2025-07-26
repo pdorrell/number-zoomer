@@ -515,12 +515,6 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     <div 
       ref={outerContainerRef}
       className="coordinate-plane-responsive-container"
-      style={{ 
-        width: '100%',
-        height: '100%',
-        minWidth: '400px',
-        minHeight: '300px'
-      }}
     >
       <div 
         className="coordinate-plane-container"
