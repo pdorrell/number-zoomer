@@ -55,37 +55,54 @@ export const App: React.FC = observer(() => {
             <button onClick={() => store.resetView()}>Reset View</button>
             <button onClick={() => store.moveCurrentPointToCenter()}>Center Point</button>
           </div>
-        </div>
-        <div className="debug-info">
-          <div className="info-item">
-            <strong>World Window:</strong> DP: {store.calculateWorldWindowPrecision()} X: {store.getPreviewWorldWindowXRangeDisplay()}, Y: {store.getPreviewWorldWindowYRangeDisplay()}
-          </div>
-          <div className="info-item">
-            <strong>Current Point:</strong> {store.getCurrentPointDisplay()} ({store.calculateCurrentPrecision()}DP)
-          </div>
-          <div className="info-item">
-            <strong>Screen Viewport:</strong> {store.screenViewport.width}×{store.screenViewport.height}px, {store.getPreviewPixelsPerXUnit().toFixed(1)} px/unit, Window: {store.calculateWorldWindowPrecision() + 1}DP
-          </div>
-          <div className="info-item drag-zoom-display">
-            <strong>Operations:</strong>{' '}
-            {store.lastCompletedOperation && (
-              <span className="completed">
-                {store.lastCompletedOperation.type === 'drag' ? 'Drag' : 'Zoom'}: {store.lastCompletedOperation.value}
-              </span>
-            )}
-            {(store.getCurrentDragDistance() !== null || store.getCurrentZoomFactor() !== null) && store.lastCompletedOperation && ' | '}
-            {store.getCurrentDragDistance() !== null && (
-              <span className="active">Drag: {Math.round(store.getCurrentDragDistance()!)}px</span>
-            )}
-            {store.getCurrentDragDistance() !== null && store.getCurrentZoomFactor() !== null && ' | '}
-            {store.getCurrentZoomFactor() !== null && (
-              <span className="active">Zoom: {store.getCurrentZoomFactorFormatted()}</span>
-            )}
-            {!store.lastCompletedOperation && store.getCurrentDragDistance() === null && store.getCurrentZoomFactor() === null && (
-              <span>None</span>
-            )}
+          <div 
+            className="debug-toggle"
+            onClick={() => store.toggleDebugInfo()}
+            style={{
+              padding: '8px 12px',
+              border: '1px solid #000000',
+              borderRadius: '3px',
+              backgroundColor: store.showDebugInfo ? '#ff0000' : '#ffffff',
+              cursor: 'pointer',
+              fontSize: '16px',
+              userSelect: 'none'
+            }}
+          >
+            🕵️
           </div>
         </div>
+        {store.showDebugInfo && (
+          <div className="debug-info">
+            <div className="info-item">
+              <strong>World Window:</strong> DP: {store.calculateWorldWindowPrecision()} X: {store.getPreviewWorldWindowXRangeDisplay()}, Y: {store.getPreviewWorldWindowYRangeDisplay()}
+            </div>
+            <div className="info-item">
+              <strong>Current Point:</strong> {store.getCurrentPointDisplay()} ({store.calculateCurrentPrecision()}DP)
+            </div>
+            <div className="info-item">
+              <strong>Screen Viewport:</strong> {store.screenViewport.width}×{store.screenViewport.height}px, {store.getPreviewPixelsPerXUnit().toFixed(1)} px/unit, Window: {store.calculateWorldWindowPrecision() + 1}DP
+            </div>
+            <div className="info-item drag-zoom-display">
+              <strong>Operations:</strong>{' '}
+              {store.lastCompletedOperation && (
+                <span className="completed">
+                  {store.lastCompletedOperation.type === 'drag' ? 'Drag' : 'Zoom'}: {store.lastCompletedOperation.value}
+                </span>
+              )}
+              {(store.getCurrentDragDistance() !== null || store.getCurrentZoomFactor() !== null) && store.lastCompletedOperation && ' | '}
+              {store.getCurrentDragDistance() !== null && (
+                <span className="active">Drag: {Math.round(store.getCurrentDragDistance()!)}px</span>
+              )}
+              {store.getCurrentDragDistance() !== null && store.getCurrentZoomFactor() !== null && ' | '}
+              {store.getCurrentZoomFactor() !== null && (
+                <span className="active">Zoom: {store.getCurrentZoomFactorFormatted()}</span>
+              )}
+              {!store.lastCompletedOperation && store.getCurrentDragDistance() === null && store.getCurrentZoomFactor() === null && (
+                <span>None</span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
       <div className="main-area">
         <h2 className="equation-heading">{store.currentEquation.getDisplayName()}</h2>

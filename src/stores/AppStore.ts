@@ -28,6 +28,9 @@ export class AppStore implements ZoomableInterface {
 
   // Debug information for drag & zoom operations
   lastCompletedOperation: { type: 'drag' | 'zoom'; value: string } | null = null;
+  
+  // Debug display toggle
+  showDebugInfo: boolean = false;
 
   // New zoom state management
   centrePoint: { x: number; y: number } | null = null;
@@ -329,6 +332,10 @@ export class AppStore implements ZoomableInterface {
       return (this.currentEquation as any).getC();
     }
     return 1;
+  }
+
+  toggleDebugInfo() {
+    this.showDebugInfo = !this.showDebugInfo;
   }
 
   // Transform methods for responsive UI
