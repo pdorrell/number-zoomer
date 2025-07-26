@@ -401,6 +401,34 @@ export class AppStore implements ZoomableInterface {
     return this.mapping.x.getPixelsPerUnit();
   }
 
+  getPreviewPixelsPerYUnit(): number {
+    if (this.previewWorldWindow) {
+      // Calculate px/unit based on preview world window using ScaledFloat
+      const previewHeight = this.previewWorldWindow.topRight[1].sub(this.previewWorldWindow.bottomLeft[1]);
+      const previewHeightScaled = previewHeight.toScaledFloat();
+      const screenHeight = new ScaledFloat(this.screenViewport.height);
+
+      const ratio = ScaledFloat.fromMantissaExponent(
+        screenHeight.getMantissa() / previewHeightScaled.getMantissa(),
+        screenHeight.getExponent() - previewHeightScaled.getExponent()
+      );
+
+      // Convert to number for UI display (safe as this is for display purposes)
+      const result = ratio.toFloatInBounds(-1e308, 1e308);
+      return result !== null ? result : this.mapping.y.getPixelsPerUnit();
+    }
+    return this.mapping.y.getPixelsPerUnit();
+  }
+
+  // Current pixels per unit for X and Y axes
+  getPixelsPerXUnit(): number {
+    return this.mapping.x.getPixelsPerUnit();
+  }
+
+  getPixelsPerYUnit(): number {
+    return this.mapping.y.getPixelsPerUnit();
+  }
+
   isCurrentPointVisible(): boolean {
     // Check if current point is within the current world window
     const pointX = this.currentPoint[0];

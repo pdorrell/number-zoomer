@@ -20,7 +20,7 @@ export const DebugInfo: React.FC<DebugInfoProps> = observer(({ store }) => {
         <strong>Current Point:</strong> {store.getCurrentPointDisplay().x}, {store.getCurrentPointDisplay().y} ({store.calculateCurrentPrecision()}DP)
       </div>
       <div className="info-item">
-        <strong>Screen Viewport:</strong> {store.screenViewport.width}×{store.screenViewport.height}px, {store.getPreviewPixelsPerXUnit().toFixed(1)} px/unit, Window: {store.calculateWorldWindowPrecision() + 1}DP
+        <strong>Screen Viewport:</strong> {store.screenViewport.width}×{store.screenViewport.height}px, X: {store.getPreviewPixelsPerXUnit().toFixed(1)} px/unit, Y: {store.getPreviewPixelsPerYUnit().toFixed(1)} px/unit, Window: {store.calculateWorldWindowPrecision() + 1}DP
       </div>
       <div className="info-item drag-zoom-display">
         <strong>Operations:</strong>{' '}
