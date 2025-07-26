@@ -152,22 +152,21 @@ export class AppStore implements ZoomableInterface {
     const newXRange = currentXRange.mul(new PreciseDecimal(xScaleFactor));
     const newYRange = currentYRange.mul(new PreciseDecimal(yScaleFactor));
 
-    // Apply precision constraints
-    const precision = Math.max(0, this.calculateWorldWindowPrecision());
-    const halfXRange = this.quantizeToWorldWindowPrecision(newXRange.div(new PreciseDecimal(2)).toNumber(), precision);
-    const halfYRange = this.quantizeToWorldWindowPrecision(newYRange.div(new PreciseDecimal(2)).toNumber(), precision);
+    // Calculate new world window bounds with high precision
+    const halfXRange = newXRange.div(new PreciseDecimal(2));
+    const halfYRange = newYRange.div(new PreciseDecimal(2));
 
-    // Update world window centered on the same point
-    this.worldWindow = {
-      bottomLeft: [
-        centerX.sub(new PreciseDecimal(halfXRange)),
-        centerY.sub(new PreciseDecimal(halfYRange))
-      ],
-      topRight: [
-        centerX.add(new PreciseDecimal(halfXRange)),
-        centerY.add(new PreciseDecimal(halfYRange))
-      ]
-    };
+    const newBottomLeft: Point = [
+      centerX.sub(halfXRange),
+      centerY.sub(halfYRange)
+    ];
+    const newTopRight: Point = [
+      centerX.add(halfXRange),
+      centerY.add(halfYRange)
+    ];
+
+    // Use updateWorldWindow to handle precision properly after mapping is established
+    this.updateWorldWindow(newBottomLeft, newTopRight);
   }
 
   private quantizeToWorldWindowPrecision(value: number, precision: number): number {
