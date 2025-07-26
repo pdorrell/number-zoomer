@@ -56,17 +56,8 @@ export const App: React.FC = observer(() => {
             <button onClick={() => store.moveCurrentPointToCenter()}>Center Point</button>
           </div>
           <div 
-            className="debug-toggle"
+            className={`debug-toggle ${store.showDebugInfo ? 'active' : ''}`}
             onClick={() => store.toggleDebugInfo()}
-            style={{
-              padding: '8px 12px',
-              border: '1px solid #000000',
-              borderRadius: '3px',
-              backgroundColor: store.showDebugInfo ? '#ff0000' : '#ffffff',
-              cursor: 'pointer',
-              fontSize: '16px',
-              userSelect: 'none'
-            }}
           >
             🕵️
           </div>

@@ -72,6 +72,21 @@
     }
   }
   
+  .debug-toggle {
+    margin-left: auto;
+    padding: 4px 6px;
+    border: 1px solid #000000;
+    border-radius: 3px;
+    background-color: #ffffff;
+    cursor: pointer;
+    font-size: 12px;
+    user-select: none;
+    
+    &.active {
+      background-color: #ff0000;
+    }
+  }
+  
   .debug-info {
     display: flex;
     flex-direction: column;
