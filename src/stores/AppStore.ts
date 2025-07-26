@@ -17,7 +17,7 @@ export class AppStore implements ZoomableInterface {
   worldWindow: WorldWindow;
   currentPoint: Point;
   mapping: CoordinateMapping;
-  currentEquation: Equation;
+  equation: Equation;
   transformState: TransformState;
   
   // Canvas extension beyond viewport for smoother drag/zoom (20% = 0.2)
@@ -73,7 +73,7 @@ export class AppStore implements ZoomableInterface {
       new PreciseDecimal(0)
     ];
 
-    this.currentEquation = createEquation({ type: 'quadratic' });
+    this.equation = createEquation({ type: 'quadratic' });
 
     this.transformState = {
       pointTransform: '',

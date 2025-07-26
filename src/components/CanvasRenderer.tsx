@@ -22,11 +22,11 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store }
     const verticalLines = gridRenderer.calculateVerticalGridLines(maxPrecision);
     const extendedWorldWindow = store.mapping.getExtendedWorldWindow();
     const extendedWidth = store.screenViewport.width * (1 + 2 * store.extension);
-    const equationPoints = store.currentEquation.generatePoints(extendedWorldWindow, extendedWidth);
+    const equationPoints = store.equation.generatePoints(extendedWorldWindow, extendedWidth);
     const screenPoints = equationPoints.map(point => store.mapping.worldToScreen(point));
     
     return { horizontalLines, verticalLines, screenPoints };
-  }, [gridRenderer, store.currentEquation, store.worldWindow, store.mapping, store.screenViewport.width, store.extension]);
+  }, [gridRenderer, store.equation, store.worldWindow, store.mapping, store.screenViewport.width, store.extension]);
   
   const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -89,7 +89,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store }
       const adjustedFirstY = screenPoints[0].y + store.screenViewport.height * store.extension;
       ctx.moveTo(adjustedFirstX, adjustedFirstY);
       
-      if (store.currentEquation.shouldDrawAsCurve(store.worldWindow) && screenPoints.length > 2) {
+      if (store.equation.shouldDrawAsCurve(store.worldWindow) && screenPoints.length > 2) {
         // Draw as smooth curve for quadratic equations at low zoom
         for (let i = 1; i < screenPoints.length; i++) {
           const adjustedX = screenPoints[i].x + store.screenViewport.width * store.extension;
@@ -105,7 +105,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store }
       }
       ctx.stroke();
     }
-  }, [store.mapping, store.currentEquation, store.worldWindow, horizontalLines, verticalLines, screenPoints]);
+  }, [store.mapping, store.equation, store.worldWindow, horizontalLines, verticalLines, screenPoints]);
   
   // Redraw canvas when dependencies change
   useEffect(() => {

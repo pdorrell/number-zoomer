@@ -11,7 +11,7 @@ export const App: React.FC = observer(() => {
 
 
   const handleSetEquation = (equation: Equation) => {
-    store.currentEquation = equation;
+    store.equation = equation;
   };
 
 
@@ -21,7 +21,7 @@ export const App: React.FC = observer(() => {
         <div className="controls-row">
           <h1>Number Zoomer</h1>
           <EquationSelector
-            equation={store.currentEquation}
+            equation={store.equation}
             setEquation={handleSetEquation}
           />
           <div className="control-buttons">
@@ -69,7 +69,7 @@ export const App: React.FC = observer(() => {
         )}
       </div>
       <div className="main-area">
-        <h2 className="equation-heading">{store.currentEquation.getDisplayName()}</h2>
+        <h2 className="equation-heading">{store.equation.getDisplayName()}</h2>
         <CoordinatePlane store={store} />
         <CustomZoomSlider 
           zoomable={store}
