@@ -286,13 +286,32 @@ export class AppStore implements ZoomableInterface {
   }
 
   resetView() {
+    // Calculate aspect ratio to maintain 1:1 pixel ratio
+    const aspectRatio = this.screenViewport.width / this.screenViewport.height;
+    const baseRange = 10; // -5 to +5 = 10 units
+
+    let xRange: number, yRange: number;
+
+    if (aspectRatio >= 1) {
+      // Width >= Height: Y range is base, X range is larger
+      yRange = baseRange;
+      xRange = baseRange * aspectRatio;
+    } else {
+      // Height > Width: X range is base, Y range is larger
+      xRange = baseRange;
+      yRange = baseRange / aspectRatio;
+    }
+
+    const halfXRange = xRange / 2;
+    const halfYRange = yRange / 2;
+
     const defaultBottomLeft: Point = [
-      new PreciseDecimal(-5),
-      new PreciseDecimal(-5)
+      new PreciseDecimal(-halfXRange),
+      new PreciseDecimal(-halfYRange)
     ];
     const defaultTopRight: Point = [
-      new PreciseDecimal(5),
-      new PreciseDecimal(5)
+      new PreciseDecimal(halfXRange),
+      new PreciseDecimal(halfYRange)
     ];
 
     // Use updateWorldWindow to ensure proper boundary rounding
