@@ -88,8 +88,98 @@ export class AppStore implements ZoomableInterface {
   }
 
   updateScreenViewport(width: number, height: number) {
+    const oldViewport = this.screenViewport;
     this.screenViewport = { width, height };
+    
+    // If this is the initial setup or a significant size change, adjust world window for 1:1 aspect ratio
+    if (oldViewport.width === 400 && oldViewport.height === 300) {
+      // Initial setup - create world window with origin centered and 1:1 aspect ratio
+      this.initializeWorldWindowWithAspectRatio();
+    } else {
+      // Resize - preserve pixels per unit and center point while maintaining aspect ratio
+      this.adjustWorldWindowForResize(oldViewport);
+    }
+    
     this.mapping = new CoordinateMapping(this.screenViewport, this.worldWindow, this.extension);
+  }
+
+  private initializeWorldWindowWithAspectRatio() {
+    const aspectRatio = this.screenViewport.width / this.screenViewport.height;
+    const baseRange = 10; // -5 to +5 = 10 units
+    
+    let xRange: number, yRange: number;
+    
+    if (aspectRatio >= 1) {
+      // Width >= Height: Y range is base, X range is larger
+      yRange = baseRange;
+      xRange = baseRange * aspectRatio;
+    } else {
+      // Height > Width: X range is base, Y range is larger  
+      xRange = baseRange;
+      yRange = baseRange / aspectRatio;
+    }
+    
+    // Apply precision constraints
+    const precision = Math.max(0, this.calculateWorldWindowPrecision());
+    const halfXRange = this.quantizeToWorldWindowPrecision(xRange / 2, precision);
+    const halfYRange = this.quantizeToWorldWindowPrecision(yRange / 2, precision);
+    
+    this.worldWindow = {
+      bottomLeft: [
+        new PreciseDecimal(-halfXRange),
+        new PreciseDecimal(-halfYRange)
+      ],
+      topRight: [
+        new PreciseDecimal(halfXRange),
+        new PreciseDecimal(halfYRange)
+      ]
+    };
+  }
+
+  private adjustWorldWindowForResize(oldViewport: { width: number; height: number }) {
+    // Calculate current center point
+    const centerX = this.worldWindow.bottomLeft[0].add(this.worldWindow.topRight[0]).div(new PreciseDecimal(2));
+    const centerY = this.worldWindow.bottomLeft[1].add(this.worldWindow.topRight[1]).div(new PreciseDecimal(2));
+    
+    // Calculate current world window dimensions
+    const currentXRange = this.worldWindow.topRight[0].sub(this.worldWindow.bottomLeft[0]);
+    const currentYRange = this.worldWindow.topRight[1].sub(this.worldWindow.bottomLeft[1]);
+    
+    // Calculate scale factors based on viewport change
+    const xScaleFactor = this.screenViewport.width / oldViewport.width;
+    const yScaleFactor = this.screenViewport.height / oldViewport.height;
+    
+    // Scale the world window ranges to preserve pixels per unit
+    const newXRange = currentXRange.mul(new PreciseDecimal(xScaleFactor));
+    const newYRange = currentYRange.mul(new PreciseDecimal(yScaleFactor));
+    
+    // Apply precision constraints
+    const precision = Math.max(0, this.calculateWorldWindowPrecision());
+    const halfXRange = this.quantizeToWorldWindowPrecision(newXRange.div(new PreciseDecimal(2)).toNumber(), precision);
+    const halfYRange = this.quantizeToWorldWindowPrecision(newYRange.div(new PreciseDecimal(2)).toNumber(), precision);
+    
+    // Update world window centered on the same point
+    this.worldWindow = {
+      bottomLeft: [
+        centerX.sub(new PreciseDecimal(halfXRange)),
+        centerY.sub(new PreciseDecimal(halfYRange))
+      ],
+      topRight: [
+        centerX.add(new PreciseDecimal(halfXRange)),
+        centerY.add(new PreciseDecimal(halfYRange))
+      ]
+    };
+  }
+
+  private quantizeToWorldWindowPrecision(value: number, precision: number): number {
+    if (precision < 0) {
+      // For negative precision, round to nearest power of 10
+      const step = Math.pow(10, -precision);
+      return Math.round(value / step) * step;
+    } else {
+      // For positive precision, round to specified decimal places
+      return Math.round(value * Math.pow(10, precision)) / Math.pow(10, precision);
+    }
   }
 
   updateWorldWindow(bottomLeft: Point, topRight: Point) {
