@@ -12,6 +12,7 @@ interface CoordinatePlaneProps {
 
 export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const outerContainerRef = useRef<HTMLDivElement>(null);
   const [isDraggingPoint, setIsDraggingPoint] = useState(false);
   const [isDraggingBackground, setIsDraggingBackground] = useState(false);
   const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
@@ -103,6 +104,25 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       };
     }
   }, [isDraggingPoint, isDraggingBackground, handleGlobalMouseMove, handleGlobalMouseUp]);
+
+  // Update screen viewport to use available space
+  useEffect(() => {
+    const container = outerContainerRef.current;
+    if (!container) return;
+
+    // Simple initial size update
+    const timer = setTimeout(() => {
+      const rect = container.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        console.log('Setting viewport to:', Math.floor(rect.width), Math.floor(rect.height));
+        store.updateScreenViewport(Math.floor(rect.width), Math.floor(rect.height));
+      }
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, []);
 
   // Helper function to start point dragging
   const startPointDrag = useCallback((mouseX: number, mouseY: number) => {
@@ -468,13 +488,23 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
 
   return (
     <div 
-      className="coordinate-plane-container"
+      ref={outerContainerRef}
+      className="coordinate-plane-responsive-container"
       style={{ 
-        position: 'relative',
-        width: store.screenViewport.width,
-        height: store.screenViewport.height
+        width: '100%',
+        height: '100%',
+        minWidth: '400px',
+        minHeight: '300px'
       }}
     >
+      <div 
+        className="coordinate-plane-container"
+        style={{ 
+          position: 'relative',
+          width: store.screenViewport.width,
+          height: store.screenViewport.height
+        }}
+      >
       {/* Clipped inner container for canvas and grid content */}
       <div 
         ref={containerRef}
@@ -573,6 +603,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
         getXLabelTransform={getXLabelTransform}
         getYLabelTransform={getYLabelTransform}
       />
+      </div>
     </div>
   );
 });

@@ -13,7 +13,7 @@ export interface TransformState {
 }
 
 export class AppStore implements ZoomableInterface {
-  screenViewport: ScreenViewport = { width: 800, height: 600 };
+  screenViewport: ScreenViewport = { width: 400, height: 300 }; // Initial fallback, updated by ResizeObserver
   worldWindow: WorldWindow;
   currentPoint: Point;
   mapping: CoordinateMapping;

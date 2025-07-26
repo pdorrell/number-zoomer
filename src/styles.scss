@@ -129,18 +129,34 @@
   justify-content: center;
   align-items: center;
   background: #fff;
+  padding: 1rem;
+  box-sizing: border-box;
   
   .equation-heading {
     margin: 0 0 1rem 0;
     font-size: 3rem;
     color: #212529;
     font-weight: 600;
+    flex-shrink: 0;
+  }
+  
+  .coordinate-plane-responsive-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    min-height: 300px;
+    min-width: 400px;
   }
 }
 
-.coordinate-plane {
+.coordinate-plane-container {
   border: 1px solid #dee2e6;
   border-radius: 4px;
+}
+
+.coordinate-plane {
 }
 
 .custom-zoom-slider {
