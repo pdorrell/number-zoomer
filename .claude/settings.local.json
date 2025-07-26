@@ -20,7 +20,8 @@
       "Bash(npm test)",
       "Bash(mv:*)",
       "Bash(npm test:*)",
-      "Bash(timeout 15s npm run start:claude)"
+      "Bash(timeout 15s npm run start:claude)",
+      "Bash(git rm:*)"
     ],
     "deny": []
   }
