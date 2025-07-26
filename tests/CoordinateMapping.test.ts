@@ -20,27 +20,27 @@ describe('CoordinateMapping', () => {
       it('should convert screen coordinates to world coordinates', () => {
         const [worldX, worldY] = mapping.screenToWorld(400, 300);
         
-        expect(worldX.toFullPrecisionString()).toBe('0');
-        expect(worldY.toFullPrecisionString()).toBe('0');
+        expect(worldX.toString()).toBe('0');
+        expect(worldY.toString()).toBe('0');
       });
 
       it('should handle screen corners correctly', () => {
         // Bottom-left corner of screen
         const [blX, blY] = mapping.screenToWorld(0, 600);
-        expect(blX.toFullPrecisionString()).toBe('-4');
-        expect(blY.toFullPrecisionString()).toBe('-3');
+        expect(blX.toString()).toBe('-4');
+        expect(blY.toString()).toBe('-3');
 
         // Top-right corner of screen
         const [trX, trY] = mapping.screenToWorld(800, 0);
-        expect(trX.toFullPrecisionString()).toBe('4');
-        expect(trY.toFullPrecisionString()).toBe('3');
+        expect(trX.toString()).toBe('4');
+        expect(trY.toString()).toBe('3');
       });
 
       it('should handle arbitrary screen positions', () => {
         const [worldX, worldY] = mapping.screenToWorld(200, 150);
         
-        expect(worldX.toFullPrecisionString()).toBe('-2');
-        expect(worldY.toFullPrecisionString()).toBe('1.5');
+        expect(worldX.toString()).toBe('-2');
+        expect(worldY.toString()).toBe('1.5');
       });
     });
 
@@ -81,7 +81,7 @@ describe('CoordinateMapping', () => {
     describe('X-axis methods', () => {
       it('should convert screen X to world X', () => {
         const worldX = mapping.x.screenToWorld(600);
-        expect(worldX.toFullPrecisionString()).toBe('2');
+        expect(worldX.toString()).toBe('2');
       });
 
       it('should convert world X to screen X', () => {
@@ -93,7 +93,7 @@ describe('CoordinateMapping', () => {
     describe('Y-axis methods', () => {
       it('should convert screen Y to world Y', () => {
         const worldY = mapping.y.screenToWorld(450);
-        expect(worldY.toFullPrecisionString()).toBe('-1.5');
+        expect(worldY.toString()).toBe('-1.5');
       });
 
       it('should convert world Y to screen Y', () => {
@@ -238,14 +238,14 @@ describe('CoordinateMapping', () => {
       expect(mapping.x).toBeDefined();
       
       const worldX = mapping.x.screenToWorld(400);
-      expect(worldX.toFullPrecisionString()).toBe('0');
+      expect(worldX.toString()).toBe('0');
     });
 
     it('should provide access to Y axis mapping', () => {
       expect(mapping.y).toBeDefined();
       
       const worldY = mapping.y.screenToWorld(300);
-      expect(worldY.toFullPrecisionString()).toBe('0');
+      expect(worldY.toString()).toBe('0');
     });
 
     it('should allow direct axis operations', () => {

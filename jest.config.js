@@ -12,4 +12,5 @@ module.exports = {
     '!src/index.tsx',
     '!src/App.tsx',
   ],
+  setupFiles: ['<rootDir>/tests/setup.js'],
 };

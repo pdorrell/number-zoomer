@@ -19,22 +19,22 @@ describe('CoordinateAxisMapping', () => {
     describe('screenToWorld', () => {
       it('should map screenBase to minWindowPosition', () => {
         const result = xMapping.screenToWorld(0);
-        expect(result.toFullPrecisionString()).toBe('-2');
+        expect(result.toString()).toBe('-2');
       });
 
       it('should map screenBase + screenRange to maxWindowPosition', () => {
         const result = xMapping.screenToWorld(500);
-        expect(result.toFullPrecisionString()).toBe('3');
+        expect(result.toString()).toBe('3');
       });
 
       it('should map mid-screen to mid-world', () => {
         const result = xMapping.screenToWorld(250);
-        expect(result.toFullPrecisionString()).toBe('0.5');
+        expect(result.toString()).toBe('0.5');
       });
 
       it('should handle fractional screen positions', () => {
         const result = xMapping.screenToWorld(100);
-        expect(result.toFullPrecisionString()).toBe('-1');
+        expect(result.toString()).toBe('-1');
       });
     });
 
@@ -86,17 +86,17 @@ describe('CoordinateAxisMapping', () => {
     describe('screenToWorld', () => {
       it('should map screenBase to minWindowPosition', () => {
         const result = yMapping.screenToWorld(400);
-        expect(result.toFullPrecisionString()).toBe('-1');
+        expect(result.toString()).toBe('-1');
       });
 
       it('should map screen top to maxWindowPosition', () => {
         const result = yMapping.screenToWorld(0);
-        expect(result.toFullPrecisionString()).toBe('4');
+        expect(result.toString()).toBe('4');
       });
 
       it('should map mid-screen to mid-world', () => {
         const result = yMapping.screenToWorld(200);
-        expect(result.toFullPrecisionString()).toBe('1.5');
+        expect(result.toString()).toBe('1.5');
       });
 
       it('should handle fractional screen positions', () => {
@@ -104,7 +104,7 @@ describe('CoordinateAxisMapping', () => {
         // screenOffset = 320 - 400 = -80
         // ratio = -(-80) / 400 = 0.2
         // world = -1 + (5 * 0.2) = 0
-        expect(result.toFullPrecisionString()).toBe('0');
+        expect(result.toString()).toBe('0');
       });
     });
 
@@ -184,7 +184,7 @@ describe('CoordinateAxisMapping', () => {
       );
       
       const result = identicalMapping.screenToWorld(50);
-      expect(result.toFullPrecisionString()).toBe('5');
+      expect(result.toString()).toBe('5');
     });
   });
 
