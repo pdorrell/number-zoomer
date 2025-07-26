@@ -18,6 +18,7 @@ export const App: React.FC = observer(() => {
 
   return (
     <div className="app">
+      {/* 1. Header with controls */}
       <div className="controls">
         <div className="controls-row">
           <h1>Number Zoomer</h1>
@@ -38,9 +39,19 @@ export const App: React.FC = observer(() => {
         </div>
         <DebugInfo store={store} />
       </div>
-      <div className="main-area">
+      
+      {/* 2. Equation heading */}
+      <div className="equation-heading-container">
         <h2 className="equation-heading">{store.equation.getDisplayName()}</h2>
+      </div>
+      
+      {/* 3. Coordinate plane (flexible) */}
+      <div className="coordinate-plane-area">
         <CoordinatePlane store={store} />
+      </div>
+      
+      {/* 4. Zoom slider */}
+      <div className="zoom-slider-container">
         <ZoomSlider 
           zoomable={store}
           source="slider"

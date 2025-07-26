@@ -122,33 +122,53 @@
   }
 }
 
-.main-area {
-  flex: 1;
+// 2. Equation heading (fixed height)
+.equation-heading-container {
+  flex-shrink: 0;
+  background: #fff;
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: #fff;
-  padding: 1rem;
-  box-sizing: border-box;
+  padding: 1rem 0;
   
   .equation-heading {
-    margin: 0 0 1rem 0;
+    margin: 0;
     font-size: 3rem;
     color: #212529;
     font-weight: 600;
-    flex-shrink: 0;
   }
+}
+
+// 3. Coordinate plane area (flexible)
+.coordinate-plane-area {
+  flex: 1;
+  background: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+  box-sizing: border-box;
+  min-height: 0; // Important: allows flex item to shrink below content size
   
   .coordinate-plane-responsive-container {
-    flex: 1;
+    width: 100%;
+    height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 100%;
-    min-height: 300px;
     min-width: 400px;
+    min-height: 300px;
   }
+}
+
+// 4. Zoom slider (fixed height)  
+.zoom-slider-container {
+  flex-shrink: 0;
+  background: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
 }
 
 .coordinate-plane-container {
@@ -159,9 +179,6 @@
 .coordinate-plane {
 }
 
-.custom-zoom-slider {
-  margin: 1.5em;
-}
 
 .coordinate-display {
   background: #ffd8a8 !important; // Always light orange background

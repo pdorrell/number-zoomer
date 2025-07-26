@@ -105,24 +105,49 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     }
   }, [isDraggingPoint, isDraggingBackground, handleGlobalMouseMove, handleGlobalMouseUp]);
 
-  // Update screen viewport to use available space
+  // Update screen viewport to use available space and respond to resize
   useEffect(() => {
     const container = outerContainerRef.current;
     if (!container) return;
 
-    // Simple initial size update
-    const timer = setTimeout(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    
+    const updateViewport = () => {
       const rect = container.getBoundingClientRect();
       if (rect.width > 0 && rect.height > 0) {
-        console.log('Setting viewport to:', Math.floor(rect.width), Math.floor(rect.height));
-        store.updateScreenViewport(Math.floor(rect.width), Math.floor(rect.height));
+        const newWidth = Math.floor(rect.width);
+        const newHeight = Math.floor(rect.height);
+        
+        // Only update if dimensions actually changed
+        if (newWidth !== store.screenViewport.width || newHeight !== store.screenViewport.height) {
+          console.log('Updating viewport to:', newWidth, newHeight);
+          store.updateScreenViewport(newWidth, newHeight);
+        }
       }
-    }, 100);
+    };
+
+    // Debounced update function to prevent excessive calls
+    const debouncedUpdate = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(updateViewport, 50);
+    };
+
+    // ResizeObserver for container size changes
+    const resizeObserver = new ResizeObserver(debouncedUpdate);
+    resizeObserver.observe(container);
+
+    // Initial update
+    setTimeout(updateViewport, 100);
+
+    // Window resize listener as backup
+    window.addEventListener('resize', debouncedUpdate);
 
     return () => {
-      clearTimeout(timer);
+      if (timeoutId) clearTimeout(timeoutId);
+      resizeObserver.disconnect();
+      window.removeEventListener('resize', debouncedUpdate);
     };
-  }, []);
+  }, [store]);
 
   // Helper function to start point dragging
   const startPointDrag = useCallback((mouseX: number, mouseY: number) => {
