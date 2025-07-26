@@ -11,7 +11,9 @@
     "check-code": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "build:full": "npm run test:full && npm run build",
+    "deploy": "node scripts/update-version.js && npm run build:full && node scripts/deploy-to-target.js"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
