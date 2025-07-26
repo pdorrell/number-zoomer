@@ -566,6 +566,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
         verticalLines={verticalLines}
         canvasWidth={store.screenViewport.width}
         canvasHeight={store.screenViewport.height}
+        store={store}
         xLabelsTransform={xLabelsTransform}
         yLabelsTransform={yLabelsTransform}
         getXLabelTransform={getXLabelTransform}

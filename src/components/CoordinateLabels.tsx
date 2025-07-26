@@ -1,12 +1,14 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { GridLine } from './GridRenderer';
+import { AppStore } from '../stores/AppStore';
 
 interface CoordinateLabelsProps {
   horizontalLines: GridLine[];
   verticalLines: GridLine[];
   canvasWidth: number;
   canvasHeight: number;
+  store: AppStore;
   xLabelsTransform?: string;
   yLabelsTransform?: string;
   // Individual transforms for zoom operations
@@ -19,6 +21,7 @@ export const CoordinateLabels: React.FC<CoordinateLabelsProps> = observer(({
   verticalLines,
   canvasWidth,
   canvasHeight,
+  store,
   xLabelsTransform = '',
   yLabelsTransform = '',
   getYLabelTransform,
@@ -27,6 +30,19 @@ export const CoordinateLabels: React.FC<CoordinateLabelsProps> = observer(({
   // Filter only thick lines that should have coordinate labels
   const thickHorizontalLines = horizontalLines.filter(line => line.isThick);
   const thickVerticalLines = verticalLines.filter(line => line.isThick);
+
+  // Helper function to check if a world position is currently visible in the viewport
+  const isWorldPositionVisible = (worldPosition: any, axis: 'x' | 'y'): boolean => {
+    // Use preview world window if available (during drag/zoom operations)
+    const currentWorldWindow = store.previewWorldWindow || store.dragPreviewWorldWindow || store.worldWindow;
+    
+    // Check if the world position is within the current (or preview) world window bounds
+    if (axis === 'x') {
+      return worldPosition.isWithinInterval(currentWorldWindow.bottomLeft[0], currentWorldWindow.topRight[0]);
+    } else {
+      return worldPosition.isWithinInterval(currentWorldWindow.bottomLeft[1], currentWorldWindow.topRight[1]);
+    }
+  };
 
   return (
     <svg
@@ -47,6 +63,11 @@ export const CoordinateLabels: React.FC<CoordinateLabelsProps> = observer(({
           const screenY = line.screenPosition;
           const labelText = line.position.toString();
           const individualTransform = getYLabelTransform ? getYLabelTransform(screenY) : '';
+          
+          // Only render label if the grid line's world position is visible within the current viewport
+          if (!isWorldPositionVisible(line.position, 'y')) {
+            return null;
+          }
           
           return (
             <g key={`y-${index}-${line.position.toString()}`} transform={individualTransform}>
@@ -81,6 +102,11 @@ export const CoordinateLabels: React.FC<CoordinateLabelsProps> = observer(({
           const screenX = line.screenPosition;
           const labelText = line.position.toString();
           const individualTransform = getXLabelTransform ? getXLabelTransform(screenX) : '';
+          
+          // Only render label if the grid line's world position is visible within the current viewport
+          if (!isWorldPositionVisible(line.position, 'x')) {
+            return null;
+          }
           
           return (
             <g key={`x-${index}-${line.position.toString()}`} transform={individualTransform}>
