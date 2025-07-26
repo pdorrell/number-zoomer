@@ -31,11 +31,14 @@ export const App: React.FC = observer(() => {
               <button onClick={() => store.resetView()}>Reset View</button>
               <button onClick={() => store.moveCurrentPointToCenter()}>Center Point</button>
             </div>
-            <div 
-              className={`debug-toggle ${store.showDebugInfo ? 'active' : ''}`}
-              onClick={() => store.toggleDebugInfo()}
-            >
-              🕵️
+            <div className="version-debug-container">
+              <div className="version-display">v{store.version}</div>
+              <div 
+                className={`debug-toggle ${store.showDebugInfo ? 'active' : ''}`}
+                onClick={() => store.toggleDebugInfo()}
+              >
+                🕵️
+              </div>
             </div>
           </div>
           <DebugInfo store={store} />

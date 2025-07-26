@@ -3,8 +3,7 @@
 /**
  * Script to copy files from dist to deploy directory
  * - Preserves deploy/.git directory
- * - Preserves deploy/assets directory
- * - Removes files in deploy root and deploy/data
+ * - Removes other files in deploy root
  * - Copies all files from dist to deploy
  */
 
@@ -20,7 +19,6 @@ const __dirname = path.dirname(__filename);
 const rootDir = path.join(__dirname, '..');
 const distPath = path.join(rootDir, 'dist');
 const deployPath = path.join(rootDir, 'deploy');
-const deployDataPath = path.join(deployPath, 'data');
 
 // Check if dist directory exists
 if (!fs.existsSync(distPath)) {
@@ -44,18 +42,16 @@ try {
     const itemPath = path.join(deployPath, item);
     const isDirectory = fs.statSync(itemPath).isDirectory();
 
-    // Skip .git and assets directories
-    if (isDirectory && (item === '.git' || item === 'assets')) {
+    // Skip .git directory
+    if (isDirectory && item === '.git') {
       console.log(`  ⏩ Preserving ${item}/ directory`);
       continue;
     }
 
     // Remove file or directory
     if (isDirectory) {
-      if (item === 'data') {
-        console.log(`  🗑️ Removing ${item}/ directory`);
-        execSync(`rm -rf "${itemPath}"`);
-      }
+      console.log(`  🗑️ Removing ${item}/ directory`);
+      execSync(`rm -rf "${itemPath}"`);
     } else {
       console.log(`  🗑️ Removing ${item}`);
       fs.unlinkSync(itemPath);

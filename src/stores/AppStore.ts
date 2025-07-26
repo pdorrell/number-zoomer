@@ -19,6 +19,7 @@ export class AppStore implements ZoomableInterface {
   mapping: CoordinateMapping;
   equation: Equation;
   transformState: TransformState;
+  version: string;
 
   // Canvas extension beyond viewport for smoother drag/zoom (20% = 0.2)
   extension: number = 0.2;
@@ -81,6 +82,9 @@ export class AppStore implements ZoomableInterface {
       isTransforming: false,
       transformType: undefined
     };
+
+    // Initialize version from environment variable
+    this.version = (process.env.APP_VERSION as string) || 'dev';
 
     this.mapping = new CoordinateMapping(this.screenViewport, this.worldWindow, this.extension);
 

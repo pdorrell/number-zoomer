@@ -104,18 +104,32 @@ body {
     }
   }
   
-  .debug-toggle {
+  .version-debug-container {
     margin-left: auto;
-    padding: 4px 6px;
-    border: 1px solid #000000;
-    border-radius: 3px;
-    background-color: #ffffff;
-    cursor: pointer;
-    font-size: 12px;
-    user-select: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
     
-    &.active {
-      background-color: #ff0000;
+    .version-display {
+      font-size: 10px;
+      color: #666;
+      font-family: monospace;
+      user-select: none;
+    }
+    
+    .debug-toggle {
+      padding: 4px 6px;
+      border: 1px solid #000000;
+      border-radius: 3px;
+      background-color: #ffffff;
+      cursor: pointer;
+      font-size: 12px;
+      user-select: none;
+      
+      &.active {
+        background-color: #ff0000;
+      }
     }
   }
   
