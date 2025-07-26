@@ -1,3 +1,21 @@
+// Global styles
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+  overflow: hidden;
+  touch-action: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+  touch-action: none;
+}
+
 .outer-app-container {
   /* Account for safe areas on all sides */
   padding-top: env(safe-area-inset-top);
@@ -14,6 +32,8 @@
   height: 100%;
   width: 100%;
   box-sizing: border-box;
+  touch-action: none;
+  overflow: hidden;
   border: 5px solid blue;
   margin: 0px;
   padding: 0;
@@ -197,6 +217,7 @@
 }
 
 .coordinate-plane {
+  touch-action: none;
 }
 
 
