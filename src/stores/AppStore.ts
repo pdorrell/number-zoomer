@@ -119,10 +119,9 @@ export class AppStore implements ZoomableInterface {
       yRange = baseRange / aspectRatio;
     }
 
-    // Apply precision constraints
-    const precision = Math.max(0, this.calculateWorldWindowPrecision());
-    const halfXRange = this.quantizeToWorldWindowPrecision(xRange / 2, precision);
-    const halfYRange = this.quantizeToWorldWindowPrecision(yRange / 2, precision);
+    // Use high precision during initialization since coordinate mapping hasn't been established yet
+    const halfXRange = xRange / 2;
+    const halfYRange = yRange / 2;
 
     this.worldWindow = {
       bottomLeft: [
