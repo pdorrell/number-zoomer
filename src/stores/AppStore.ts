@@ -19,18 +19,18 @@ export class AppStore implements ZoomableInterface {
   mapping: CoordinateMapping;
   equation: Equation;
   transformState: TransformState;
-  
+
   // Canvas extension beyond viewport for smoother drag/zoom (20% = 0.2)
   extension: number = 0.2;
-  
+
   // Ratio of extension that triggers redraw based on movement distance (50% = 0.50)
   extensionRedrawOnRatio: number = 0.50;
 
   // Debug information for drag & zoom operations
   lastCompletedOperation: { type: 'drag' | 'zoom'; value: string } | null = null;
-  
+
   // Debug display toggle
-  showDebugInfo: boolean = false;
+  showDebugInfo: boolean = true;
 
   // New zoom state management
   centrePoint: { x: number; y: number } | null = null;
@@ -47,7 +47,7 @@ export class AppStore implements ZoomableInterface {
   // State for intermediate redraws during drag
   private appliedIntermediateDelta: { x: number; y: number } = { x: 0, y: 0 };
   private currentDragDelta: { x: number; y: number } = { x: 0, y: 0 };
-  
+
   // State for intermediate redraws during zoom
   private appliedIntermediateZoomFactor: number = 1.0;
 
@@ -90,7 +90,7 @@ export class AppStore implements ZoomableInterface {
   updateScreenViewport(width: number, height: number) {
     const oldViewport = this.screenViewport;
     this.screenViewport = { width, height };
-    
+
     // If this is the initial setup or a significant size change, adjust world window for 1:1 aspect ratio
     if (oldViewport.width === 400 && oldViewport.height === 300) {
       // Initial setup - create world window with origin centered and 1:1 aspect ratio
@@ -99,31 +99,31 @@ export class AppStore implements ZoomableInterface {
       // Resize - preserve pixels per unit and center point while maintaining aspect ratio
       this.adjustWorldWindowForResize(oldViewport);
     }
-    
+
     this.mapping = new CoordinateMapping(this.screenViewport, this.worldWindow, this.extension);
   }
 
   private initializeWorldWindowWithAspectRatio() {
     const aspectRatio = this.screenViewport.width / this.screenViewport.height;
     const baseRange = 10; // -5 to +5 = 10 units
-    
+
     let xRange: number, yRange: number;
-    
+
     if (aspectRatio >= 1) {
       // Width >= Height: Y range is base, X range is larger
       yRange = baseRange;
       xRange = baseRange * aspectRatio;
     } else {
-      // Height > Width: X range is base, Y range is larger  
+      // Height > Width: X range is base, Y range is larger
       xRange = baseRange;
       yRange = baseRange / aspectRatio;
     }
-    
+
     // Apply precision constraints
     const precision = Math.max(0, this.calculateWorldWindowPrecision());
     const halfXRange = this.quantizeToWorldWindowPrecision(xRange / 2, precision);
     const halfYRange = this.quantizeToWorldWindowPrecision(yRange / 2, precision);
-    
+
     this.worldWindow = {
       bottomLeft: [
         new PreciseDecimal(-halfXRange),
@@ -140,24 +140,24 @@ export class AppStore implements ZoomableInterface {
     // Calculate current center point
     const centerX = this.worldWindow.bottomLeft[0].add(this.worldWindow.topRight[0]).div(new PreciseDecimal(2));
     const centerY = this.worldWindow.bottomLeft[1].add(this.worldWindow.topRight[1]).div(new PreciseDecimal(2));
-    
+
     // Calculate current world window dimensions
     const currentXRange = this.worldWindow.topRight[0].sub(this.worldWindow.bottomLeft[0]);
     const currentYRange = this.worldWindow.topRight[1].sub(this.worldWindow.bottomLeft[1]);
-    
+
     // Calculate scale factors based on viewport change
     const xScaleFactor = this.screenViewport.width / oldViewport.width;
     const yScaleFactor = this.screenViewport.height / oldViewport.height;
-    
+
     // Scale the world window ranges to preserve pixels per unit
     const newXRange = currentXRange.mul(new PreciseDecimal(xScaleFactor));
     const newYRange = currentYRange.mul(new PreciseDecimal(yScaleFactor));
-    
+
     // Apply precision constraints
     const precision = Math.max(0, this.calculateWorldWindowPrecision());
     const halfXRange = this.quantizeToWorldWindowPrecision(newXRange.div(new PreciseDecimal(2)).toNumber(), precision);
     const halfYRange = this.quantizeToWorldWindowPrecision(newYRange.div(new PreciseDecimal(2)).toNumber(), precision);
-    
+
     // Update world window centered on the same point
     this.worldWindow = {
       bottomLeft: [
@@ -336,7 +336,7 @@ export class AppStore implements ZoomableInterface {
     // Display current point with consistent decimal places based on current point precision
     const currentDP = this.calculateCurrentPrecision(); // World window DP + 1
     const minDecimalPlaces = Math.max(0, currentDP); // Don't pad if negative precision
-    
+
     const x = this.currentPoint[0].toStringPadded(minDecimalPlaces);
     const y = this.currentPoint[1].toStringPadded(minDecimalPlaces);
     return { x, y };
@@ -461,7 +461,7 @@ export class AppStore implements ZoomableInterface {
 
     // Store the starting world window for drag preview calculations
     this.dragPreviewWorldWindow = null; // Will be calculated in updateWorldWindowDragTransform
-    
+
     // Initialize intermediate redraw state
     this.appliedIntermediateDelta = { x: 0, y: 0 };
   }
@@ -469,22 +469,22 @@ export class AppStore implements ZoomableInterface {
   updateWorldWindowDragTransform(deltaX: number, deltaY: number) {
     // Track current drag delta for debug display
     this.currentDragDelta = { x: deltaX, y: deltaY };
-    
+
     // Check if movement distance exceeds threshold for redraw
     const remainingDeltaX = deltaX - this.appliedIntermediateDelta.x;
     const remainingDeltaY = deltaY - this.appliedIntermediateDelta.y;
     const distanceThreshold = this.screenViewport.width * this.extension * this.extensionRedrawOnRatio;
     const movementDistance = Math.sqrt(remainingDeltaX * remainingDeltaX + remainingDeltaY * remainingDeltaY);
     const shouldRedrawByDistance = movementDistance >= distanceThreshold;
-    
+
     if (shouldRedrawByDistance) {
       // Perform intermediate redraw: apply current delta to actual coordinates
       this.performIntermediateDragRedraw(deltaX, deltaY);
-      
+
       // After intermediate redraw, CSS transforms should show remaining delta from new baseline
       const newRemainingDeltaX = deltaX - this.appliedIntermediateDelta.x;
       const newRemainingDeltaY = deltaY - this.appliedIntermediateDelta.y;
-      
+
       if (newRemainingDeltaX !== 0 || newRemainingDeltaY !== 0) {
         const newTransform = `translate(${newRemainingDeltaX}px, ${newRemainingDeltaY}px)`;
         this.transformState.gridTransform = newTransform;
@@ -494,7 +494,7 @@ export class AppStore implements ZoomableInterface {
         this.transformState.pointTransform = '';
       }
     } else {
-      // Continue with CSS transforms for immediate feedback  
+      // Continue with CSS transforms for immediate feedback
       // CSS transform should show delta relative to what's already been applied
       const effectiveDeltaX = deltaX - this.appliedIntermediateDelta.x;
       const effectiveDeltaY = deltaY - this.appliedIntermediateDelta.y;
@@ -512,7 +512,7 @@ export class AppStore implements ZoomableInterface {
     // Always calculate drag preview world window for live coordinate display
     // Use the remaining delta (not applied through intermediate redraws) for preview
     // remainingDeltaX and remainingDeltaY already calculated above
-    
+
     const worldDelta = this.mapping.screenToWorld(remainingDeltaX, remainingDeltaY);
     const worldOrigin = this.mapping.screenToWorld(0, 0);
 
@@ -539,7 +539,7 @@ export class AppStore implements ZoomableInterface {
 
     // Clear drag preview
     this.dragPreviewWorldWindow = null;
-    
+
     // Reset intermediate redraw state
     this.appliedIntermediateDelta = { x: 0, y: 0 };
     this.currentDragDelta = { x: 0, y: 0 };
@@ -549,13 +549,13 @@ export class AppStore implements ZoomableInterface {
     // Calculate the incremental delta since last intermediate redraw
     const incrementalDeltaX = deltaX - this.appliedIntermediateDelta.x;
     const incrementalDeltaY = deltaY - this.appliedIntermediateDelta.y;
-    
+
     // Apply only the incremental delta to actual coordinates, triggering a redraw
     this.pan(incrementalDeltaX, incrementalDeltaY);
-    
+
     // Track what we've applied so far
     this.appliedIntermediateDelta = { x: deltaX, y: deltaY };
-    
+
     // Don't clear dragPreviewWorldWindow here - it will be recalculated correctly
     // in the main updateWorldWindowDragTransform method with the new baseline
   }
@@ -564,16 +564,16 @@ export class AppStore implements ZoomableInterface {
     // Calculate the remaining delta that hasn't been applied through intermediate redraws
     const remainingDeltaX = deltaX - this.appliedIntermediateDelta.x;
     const remainingDeltaY = deltaY - this.appliedIntermediateDelta.y;
-    
+
     // Apply only the remaining delta
     if (remainingDeltaX !== 0 || remainingDeltaY !== 0) {
       this.pan(remainingDeltaX, remainingDeltaY);
     }
-    
+
     // Track completed drag operation for debug display
     const totalDistance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
     this.lastCompletedOperation = { type: 'drag', value: `${Math.round(totalDistance)}px` };
-    
+
     // Reset intermediate drag state
     this.appliedIntermediateDelta = { x: 0, y: 0 };
   }
@@ -581,15 +581,15 @@ export class AppStore implements ZoomableInterface {
   private performIntermediateZoomRedraw(zoomFactor: number) {
     // Calculate the incremental zoom factor since last intermediate redraw
     const incrementalZoomFactor = zoomFactor / this.appliedIntermediateZoomFactor;
-    
+
     // Apply only the incremental zoom to actual coordinates, triggering a redraw
     if (this.centrePoint && incrementalZoomFactor !== 1.0) {
       this.zoomAroundScreenPoint(incrementalZoomFactor, this.centrePoint.x, this.centrePoint.y);
     }
-    
+
     // Track what we've applied so far
     this.appliedIntermediateZoomFactor = zoomFactor;
-    
+
     // Clear preview window as it will be recalculated with new baseline
     this.previewWorldWindow = null;
   }
@@ -660,7 +660,7 @@ export class AppStore implements ZoomableInterface {
     this.transformState.transformType = transformType || 'zoom';
     this.transformState.pointTransform = '';
     this.transformState.gridTransform = '';
-    
+
     // Initialize intermediate zoom redraw state
     this.appliedIntermediateZoomFactor = 1.0;
   }
@@ -683,11 +683,11 @@ export class AppStore implements ZoomableInterface {
     // For zoom, use a much smaller threshold since visual impact is greater
     const zoomThreshold = this.extensionRedrawOnRatio * 0.2; // 0.1 means redraw when zoom changes by 10%
     const shouldRedrawByZoom = Math.abs(remainingZoomFactor - 1.0) >= zoomThreshold;
-    
+
     if (shouldRedrawByZoom) {
       // Perform intermediate redraw: apply current zoom factor to actual coordinates
       this.performIntermediateZoomRedraw(zoomFactor);
-      
+
       // After intermediate redraw, CSS transforms should show remaining zoom from new baseline
       const remainingZoomFactor = zoomFactor / this.appliedIntermediateZoomFactor;
       this.updateZoomTransform(remainingZoomFactor, this.centrePoint);
@@ -717,7 +717,7 @@ export class AppStore implements ZoomableInterface {
 
     // Calculate the remaining zoom factor that hasn't been applied through intermediate redraws
     const remainingZoomFactor = finalZoomFactor / this.appliedIntermediateZoomFactor;
-    
+
     // Apply only the remaining zoom factor
     if (Math.abs(remainingZoomFactor - 1.0) > 0.001) {
       this.zoomAroundScreenPoint(remainingZoomFactor, this.centrePoint.x, this.centrePoint.y);
