@@ -1,7 +1,7 @@
 import React, { useRef, useState, useCallback } from 'react';
 import { ZoomableInterface, ZoomSource } from '../interfaces/ZoomableInterface';
 
-interface CustomZoomSliderProps {
+interface ZoomSliderProps {
   zoomable: ZoomableInterface;
   source: ZoomSource;
   zoomRange: number;
@@ -9,7 +9,7 @@ interface CustomZoomSliderProps {
   disabled?: boolean;
 }
 
-export const CustomZoomSlider: React.FC<CustomZoomSliderProps> = ({
+export const ZoomSlider: React.FC<ZoomSliderProps> = ({
   zoomable,
   source,
   zoomRange,

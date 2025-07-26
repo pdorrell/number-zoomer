@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { AppStore } from './stores/AppStore';
 import { CoordinatePlane } from './components/CoordinatePlane';
-import { CustomZoomSlider } from './components/CustomZoomSlider';
+import { ZoomSlider } from './components/ZoomSlider';
 import { EquationSelector } from './components/EquationSelector';
 import { DebugInfo } from './components/DebugInfo';
 import { Equation, EquationType } from './types/Equation';
@@ -41,7 +41,7 @@ export const App: React.FC = observer(() => {
       <div className="main-area">
         <h2 className="equation-heading">{store.equation.getDisplayName()}</h2>
         <CoordinatePlane store={store} />
-        <CustomZoomSlider 
+        <ZoomSlider 
           zoomable={store}
           source="slider"
           zoomRange={8}
