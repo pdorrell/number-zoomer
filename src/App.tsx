@@ -4,33 +4,14 @@ import { AppStore } from './stores/AppStore';
 import { CoordinatePlane } from './components/CoordinatePlane';
 import { CustomZoomSlider } from './components/CustomZoomSlider';
 import { EquationSelector } from './components/EquationSelector';
-import { EquationType } from './types/Equation';
+import { Equation, EquationType } from './types/Equation';
 
 export const App: React.FC = observer(() => {
   const [store] = useState(() => new AppStore());
 
 
-  const getCurrentEquationType = (): EquationType => {
-    return store.currentEquation.getType();
-  };
-
-  const getCurrentLinearC = (): number => {
-    if (store.currentEquation.getType() === 'linear') {
-      return (store.currentEquation as any).getC();
-    }
-    return 1;
-  };
-
-  const handleEquationTypeChange = (type: EquationType) => {
-    if (type === 'linear') {
-      store.setEquation({ type: 'linear', c: getCurrentLinearC() });
-    } else {
-      store.setEquation({ type: 'quadratic' });
-    }
-  };
-
-  const handleLinearCChange = (c: number) => {
-    store.setEquation({ type: 'linear', c });
+  const handleSetEquation = (equation: Equation) => {
+    store.currentEquation = equation;
   };
 
 
@@ -40,10 +21,8 @@ export const App: React.FC = observer(() => {
         <div className="controls-row">
           <h1>Number Zoomer</h1>
           <EquationSelector
-            equationType={getCurrentEquationType()}
-            linearC={getCurrentLinearC()}
-            onEquationTypeChange={handleEquationTypeChange}
-            onLinearCChange={handleLinearCChange}
+            equation={store.currentEquation}
+            setEquation={handleSetEquation}
           />
           <div className="control-buttons">
             <button onClick={() => store.resetView()}>Reset View</button>

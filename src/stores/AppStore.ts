@@ -1,7 +1,7 @@
 import { makeAutoObservable } from 'mobx';
 import { PreciseDecimal } from '../types/Decimal';
 import { Point, WorldWindow, ScreenViewport, CoordinateMapping } from '../types/Coordinate';
-import { Equation, EquationType, EquationConfig, createEquation } from '../types/Equation';
+import { Equation, createEquation } from '../types/Equation';
 import { ZoomableInterface, ZoomSource } from '../interfaces/ZoomableInterface';
 import { ScaledFloat } from '../types/ScaledFloat';
 
@@ -322,9 +322,6 @@ export class AppStore implements ZoomableInterface {
     return withinX && withinY;
   }
 
-  setEquation(config: EquationConfig) {
-    this.currentEquation = createEquation(config);
-  }
 
   toggleDebugInfo() {
     this.showDebugInfo = !this.showDebugInfo;

@@ -1,27 +1,31 @@
 import React from 'react';
-import { EquationType } from '../types/Equation';
+import { Equation, EquationType, createEquation } from '../types/Equation';
 
 interface EquationSelectorProps {
-  equationType: EquationType;
-  linearC: number;
-  onEquationTypeChange: (type: EquationType) => void;
-  onLinearCChange: (c: number) => void;
+  equation: Equation;
+  setEquation: (equation: Equation) => void;
 }
 
 export const EquationSelector: React.FC<EquationSelectorProps> = ({
-  equationType,
-  linearC,
-  onEquationTypeChange,
-  onLinearCChange
+  equation,
+  setEquation
 }) => {
+  const equationType = equation.getType();
+  const linearC = equationType === 'linear' ? (equation as any).getC() : 1;
+
   const handleEquationTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const type = event.target.value as EquationType;
-    onEquationTypeChange(type);
+    if (type === 'linear') {
+      // Preserve current c value when switching to linear
+      setEquation(createEquation({ type: 'linear', c: linearC }));
+    } else {
+      setEquation(createEquation({ type: 'quadratic' }));
+    }
   };
 
   const handleLinearCChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const c = parseInt(event.target.value, 10);
-    onLinearCChange(c);
+    setEquation(createEquation({ type: 'linear', c }));
   };
 
   return (
