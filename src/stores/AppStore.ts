@@ -30,7 +30,7 @@ export class AppStore implements ZoomableInterface {
   lastCompletedOperation: { type: 'drag' | 'zoom'; value: string } | null = null;
 
   // Debug display toggle
-  showDebugInfo: boolean = true;
+  showDebugInfo: boolean = false;
 
   // New zoom state management
   centrePoint: { x: number; y: number } | null = null;
