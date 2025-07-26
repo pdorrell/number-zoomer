@@ -326,17 +326,6 @@ export class AppStore implements ZoomableInterface {
     this.currentEquation = createEquation(config);
   }
 
-  getEquationType(): EquationType {
-    return this.currentEquation.getType();
-  }
-
-  getLinearC(): number {
-    if (this.currentEquation.getType() === 'linear') {
-      return (this.currentEquation as any).getC();
-    }
-    return 1;
-  }
-
   toggleDebugInfo() {
     this.showDebugInfo = !this.showDebugInfo;
   }

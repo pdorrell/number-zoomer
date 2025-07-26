@@ -3,23 +3,33 @@ import { observer } from 'mobx-react-lite';
 import { AppStore } from './stores/AppStore';
 import { CoordinatePlane } from './components/CoordinatePlane';
 import { CustomZoomSlider } from './components/CustomZoomSlider';
+import { EquationSelector } from './components/EquationSelector';
 import { EquationType } from './types/Equation';
 
 export const App: React.FC = observer(() => {
   const [store] = useState(() => new AppStore());
 
 
-  const handleEquationTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const type = event.target.value as EquationType;
+  const getCurrentEquationType = (): EquationType => {
+    return store.currentEquation.getType();
+  };
+
+  const getCurrentLinearC = (): number => {
+    if (store.currentEquation.getType() === 'linear') {
+      return (store.currentEquation as any).getC();
+    }
+    return 1;
+  };
+
+  const handleEquationTypeChange = (type: EquationType) => {
     if (type === 'linear') {
-      store.setEquation({ type: 'linear', c: store.getLinearC() });
+      store.setEquation({ type: 'linear', c: getCurrentLinearC() });
     } else {
       store.setEquation({ type: 'quadratic' });
     }
   };
 
-  const handleLinearCChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const c = parseInt(event.target.value, 10);
+  const handleLinearCChange = (c: number) => {
     store.setEquation({ type: 'linear', c });
   };
 
@@ -29,25 +39,12 @@ export const App: React.FC = observer(() => {
       <div className="controls">
         <div className="controls-row">
           <h1>Number Zoomer</h1>
-          <div className="equation-controls">
-            <label>
-              Equation: 
-              <select value={store.getEquationType()} onChange={handleEquationTypeChange}>
-                <option value="quadratic">y = x²</option>
-                <option value="linear">y = cx</option>
-              </select>
-            </label>
-            {store.getEquationType() === 'linear' && (
-              <label>
-                c = 
-                <select value={store.getLinearC()} onChange={handleLinearCChange}>
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </label>
-            )}
-          </div>
+          <EquationSelector
+            equationType={getCurrentEquationType()}
+            linearC={getCurrentLinearC()}
+            onEquationTypeChange={handleEquationTypeChange}
+            onLinearCChange={handleLinearCChange}
+          />
           <div className="control-buttons">
             <button onClick={() => store.resetView()}>Reset View</button>
             <button onClick={() => store.moveCurrentPointToCenter()}>Center Point</button>
@@ -65,7 +62,7 @@ export const App: React.FC = observer(() => {
               <strong>World Window:</strong> DP: {store.calculateWorldWindowPrecision()} X: {store.getPreviewWorldWindowXRangeDisplay()}, Y: {store.getPreviewWorldWindowYRangeDisplay()}
             </div>
             <div className="info-item">
-              <strong>Current Point:</strong> {store.getCurrentPointDisplay()} ({store.calculateCurrentPrecision()}DP)
+              <strong>Current Point:</strong> {store.getCurrentPointDisplay().x}, {store.getCurrentPointDisplay().y} ({store.calculateCurrentPrecision()}DP)
             </div>
             <div className="info-item">
               <strong>Screen Viewport:</strong> {store.screenViewport.width}×{store.screenViewport.height}px, {store.getPreviewPixelsPerXUnit().toFixed(1)} px/unit, Window: {store.calculateWorldWindowPrecision() + 1}DP
