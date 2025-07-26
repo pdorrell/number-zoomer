@@ -148,17 +148,18 @@
 }
 
 .coordinate-display {
-  background: #ffffff; // White background by default
+  background: #ffd8a8 !important; // Always light orange background
   
   // Only show hover effects on devices that support true hovering (not touch devices)
   @media (hover: hover) and (pointer: fine) {
     &:hover:not(.dragging) {
-      background: #fffacd !important; // Light yellow on hover when not dragging
+      box-shadow: 0 0 0 2px #212529 !important; // Add 2px shadow to simulate thicker border
     }
   }
   
   &.dragging {
-    background: #ffd8a8 !important; // Light orange when dragging
+    background: #ffd8a8 !important; // Same light orange when dragging
+    box-shadow: 0 0 0 2px #212529 !important; // Add 2px shadow while dragging
   }
 }
 
