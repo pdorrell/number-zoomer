@@ -540,7 +540,6 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
             fontFamily: 'monospace',
             color: '#212529',
             pointerEvents: 'auto',
-            whiteSpace: 'nowrap',
             transform: store.transformState.pointTransform,
             cursor: isDraggingPoint ? 'grabbing' : 'grab',
             userSelect: 'none',

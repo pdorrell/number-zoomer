@@ -46,9 +46,10 @@ export class PreciseDecimal {
     const decimalIndex = str.indexOf('.');
     
     if (decimalIndex === -1) {
-      // No decimal point, add one with required padding
+      // No decimal point - need to pad to match decimal format length
       if (minDecimalPlaces > 0) {
-        return str + '.' + ' '.repeat(minDecimalPlaces) + '\u200B'; // Add zero-width space to preserve trailing spaces
+        // Add space where decimal point would be, then spaces for decimal places
+        return str + ' ' + ' '.repeat(minDecimalPlaces) + '\u200B';
       }
       return str;
     }
@@ -56,12 +57,21 @@ export class PreciseDecimal {
     // Count existing decimal places
     const existingDecimalPlaces = str.length - decimalIndex - 1;
     
+    // Always ensure we have at least minDecimalPlaces total characters after the integer part
+    const totalDecimalChars = Math.max(existingDecimalPlaces, minDecimalPlaces);
+    
+    if (existingDecimalPlaces === 0) {
+      // Number ends with decimal point but no digits (e.g., "2.")
+      // Replace decimal point with space and add padding for decimal places
+      return str.slice(0, decimalIndex) + ' ' + ' '.repeat(minDecimalPlaces) + '\u200B';
+    }
+    
     if (existingDecimalPlaces >= minDecimalPlaces) {
       // Already has enough or more decimal places, return as-is
       return str;
     }
     
-    // Pad with spaces to reach minimum decimal places
+    // Has some decimal digits but needs padding
     const paddingNeeded = minDecimalPlaces - existingDecimalPlaces;
     return str + ' '.repeat(paddingNeeded) + '\u200B'; // Add zero-width space to preserve trailing spaces
   }
