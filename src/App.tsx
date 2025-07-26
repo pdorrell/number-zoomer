@@ -47,9 +47,6 @@ export const App: React.FC = observer(() => {
                 </select>
               </label>
             )}
-            <span className="equation-display">
-              Current: {store.currentEquation.getDisplayName()}
-            </span>
           </div>
           <div className="control-buttons">
             <button onClick={() => store.resetView()}>Reset View</button>
