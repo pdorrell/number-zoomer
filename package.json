@@ -12,7 +12,8 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "build:full": "npm run check-code && npm run test && npm run build",
+    "test:full": "npm run check-code && npm run test",
+    "build:full": "npm run test:full && npm run build",
     "deploy": "node scripts/update-version.js && npm run build:full && node scripts/deploy-to-target.js"
   },
   "devDependencies": {
