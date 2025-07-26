@@ -17,47 +17,49 @@ export const App: React.FC = observer(() => {
 
 
   return (
-    <div className="app">
-      {/* 1. Header with controls */}
-      <div className="controls">
-        <div className="controls-row">
-          <h1>Number Zoomer</h1>
-          <EquationSelector
-            equation={store.equation}
-            setEquation={handleSetEquation}
-          />
-          <div className="control-buttons">
-            <button onClick={() => store.resetView()}>Reset View</button>
-            <button onClick={() => store.moveCurrentPointToCenter()}>Center Point</button>
+    <div className="outer-app-container">
+      <div className="app">
+        {/* 1. Header with controls */}
+        <div className="controls">
+          <div className="controls-row">
+            <h1>Number Zoomer</h1>
+            <EquationSelector
+              equation={store.equation}
+              setEquation={handleSetEquation}
+            />
+            <div className="control-buttons">
+              <button onClick={() => store.resetView()}>Reset View</button>
+              <button onClick={() => store.moveCurrentPointToCenter()}>Center Point</button>
+            </div>
+            <div 
+              className={`debug-toggle ${store.showDebugInfo ? 'active' : ''}`}
+              onClick={() => store.toggleDebugInfo()}
+            >
+              🕵️
+            </div>
           </div>
-          <div 
-            className={`debug-toggle ${store.showDebugInfo ? 'active' : ''}`}
-            onClick={() => store.toggleDebugInfo()}
-          >
-            🕵️
-          </div>
+          <DebugInfo store={store} />
         </div>
-        <DebugInfo store={store} />
-      </div>
-      
-      {/* 2. Equation heading */}
-      <div className="equation-heading-container">
-        <h2 className="equation-heading">{store.equation.getDisplayName()}</h2>
-      </div>
-      
-      {/* 3. Coordinate plane (flexible) */}
-      <div className="coordinate-plane-area">
-        <CoordinatePlane store={store} />
-      </div>
-      
-      {/* 4. Zoom slider */}
-      <div className="zoom-slider-container">
-        <ZoomSlider 
-          zoomable={store}
-          source="slider"
-          zoomRange={8}
-          disabled={store.transformState.isTransforming && store.transformState.transformType !== 'slider'}
-        />
+        
+        {/* 2. Equation heading */}
+        <div className="equation-heading-container">
+          <h2 className="equation-heading">{store.equation.getDisplayName()}</h2>
+        </div>
+        
+        {/* 3. Coordinate plane (flexible) */}
+        <div className="coordinate-plane-area">
+          <CoordinatePlane store={store} />
+        </div>
+        
+        {/* 4. Zoom slider */}
+        <div className="zoom-slider-container">
+          <ZoomSlider 
+            zoomable={store}
+            source="slider"
+            zoomRange={8}
+            disabled={store.transformState.isTransforming && store.transformState.transformType !== 'slider'}
+          />
+        </div>
       </div>
     </div>
   );
