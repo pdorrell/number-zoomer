@@ -242,14 +242,14 @@ export class AppStore implements ZoomableInterface {
   }
 
   // Utility methods for formatted display
-  getCurrentPointDisplay(): string {
+  getCurrentPointDisplay(): { x: string; y: string } {
     // Display current point with consistent decimal places based on current point precision
     const currentDP = this.calculateCurrentPrecision(); // World window DP + 1
     const minDecimalPlaces = Math.max(0, currentDP); // Don't pad if negative precision
     
     const x = this.currentPoint[0].toStringPadded(minDecimalPlaces);
     const y = this.currentPoint[1].toStringPadded(minDecimalPlaces);
-    return `${x}, ${y}`;
+    return { x, y };
   }
 
   getWorldWindowXRangeDisplay(): string {

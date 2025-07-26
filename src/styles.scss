@@ -164,5 +164,20 @@
     background: #ffd8a8 !important; // Same light orange when dragging
     box-shadow: 0 0 0 2px #212529 !important; // Add 2px shadow while dragging
   }
+  
+  &.coordinate-table {
+    border-collapse: collapse;
+    
+    td {
+      padding: 0 4px; // Small horizontal padding
+      border-right: 1px solid #000000; // Black vertical line between cells
+      text-align: center;
+      vertical-align: middle;
+      
+      &:last-child {
+        border-right: none; // Remove border on last cell
+      }
+    }
+  }
 }
 

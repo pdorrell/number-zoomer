@@ -524,11 +524,11 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
           </g>
         </svg>
         
-        {/* Clipped expandable div for coordinate display */}
-        <div
+        {/* Clipped table for coordinate display - table is the outer draggable container */}
+        <table
           onMouseDown={handleCoordinateMouseDown}
           onTouchStart={handleCoordinateTouchStart}
-          className={`coordinate-display ${isDraggingPoint ? 'dragging' : ''}`}
+          className={`coordinate-table coordinate-display ${isDraggingPoint ? 'dragging' : ''}`}
           style={{
             position: 'absolute',
             left: currentPointScreen.x + 10,
@@ -547,16 +547,18 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
             msUserSelect: 'none',
             minHeight: '20px', // Minimum touch target size
             minWidth: '40px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
             boxShadow: isDraggingPoint ? '0 2px 4px rgba(0,0,0,0.2)' : '0 1px 2px rgba(0,0,0,0.1)',
             zIndex: 10, // Ensure it's above other elements
             touchAction: 'none' // Prevent default touch behaviors
           }}
         >
-          {store.getCurrentPointDisplay()}
-        </div>
+          <tbody>
+            <tr>
+              <td>{store.getCurrentPointDisplay().x}</td>
+              <td>{store.getCurrentPointDisplay().y}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
       
       {/* Unclipped coordinate labels positioned above the clipped container */}
