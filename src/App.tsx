@@ -5,14 +5,34 @@ import { CoordinatePlane } from './components/CoordinatePlane';
 import { ZoomSlider } from './components/ZoomSlider';
 import { EquationSelector } from './components/EquationSelector';
 import { DebugInfo } from './components/DebugInfo';
+import { EquationEditModal } from './components/EquationEditModal';
 import { Equation, EquationType } from './types/Equation';
 
 export const App: React.FC = observer(() => {
   const [store] = useState(() => new AppStore());
-
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [previousEquation, setPreviousEquation] = useState<Equation | null>(null);
 
   const handleSetEquation = (equation: Equation) => {
     store.equation = equation;
+  };
+
+  const handleOpenEditModal = () => {
+    setPreviousEquation(store.equation);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEquation = () => {
+    setIsEditModalOpen(false);
+    setPreviousEquation(null);
+  };
+
+  const handleCancelEquation = () => {
+    if (previousEquation) {
+      store.equation = previousEquation;
+    }
+    setIsEditModalOpen(false);
+    setPreviousEquation(null);
   };
 
 
@@ -46,7 +66,16 @@ export const App: React.FC = observer(() => {
         
         {/* 2. Equation heading */}
         <div className="equation-heading-container">
-          <h2 className="equation-heading">{store.equation.getDisplayName()}</h2>
+          <h2 className="equation-heading">
+            {store.equation.getDisplayName()}
+            <button 
+              className="equation-edit-button"
+              onClick={handleOpenEditModal}
+              title="Edit equation"
+            >
+              ✏️
+            </button>
+          </h2>
         </div>
         
         {/* 3. Coordinate plane (flexible) */}
@@ -64,6 +93,15 @@ export const App: React.FC = observer(() => {
           />
         </div>
       </div>
+      
+      {/* Equation Edit Modal */}
+      <EquationEditModal
+        isOpen={isEditModalOpen}
+        equation={store.equation}
+        onSave={handleSaveEquation}
+        onCancel={handleCancelEquation}
+        onEquationChange={handleSetEquation}
+      />
     </div>
   );
 });
