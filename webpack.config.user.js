@@ -1,7 +1,11 @@
-const path = require('path');
-const fs = require('fs');
-const webpack = require('webpack');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+import path from 'path';
+import fs from 'fs';
+import webpack from 'webpack';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 function getFormattedDateTime() {
   const now = new Date();
@@ -14,7 +18,7 @@ function getFormattedDateTime() {
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
 
-module.exports = (env, argv) => {
+export default (env, argv) => {
   const isDevelopment = argv.mode === 'development';
   
   return {
