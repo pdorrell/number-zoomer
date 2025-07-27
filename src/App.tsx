@@ -3,7 +3,6 @@ import { observer } from 'mobx-react-lite';
 import { AppStore } from './stores/AppStore';
 import { CoordinatePlane } from './components/CoordinatePlane';
 import { ZoomSlider } from './components/ZoomSlider';
-import { EquationSelector } from './components/EquationSelector';
 import { DebugInfo } from './components/DebugInfo';
 import { EquationEditModal } from './components/EquationEditModal';
 import { Equation, EquationType } from './types/Equation';
@@ -43,10 +42,6 @@ export const App: React.FC = observer(() => {
         <div className="controls">
           <div className="controls-row">
             <h1>Number Zoomer</h1>
-            <EquationSelector
-              equation={store.equation}
-              setEquation={handleSetEquation}
-            />
             <div className="control-buttons">
               <button onClick={() => store.resetView()}>Reset View</button>
               <button onClick={() => store.moveCurrentPointToCenter()}>Center Point</button>
