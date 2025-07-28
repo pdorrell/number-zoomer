@@ -51,7 +51,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store, 
         if (horizontalLines[thicknessLevel]) {
           horizontalLines[thicknessLevel].forEach(line => {
             // Adjust screen coordinates for canvas offset
-            const screenY = line.screenPosition + store.screenViewport.height * store.extension;
+            const screenY = line.screenPosition + extensionOffset.y;
             
             ctx.strokeStyle = line.color;
             ctx.lineWidth = line.thickness;
@@ -66,7 +66,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store, 
         if (verticalLines[thicknessLevel]) {
           verticalLines[thicknessLevel].forEach(line => {
             // Adjust screen coordinates for canvas offset
-            const screenX = line.screenPosition + store.screenViewport.width * store.extension;
+            const screenX = line.screenPosition + extensionOffset.x;
             
             ctx.strokeStyle = line.color;
             ctx.lineWidth = line.thickness;
