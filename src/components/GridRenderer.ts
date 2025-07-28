@@ -1,6 +1,8 @@
 import { PreciseDecimal } from '../types/Decimal';
 import { CoordinateMapping, CoordinateAxisMapping, Point } from '../types/Coordinate';
 import { ScaledFloat } from '../types/ScaledFloat';
+import { makeAutoObservable, computed } from 'mobx';
+import { CanvasGridLines } from '../types/CanvasTypes';
 
 export interface GridLine {
   position: PreciseDecimal;
@@ -16,6 +18,14 @@ export class GridRenderer {
 
   constructor(mapping: CoordinateMapping) {
     this.mapping = mapping;
+    makeAutoObservable(this);
+  }
+
+  get canvasGridLines(): CanvasGridLines {
+    const maxPrecision = this.calculateMaxPrecision();
+    const horizontalLines = this.calculateHorizontalGridLines(maxPrecision);
+    const verticalLines = this.calculateVerticalGridLines(maxPrecision);
+    return new CanvasGridLines(horizontalLines, verticalLines);
   }
 
   calculateMaxPrecision(): number {

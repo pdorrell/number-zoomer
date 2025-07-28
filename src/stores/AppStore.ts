@@ -5,6 +5,7 @@ import { PolynomialEquation, createEquation } from '../types/Equation';
 import { ZoomableInterface, ZoomSource } from '../interfaces/ZoomableInterface';
 import { ScaledFloat } from '../types/ScaledFloat';
 import { GridRenderer } from '../components/GridRenderer';
+import { CanvasEquationGraph } from '../types/CanvasTypes';
 
 export interface TransformState {
   pointTransform: string;
@@ -61,6 +62,15 @@ export class AppStore implements ZoomableInterface {
   // Computed property for GridRenderer
   get gridRenderer(): GridRenderer {
     return new GridRenderer(this.mapping);
+  }
+
+  // Computed property for CanvasEquationGraph
+  get canvasEquationGraph(): CanvasEquationGraph {
+    const extendedWorldWindow = this.mapping.getExtendedWorldWindow();
+    const extendedWidth = this.screenViewport.width * (1 + 2 * this.extension);
+    const equationPoints = this.equation.generatePoints(extendedWorldWindow, extendedWidth);
+    const screenPoints = equationPoints.map(point => this.mapping.worldToScreen(point));
+    return new CanvasEquationGraph(screenPoints);
   }
 
   constructor() {

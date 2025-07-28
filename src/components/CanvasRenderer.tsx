@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback, useMemo } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { AppStore } from '../stores/AppStore';
 
@@ -12,20 +12,9 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store, 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
   
-  // Memoize grid lines and equation points calculation
-  // The key is to make sure we access store.equation.coefficients here so MobX tracks it
-  const { horizontalLines, verticalLines, screenPoints } = useMemo(() => {
-    console.log(`[CanvasRenderer] Recalculating points, coefficients:`, store.equation.coefficients);
-    const maxPrecision = store.gridRenderer.calculateMaxPrecision();
-    const horizontalLines = store.gridRenderer.calculateHorizontalGridLines(maxPrecision);
-    const verticalLines = store.gridRenderer.calculateVerticalGridLines(maxPrecision);
-    const extendedWorldWindow = store.mapping.getExtendedWorldWindow();
-    const extendedWidth = store.screenViewport.width * (1 + 2 * store.extension);
-    const equationPoints = store.equation.generatePoints(extendedWorldWindow, extendedWidth);
-    const screenPoints = equationPoints.map(point => store.mapping.worldToScreen(point));
-    
-    return { horizontalLines, verticalLines, screenPoints };
-  }, [store.equation, store.equation.coefficients, store.worldWindow, store.mapping, store.screenViewport.width, store.extension]);
+  // Use computed properties for grid lines and equation points
+  const { horizontalLines, verticalLines } = store.gridRenderer.canvasGridLines;
+  const { screenPoints } = store.canvasEquationGraph;
   
   const drawCanvas = useCallback(() => {
     console.log(`[CanvasRenderer] drawCanvas called with renderMode: ${renderMode}, coefficients:`, store.equation.coefficients);
