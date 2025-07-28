@@ -1,9 +1,10 @@
-import { makeAutoObservable } from 'mobx';
+import { makeAutoObservable, computed } from 'mobx';
 import { PreciseDecimal } from '../types/Decimal';
 import { Point, WorldWindow, ScreenViewport, CoordinateMapping } from '../types/Coordinate';
 import { PolynomialEquation, createEquation } from '../types/Equation';
 import { ZoomableInterface, ZoomSource } from '../interfaces/ZoomableInterface';
 import { ScaledFloat } from '../types/ScaledFloat';
+import { GridRenderer } from '../components/GridRenderer';
 
 export interface TransformState {
   pointTransform: string;
@@ -55,6 +56,11 @@ export class AppStore implements ZoomableInterface {
   // Computed property for backward compatibility
   get isZooming(): boolean {
     return this.zoomingSource !== null;
+  }
+
+  // Computed property for GridRenderer
+  get gridRenderer(): GridRenderer {
+    return new GridRenderer(this.mapping);
   }
 
   constructor() {
