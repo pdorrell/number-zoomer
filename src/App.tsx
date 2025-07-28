@@ -5,11 +5,13 @@ import { CoordinatePlane } from './components/CoordinatePlane';
 import { ZoomSlider } from './components/ZoomSlider';
 import { DebugInfo } from './components/DebugInfo';
 import { EquationEditModal } from './components/EquationEditModal';
+import { AboutModal } from './components/AboutModal';
 import { PolynomialEquation } from './types/Equation';
 
 export const App: React.FC = observer(() => {
   const [store] = useState(() => new AppStore());
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
   const [previousEquation, setPreviousEquation] = useState<PolynomialEquation | null>(null);
 
   const handleOpenEditModal = () => {
@@ -50,11 +52,21 @@ export const App: React.FC = observer(() => {
             </div>
             <div className="version-debug-container">
               <div className="version-display">v{store.version}</div>
-              <div 
-                className={`debug-toggle ${store.showDebugInfo ? 'active' : ''}`}
-                onClick={() => store.toggleDebugInfo()}
-              >
-                🕵️
+              <div className="debug-info-buttons">
+                <div 
+                  className="info-button"
+                  onClick={() => setIsAboutModalOpen(true)}
+                  title="About Number Zoomer"
+                >
+                  ℹ️
+                </div>
+                <div 
+                  className={`debug-toggle ${store.showDebugInfo ? 'active' : ''}`}
+                  onClick={() => store.toggleDebugInfo()}
+                  title="Toggle debug info"
+                >
+                  🕵️
+                </div>
               </div>
             </div>
           </div>
@@ -97,6 +109,12 @@ export const App: React.FC = observer(() => {
         equation={store.equation as PolynomialEquation}
         onSave={handleSaveEquation}
         onCancel={handleCancelEquation}
+      />
+      
+      {/* About Modal */}
+      <AboutModal
+        isOpen={isAboutModalOpen}
+        onClose={() => setIsAboutModalOpen(false)}
       />
     </div>
   );
