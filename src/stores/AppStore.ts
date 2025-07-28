@@ -1,7 +1,7 @@
 import { makeAutoObservable } from 'mobx';
 import { PreciseDecimal } from '../types/Decimal';
 import { Point, WorldWindow, ScreenViewport, CoordinateMapping } from '../types/Coordinate';
-import { Equation, createEquation } from '../types/Equation';
+import { Equation, PolynomialEquation, createEquation } from '../types/Equation';
 import { ZoomableInterface, ZoomSource } from '../interfaces/ZoomableInterface';
 import { ScaledFloat } from '../types/ScaledFloat';
 
@@ -74,7 +74,7 @@ export class AppStore implements ZoomableInterface {
       new PreciseDecimal(0)
     ];
 
-    this.equation = createEquation({ type: 'quadratic' });
+    this.equation = createEquation({ type: 'polynomial', coefficients: [0, 0, 1] }); // y = x²
 
     this.transformState = {
       pointTransform: '',

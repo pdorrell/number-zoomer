@@ -1,11 +1,13 @@
+import { makeObservable, observable, action } from 'mobx';
 import { PreciseDecimal } from './Decimal';
 import { Point, WorldWindow } from './Coordinate';
 
-export type EquationType = 'quadratic' | 'linear';
+export type EquationType = 'quadratic' | 'linear' | 'polynomial';
 
 export interface EquationConfig {
   type: EquationType;
   c?: number; // For y = cx, defaults to 1
+  coefficients?: number[]; // For polynomial, index 0 = constant term, index 1 = x term, etc.
 }
 
 export abstract class Equation {
@@ -104,13 +106,232 @@ export class LinearEquation extends Equation {
   }
 }
 
+export class PolynomialEquation extends Equation {
+  // Observable coefficients array - index 0 = constant, index 1 = x, index 2 = x², etc.
+  coefficients: number[] = [0]; // Default to polynomial "0"
+
+  constructor(coefficients: number[] = [0]) {
+    super();
+    this.coefficients = [...coefficients];
+    
+    makeObservable(this, {
+      coefficients: observable,
+      setCoefficient: action,
+      addDegree: action,
+      removeDegree: action,
+      setCoefficients: action
+    });
+  }
+
+  evaluate(x: PreciseDecimal): PreciseDecimal {
+    let result = new PreciseDecimal(0);
+    let xPower = new PreciseDecimal(1); // x^0 = 1
+    
+    for (let i = 0; i < this.coefficients.length; i++) {
+      if (this.coefficients[i] !== 0) {
+        const term = xPower.mul(new PreciseDecimal(this.coefficients[i]));
+        result = result.add(term);
+      }
+      if (i < this.coefficients.length - 1) {
+        xPower = xPower.mul(x); // Prepare x^(i+1) for next iteration
+      }
+    }
+    
+    return result;
+  }
+
+  getType(): EquationType {
+    return 'polynomial';
+  }
+
+  getDegree(): number {
+    // Find the highest degree with non-zero coefficient
+    for (let i = this.coefficients.length - 1; i >= 0; i--) {
+      if (this.coefficients[i] !== 0) {
+        return i;
+      }
+    }
+    return 0; // All coefficients are zero, degree is 0
+  }
+
+  getDisplayName(): string {
+    const degree = this.getDegree();
+    
+    // Special case: polynomial is just "0"
+    if (degree === 0 && this.coefficients[0] === 0) {
+      return 'y = 0';
+    }
+
+    const terms: string[] = [];
+    
+    for (let i = degree; i >= 0; i--) {
+      const coeff = this.coefficients[i] || 0;
+      if (coeff === 0) continue;
+      
+      let term = '';
+      const isFirst = terms.length === 0;
+      
+      // Handle coefficient
+      if (i === 0) {
+        // Constant term
+        if (isFirst) {
+          term = coeff.toString();
+        } else {
+          term = coeff > 0 ? ` + ${coeff}` : ` - ${Math.abs(coeff)}`;
+        }
+      } else if (i === 1) {
+        // Linear term (x)
+        if (coeff === 1) {
+          term = isFirst ? 'x' : ' + x';
+        } else if (coeff === -1) {
+          term = isFirst ? '-x' : ' - x';
+        } else {
+          if (isFirst) {
+            term = `${coeff}x`;
+          } else {
+            term = coeff > 0 ? ` + ${coeff}x` : ` - ${Math.abs(coeff)}x`;
+          }
+        }
+      } else {
+        // Higher degree terms (x², x³, etc.)
+        const exponent = i;
+        if (coeff === 1) {
+          term = isFirst ? `x^${exponent}` : ` + x^${exponent}`;
+        } else if (coeff === -1) {
+          term = isFirst ? `-x^${exponent}` : ` - x^${exponent}`;
+        } else {
+          if (isFirst) {
+            term = `${coeff}x^${exponent}`;
+          } else {
+            term = coeff > 0 ? ` + ${coeff}x^${exponent}` : ` - ${Math.abs(coeff)}x^${exponent}`;
+          }
+        }
+      }
+      
+      terms.push(term);
+    }
+    
+    return `y = ${terms.join('')}`;
+  }
+
+  shouldDrawAsCurve(worldWindow: WorldWindow): boolean {
+    const degree = this.getDegree();
+    if (degree <= 1) {
+      return false; // Linear or constant, draw as line
+    }
+    
+    // For higher degrees, use similar logic to quadratic
+    const xRange = worldWindow.topRight[0].sub(worldWindow.bottomLeft[0]);
+    const rangeSize = xRange.abs();
+    const threshold = new PreciseDecimal(0.01);
+    
+    return rangeSize.gte(threshold);
+  }
+
+  generatePoints(worldWindow: WorldWindow, screenWidth: number): Point[] {
+    const degree = this.getDegree();
+    const points: Point[] = [];
+    const xMin = worldWindow.bottomLeft[0];
+    const xMax = worldWindow.topRight[0];
+    
+    if (degree <= 1) {
+      // Linear or constant, only need two points
+      return [
+        [xMin, this.evaluate(xMin)],
+        [xMax, this.evaluate(xMax)]
+      ];
+    }
+    
+    // Higher degree polynomials need more points for smooth curves
+    const xRange = xMax.sub(xMin);
+    const numPoints = Math.min(screenWidth, 200);
+    
+    for (let i = 0; i <= numPoints; i++) {
+      const ratio = i / numPoints;
+      const x = xMin.add(xRange.mul(new PreciseDecimal(ratio)));
+      const y = this.evaluate(x);
+      points.push([x, y]);
+    }
+    
+    return points;
+  }
+
+  // Observable actions for editing coefficients
+  setCoefficient(degree: number, value: number): void {
+    // Extend array if necessary
+    while (this.coefficients.length <= degree) {
+      this.coefficients.push(0);
+    }
+    this.coefficients[degree] = value;
+    
+    // Clean up trailing zeros
+    this.trimTrailingZeros();
+  }
+
+  addDegree(): void {
+    const currentDegree = this.getDegree();
+    const newDegree = Math.min(currentDegree + 1, 5); // Max degree 5
+    this.setCoefficient(newDegree, 1);
+  }
+
+  removeDegree(degree: number): void {
+    if (degree < this.coefficients.length) {
+      this.coefficients[degree] = 0;
+      this.trimTrailingZeros();
+    }
+  }
+
+  setCoefficients(coefficients: number[]): void {
+    this.coefficients = [...coefficients];
+    this.trimTrailingZeros();
+  }
+
+  private trimTrailingZeros(): void {
+    // Remove trailing zeros, but keep at least one element (for "0" polynomial)
+    while (this.coefficients.length > 1 && this.coefficients[this.coefficients.length - 1] === 0) {
+      this.coefficients.pop();
+    }
+  }
+
+  // Helper method to get coefficient for a specific degree
+  getCoefficient(degree: number): number {
+    return degree < this.coefficients.length ? this.coefficients[degree] : 0;
+  }
+
+  // Helper method to get max degree shown in editor (always show up to current degree, min 0)
+  getMaxDisplayDegree(): number {
+    return Math.max(0, this.getDegree());
+  }
+}
+
 export function createEquation(config: EquationConfig): Equation {
   switch (config.type) {
     case 'quadratic':
       return new QuadraticEquation();
     case 'linear':
       return new LinearEquation(config.c || 1);
+    case 'polynomial':
+      return new PolynomialEquation(config.coefficients || [0]);
     default:
       throw new Error(`Unknown equation type: ${config.type}`);
   }
+}
+
+// Helper function to convert existing equations to polynomial
+export function convertToPolynomial(equation: Equation): PolynomialEquation {
+  if (equation instanceof PolynomialEquation) {
+    return equation;
+  }
+  
+  if (equation instanceof LinearEquation) {
+    const c = equation.getC();
+    return new PolynomialEquation([0, c]); // 0 + cx
+  }
+  
+  if (equation instanceof QuadraticEquation) {
+    return new PolynomialEquation([0, 0, 1]); // 0 + 0x + 1x²
+  }
+  
+  // Fallback
+  return new PolynomialEquation([0]);
 }

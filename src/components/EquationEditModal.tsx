@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Equation, EquationType, createEquation } from '../types/Equation';
+import { observer } from 'mobx-react-lite';
+import { Equation, EquationType, PolynomialEquation, convertToPolynomial } from '../types/Equation';
+import { PolynomialEditor } from './PolynomialEditor';
 
 interface EquationEditModalProps {
   isOpen: boolean;
@@ -9,7 +11,7 @@ interface EquationEditModalProps {
   onEquationChange: (equation: Equation) => void;
 }
 
-export const EquationEditModal: React.FC<EquationEditModalProps> = ({
+export const EquationEditModal: React.FC<EquationEditModalProps> = observer(({
   isOpen,
   equation,
   onSave,
@@ -19,25 +21,23 @@ export const EquationEditModal: React.FC<EquationEditModalProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [position, setPosition] = useState({ x: 100, y: 100 });
+  const [polynomialEquation, setPolynomialEquation] = useState<PolynomialEquation>(() => 
+    convertToPolynomial(equation)
+  );
   const modalRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
 
-  const equationType = equation.getType();
-  const linearC = equationType === 'linear' ? (equation as any).getC() : 1;
-
-  const handleEquationTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const type = event.target.value as EquationType;
-    if (type === 'linear') {
-      onEquationChange(createEquation({ type: 'linear', c: linearC }));
-    } else {
-      onEquationChange(createEquation({ type: 'quadratic' }));
+  // Convert to polynomial equation when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      const poly = convertToPolynomial(equation);
+      setPolynomialEquation(poly);
+      // Immediately update the parent equation to polynomial
+      onEquationChange(poly);
     }
-  };
+  }, [isOpen, equation, onEquationChange]);
 
-  const handleLinearCChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const c = parseInt(event.target.value, 10);
-    onEquationChange(createEquation({ type: 'linear', c }));
-  };
+  // No longer need legacy equation type handlers - polynomial editor handles everything
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (headerRef.current && headerRef.current.contains(e.target as Node)) {
@@ -107,29 +107,11 @@ export const EquationEditModal: React.FC<EquationEditModalProps> = ({
           onMouseDown={handleMouseDown}
           style={{ cursor: 'grab' }}
         >
-          <h3>Edit Equation: {equation.getDisplayName()}</h3>
+          <h3>Edit Equation: {polynomialEquation.getDisplayName()}</h3>
         </div>
         
         <div className="modal-content">
-          <div className="equation-controls">
-            <label>
-              Equation: 
-              <select value={equationType} onChange={handleEquationTypeChange}>
-                <option value="quadratic">y = x²</option>
-                <option value="linear">y = cx</option>
-              </select>
-            </label>
-            {equationType === 'linear' && (
-              <label>
-                c = 
-                <select value={linearC} onChange={handleLinearCChange}>
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(c => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
-              </label>
-            )}
-          </div>
+          <PolynomialEditor equation={polynomialEquation} />
         </div>
         
         <div className="modal-actions">
@@ -143,4 +125,4 @@ export const EquationEditModal: React.FC<EquationEditModalProps> = ({
       </div>
     </div>
   );
-};
+});
