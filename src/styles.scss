@@ -414,14 +414,17 @@ body {
     gap: 1rem;
     align-items: center;
     padding: 0.5rem 0;
+    opacity: 1;
+    transition: opacity 300ms ease-out;
     
     &.coefficient-row-hidden {
       opacity: 0;
       pointer-events: none;
-      height: 0;
-      padding: 0;
-      margin: 0;
-      overflow: hidden;
+      
+      // Keep layout space but make invisible and non-interactive
+      .coefficient-slider {
+        pointer-events: none;
+      }
     }
   }
   
@@ -444,6 +447,15 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+  }
+  
+  .remove-button-placeholder {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
   }
   
   .coefficient-slider {

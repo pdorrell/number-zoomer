@@ -195,15 +195,16 @@ export class PolynomialEquation extends Equation {
       } else {
         // Higher degree terms (x², x³, etc.)
         const exponent = i;
+        const superscriptExponent = this.toSuperscript(exponent);
         if (coeff === 1) {
-          term = isFirst ? `x^${exponent}` : ` + x^${exponent}`;
+          term = isFirst ? `x${superscriptExponent}` : ` + x${superscriptExponent}`;
         } else if (coeff === -1) {
-          term = isFirst ? `-x^${exponent}` : ` - x^${exponent}`;
+          term = isFirst ? `-x${superscriptExponent}` : ` - x${superscriptExponent}`;
         } else {
           if (isFirst) {
-            term = `${coeff}x^${exponent}`;
+            term = `${coeff}x${superscriptExponent}`;
           } else {
-            term = coeff > 0 ? ` + ${coeff}x^${exponent}` : ` - ${Math.abs(coeff)}x^${exponent}`;
+            term = coeff > 0 ? ` + ${coeff}x${superscriptExponent}` : ` - ${Math.abs(coeff)}x${superscriptExponent}`;
           }
         }
       }
@@ -301,6 +302,15 @@ export class PolynomialEquation extends Equation {
   // Helper method to get max degree shown in editor (always show up to current degree, min 0)
   getMaxDisplayDegree(): number {
     return Math.max(0, this.getDegree());
+  }
+
+  // Convert number to Unicode superscript characters
+  private toSuperscript(num: number): string {
+    const superscriptMap: { [key: string]: string } = {
+      '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴',
+      '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹'
+    };
+    return num.toString().split('').map(digit => superscriptMap[digit] || digit).join('');
   }
 }
 

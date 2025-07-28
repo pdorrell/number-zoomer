@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { PolynomialEquation } from '../types/Equation';
 
@@ -7,11 +7,36 @@ interface PolynomialEditorProps {
 }
 
 export const PolynomialEditor: React.FC<PolynomialEditorProps> = observer(({ equation }) => {
+  const [editingCoefficient, setEditingCoefficient] = useState<number | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
   const maxDisplayDegree = equation.getMaxDisplayDegree();
-  const canAddDegree = maxDisplayDegree < 5;
+  const effectiveMaxDegree = editingCoefficient !== null ? Math.max(maxDisplayDegree, editingCoefficient) : maxDisplayDegree;
+  const canAddDegree = effectiveMaxDegree < 5;
 
   const handleCoefficientChange = (degree: number, value: number) => {
     equation.setCoefficient(degree, value);
+    
+    // Track editing state to maintain degree visibility while sliding
+    if (value === 0 && degree > 0) {
+      setEditingCoefficient(degree);
+      
+      // Clear editing state after a short delay
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => {
+        setEditingCoefficient(null);
+      }, 1000); // Keep visible for 1 second after setting to 0
+    } else {
+      // If moving away from 0, clear editing state immediately
+      if (editingCoefficient === degree) {
+        setEditingCoefficient(null);
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+        }
+      }
+    }
   };
 
   const handleRemoveCoefficient = (degree: number) => {
@@ -25,7 +50,11 @@ export const PolynomialEditor: React.FC<PolynomialEditorProps> = observer(({ equ
   const formatDegreeLabel = (degree: number): string => {
     if (degree === 0) return 'Constant';
     if (degree === 1) return 'x';
-    return `x^${degree}`;
+    // Use Unicode superscript characters
+    const superscriptMap: { [key: string]: string } = {
+      '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵'
+    };
+    return `x${superscriptMap[degree.toString()] || degree}`;
   };
 
   const isOnlyNonZeroTerm = (degree: number): boolean => {
@@ -45,18 +74,23 @@ export const PolynomialEditor: React.FC<PolynomialEditorProps> = observer(({ equ
   const renderCoefficientRows = () => {
     const rows = [];
     
-    // Always show at least degree 0 through current max degree
+    // Always show degree 0 through effective max degree, with all 6 rows for layout stability
     const minDegree = 0;
-    const displayUpTo = Math.max(maxDisplayDegree, 0);
+    const displayUpTo = effectiveMaxDegree;
     
-    for (let degree = minDegree; degree <= displayUpTo; degree++) {
+    // Render all 6 coefficient rows (0-5) with visibility control
+    for (let degree = 0; degree <= 5; degree++) {
       const coefficient = equation.getCoefficient(degree);
       const isZero = coefficient === 0;
+      const shouldShow = degree <= displayUpTo;
       const showRemoveButton = !isZero && !isOnlyNonZeroTerm(degree);
-      const isGreyedOut = isZero && !(degree === 0 && maxDisplayDegree === 0); // Don't grey out constant term if it's the only term
+      const isGreyedOut = isZero && !(degree === 0 && effectiveMaxDegree === 0); // Don't grey out constant term if it's the only term
       
       rows.push(
-        <div key={degree} className="coefficient-row">
+        <div 
+          key={degree} 
+          className={`coefficient-row ${!shouldShow ? 'coefficient-row-hidden' : ''}`}
+        >
           <div className="coefficient-label">
             {formatDegreeLabel(degree)}:
           </div>
@@ -71,44 +105,25 @@ export const PolynomialEditor: React.FC<PolynomialEditorProps> = observer(({ equ
               value={coefficient}
               onChange={(e) => handleCoefficientChange(degree, parseInt(e.target.value, 10))}
               className="coefficient-slider"
+              disabled={!shouldShow}
             />
-            {showRemoveButton && (
-              <button
-                onClick={() => handleRemoveCoefficient(degree)}
-                className="remove-coefficient-button"
-                title={`Remove ${formatDegreeLabel(degree)} term`}
-              >
-                ✕
-              </button>
-            )}
+            <div className="remove-button-placeholder">
+              {showRemoveButton && shouldShow ? (
+                <button
+                  onClick={() => handleRemoveCoefficient(degree)}
+                  className="remove-coefficient-button"
+                  title={`Remove ${formatDegreeLabel(degree)} term`}
+                >
+                  ✕
+                </button>
+              ) : null}
+            </div>
           </div>
         </div>
       );
     }
     
-    // Add empty rows for higher degrees up to 5 to prevent layout jumps
-    for (let degree = displayUpTo + 1; degree <= 5; degree++) {
-      rows.push(
-        <div key={degree} className="coefficient-row coefficient-row-hidden">
-          <div className="coefficient-label">
-            {formatDegreeLabel(degree)}:
-          </div>
-          <div className="coefficient-value">
-            0
-          </div>
-          <div className="coefficient-controls">
-            <input
-              type="range"
-              min="-20"
-              max="20"
-              value={0}
-              disabled
-              className="coefficient-slider"
-            />
-          </div>
-        </div>
-      );
-    }
+    // All rows are now rendered above with visibility control
     
     return rows;
   };
@@ -126,7 +141,7 @@ export const PolynomialEditor: React.FC<PolynomialEditorProps> = observer(({ equ
             className="add-degree-button"
             title="Add next degree term"
           >
-            + Add {formatDegreeLabel(maxDisplayDegree + 1)} term
+            + Add {formatDegreeLabel(effectiveMaxDegree + 1)} term
           </button>
         </div>
       )}
