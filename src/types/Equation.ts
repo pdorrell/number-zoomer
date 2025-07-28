@@ -13,7 +13,7 @@ export class PolynomialEquation {
 
   constructor(coefficients: number[] = [0]) {
     this.coefficients = [...coefficients];
-    
+
     makeObservable(this, {
       coefficients: observable,
       setCoefficient: action,
@@ -26,7 +26,7 @@ export class PolynomialEquation {
   evaluate(x: PreciseDecimal): PreciseDecimal {
     let result = new PreciseDecimal(0);
     let xPower = new PreciseDecimal(1); // x^0 = 1
-    
+
     for (let i = 0; i < this.coefficients.length; i++) {
       if (this.coefficients[i] !== 0) {
         const term = xPower.mul(new PreciseDecimal(this.coefficients[i]));
@@ -36,7 +36,7 @@ export class PolynomialEquation {
         xPower = xPower.mul(x); // Prepare x^(i+1) for next iteration
       }
     }
-    
+
     return result;
   }
 
@@ -56,21 +56,21 @@ export class PolynomialEquation {
 
   getDisplayName(): string {
     const degree = this.getDegree();
-    
+
     // Special case: polynomial is just "0"
     if (degree === 0 && this.coefficients[0] === 0) {
       return 'y = 0';
     }
 
     const terms: string[] = [];
-    
+
     for (let i = degree; i >= 0; i--) {
       const coeff = this.coefficients[i] || 0;
       if (coeff === 0) continue;
-      
+
       let term = '';
       const isFirst = terms.length === 0;
-      
+
       // Handle coefficient
       if (i === 0) {
         // Constant term
@@ -108,10 +108,10 @@ export class PolynomialEquation {
           }
         }
       }
-      
+
       terms.push(term);
     }
-    
+
     return `y = ${terms.join('')}`;
   }
 
@@ -120,12 +120,12 @@ export class PolynomialEquation {
     if (degree <= 1) {
       return false; // Linear or constant, draw as line
     }
-    
+
     // For higher degrees, use similar logic to quadratic
     const xRange = worldWindow.topRight[0].sub(worldWindow.bottomLeft[0]);
     const rangeSize = xRange.abs();
     const threshold = new PreciseDecimal(0.01);
-    
+
     return rangeSize.gte(threshold);
   }
 
@@ -134,7 +134,7 @@ export class PolynomialEquation {
     const points: Point[] = [];
     const xMin = worldWindow.bottomLeft[0];
     const xMax = worldWindow.topRight[0];
-    
+
     if (degree <= 1) {
       // Linear or constant, only need two points
       return [
@@ -142,18 +142,18 @@ export class PolynomialEquation {
         [xMax, this.evaluate(xMax)]
       ];
     }
-    
+
     // Higher degree polynomials need more points for smooth curves
     const xRange = xMax.sub(xMin);
-    const numPoints = Math.min(screenWidth, 200);
-    
+    const numPoints = 4 * Math.min(screenWidth, 200);
+
     for (let i = 0; i <= numPoints; i++) {
       const ratio = i / numPoints;
       const x = xMin.add(xRange.mul(new PreciseDecimal(ratio)));
       const y = this.evaluate(x);
       points.push([x, y]);
     }
-    
+
     return points;
   }
 
@@ -165,7 +165,7 @@ export class PolynomialEquation {
       this.coefficients.push(0);
     }
     this.coefficients[degree] = value;
-    
+
     // Clean up trailing zeros
     this.trimTrailingZeros();
     console.log(`[PolynomialEquation] Coefficients after change:`, this.coefficients);
