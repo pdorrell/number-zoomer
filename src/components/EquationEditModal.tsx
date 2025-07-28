@@ -38,6 +38,20 @@ export const EquationEditModal: React.FC<EquationEditModalProps> = observer(({
     }
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (headerRef.current && headerRef.current.contains(e.target as Node)) {
+      setIsDragging(true);
+      const rect = modalRef.current?.getBoundingClientRect();
+      if (rect && e.touches.length > 0) {
+        setDragOffset({
+          x: e.touches[0].clientX - rect.left,
+          y: e.touches[0].clientY - rect.top
+        });
+      }
+      e.preventDefault();
+    }
+  };
+
   const handleMouseMove = (e: MouseEvent) => {
     if (isDragging) {
       setPosition({
@@ -47,7 +61,21 @@ export const EquationEditModal: React.FC<EquationEditModalProps> = observer(({
     }
   };
 
+  const handleTouchMove = (e: TouchEvent) => {
+    if (isDragging && e.touches.length > 0) {
+      setPosition({
+        x: e.touches[0].clientX - dragOffset.x,
+        y: e.touches[0].clientY - dragOffset.y
+      });
+      e.preventDefault(); // Prevent scrolling
+    }
+  };
+
   const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleTouchEnd = () => {
     setIsDragging(false);
   };
 
@@ -55,9 +83,13 @@ export const EquationEditModal: React.FC<EquationEditModalProps> = observer(({
     if (isDragging) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', handleTouchEnd);
       return () => {
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
+        document.removeEventListener('touchmove', handleTouchMove);
+        document.removeEventListener('touchend', handleTouchEnd);
       };
     }
   }, [isDragging, dragOffset]);
@@ -90,7 +122,8 @@ export const EquationEditModal: React.FC<EquationEditModalProps> = observer(({
           ref={headerRef}
           className="modal-header"
           onMouseDown={handleMouseDown}
-          style={{ cursor: 'grab' }}
+          onTouchStart={handleTouchStart}
+          style={{ cursor: 'grab', touchAction: 'none' }}
         >
           <h3>Edit Equation: {equation.getDisplayName()}</h3>
         </div>

@@ -410,8 +410,8 @@ body {
   
   .coefficient-row {
     display: grid;
-    grid-template-columns: 80px 60px 1fr;
-    gap: 1rem;
+    grid-template-columns: 2em 3em 1fr;
+    gap: 0.5rem;
     align-items: center;
     padding: 0.5rem 0;
     opacity: 1;
