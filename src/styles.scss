@@ -458,6 +458,46 @@ body {
     flex-shrink: 0;
   }
   
+  .coefficient-slider-placeholder {
+    flex: 1;
+    height: 6px;
+    background: transparent;
+  }
+  
+  .coefficient-row-add {
+    // Special styling for rows containing the + button
+    .coefficient-value {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+  
+  .add-degree-button-inline {
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s, transform 0.1s;
+    
+    &:hover {
+      background: #218838;
+      transform: scale(1.05);
+    }
+    
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+  
   .coefficient-slider {
     flex: 1;
     height: 6px;
@@ -531,30 +571,5 @@ body {
     }
   }
   
-  .add-degree-section {
-    border-top: 1px solid #dee2e6;
-    padding-top: 1rem;
-    display: flex;
-    justify-content: center;
-  }
-  
-  .add-degree-button {
-    background: #28a745;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 0.5rem 1rem;
-    font-size: 0.9rem;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    
-    &:hover {
-      background: #218838;
-    }
-    
-    &:active {
-      transform: translateY(1px);
-    }
-  }
 }
 

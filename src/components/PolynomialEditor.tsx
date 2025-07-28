@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { PolynomialEquation } from '../types/Equation';
 
@@ -16,28 +16,49 @@ export const PolynomialEditor: React.FC<PolynomialEditorProps> = observer(({ equ
 
   const handleCoefficientChange = (degree: number, value: number) => {
     equation.setCoefficient(degree, value);
+  };
+
+  const handleSliderMouseDown = (degree: number) => {
+    // Set editing state when user starts dragging
+    setEditingCoefficient(degree);
     
-    // Track editing state to maintain degree visibility while sliding
-    if (value === 0 && degree > 0) {
-      setEditingCoefficient(degree);
-      
-      // Clear editing state after a short delay
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      timeoutRef.current = setTimeout(() => {
-        setEditingCoefficient(null);
-      }, 1000); // Keep visible for 1 second after setting to 0
-    } else {
-      // If moving away from 0, clear editing state immediately
-      if (editingCoefficient === degree) {
-        setEditingCoefficient(null);
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-        }
-      }
+    // Clear any existing timeout
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
     }
   };
+
+  const handleSliderMouseUp = (degree: number) => {
+    // Clear editing state when user releases slider
+    if (editingCoefficient === degree) {
+      setEditingCoefficient(null);
+    }
+  };
+
+  // Handle global mouse up to catch drags that end outside the slider
+  useEffect(() => {
+    const handleGlobalMouseUp = () => {
+      if (editingCoefficient !== null) {
+        setEditingCoefficient(null);
+      }
+    };
+
+    const handleGlobalTouchEnd = () => {
+      if (editingCoefficient !== null) {
+        setEditingCoefficient(null);
+      }
+    };
+
+    if (editingCoefficient !== null) {
+      document.addEventListener('mouseup', handleGlobalMouseUp);
+      document.addEventListener('touchend', handleGlobalTouchEnd);
+      
+      return () => {
+        document.removeEventListener('mouseup', handleGlobalMouseUp);
+        document.removeEventListener('touchend', handleGlobalTouchEnd);
+      };
+    }
+  }, [editingCoefficient]);
 
   const handleRemoveCoefficient = (degree: number) => {
     equation.removeDegree(degree);
@@ -57,17 +78,10 @@ export const PolynomialEditor: React.FC<PolynomialEditorProps> = observer(({ equ
     return `x${superscriptMap[degree.toString()] || degree}`;
   };
 
-  const isOnlyNonZeroTerm = (degree: number): boolean => {
+  const shouldShowRemoveButton = (degree: number): boolean => {
+    // Simple rule: show remove button for any non-zero coefficient
     const currentCoeff = equation.getCoefficient(degree);
-    if (currentCoeff === 0) return false;
-    
-    // Check if this is the only non-zero coefficient
-    for (let i = 0; i <= Math.max(5, equation.coefficients.length - 1); i++) {
-      if (i !== degree && equation.getCoefficient(i) !== 0) {
-        return false;
-      }
-    }
-    return true;
+    return currentCoeff !== 0;
   };
 
   // Create rows for degrees 0 through max(current degree, 0), plus empty rows up to degree 5
@@ -78,49 +92,109 @@ export const PolynomialEditor: React.FC<PolynomialEditorProps> = observer(({ equ
     const minDegree = 0;
     const displayUpTo = effectiveMaxDegree;
     
-    // Render all 6 coefficient rows (0-5) with visibility control
+    // Render all 6 coefficient rows (0-5) with visibility control and inline + button
     for (let degree = 0; degree <= 5; degree++) {
       const coefficient = equation.getCoefficient(degree);
       const isZero = coefficient === 0;
       const shouldShow = degree <= displayUpTo;
-      const showRemoveButton = !isZero && !isOnlyNonZeroTerm(degree);
-      const isGreyedOut = isZero && !(degree === 0 && effectiveMaxDegree === 0); // Don't grey out constant term if it's the only term
+      const showRemoveButton = shouldShowRemoveButton(degree);
+      const isGreyedOut = isZero && !(degree === 0 && effectiveMaxDegree === 0);
       
-      rows.push(
-        <div 
-          key={degree} 
-          className={`coefficient-row ${!shouldShow ? 'coefficient-row-hidden' : ''}`}
-        >
-          <div className="coefficient-label">
-            {formatDegreeLabel(degree)}:
-          </div>
-          <div className="coefficient-value" style={{ color: isGreyedOut ? '#ccc' : 'inherit' }}>
-            {coefficient}
-          </div>
-          <div className="coefficient-controls">
-            <input
-              type="range"
-              min="-20"
-              max="20"
-              value={coefficient}
-              onChange={(e) => handleCoefficientChange(degree, parseInt(e.target.value, 10))}
-              className="coefficient-slider"
-              disabled={!shouldShow}
-            />
-            <div className="remove-button-placeholder">
-              {showRemoveButton && shouldShow ? (
-                <button
-                  onClick={() => handleRemoveCoefficient(degree)}
-                  className="remove-coefficient-button"
-                  title={`Remove ${formatDegreeLabel(degree)} term`}
-                >
-                  ✕
-                </button>
-              ) : null}
+      // Show + button if this degree is the next one to add (degree = displayUpTo + 1) and we can add it
+      const shouldShowAddButton = degree === displayUpTo + 1 && canAddDegree;
+      
+      if (shouldShow) {
+        // Regular coefficient row
+        rows.push(
+          <div 
+            key={degree} 
+            className="coefficient-row"
+          >
+            <div className="coefficient-label">
+              {formatDegreeLabel(degree)}:
+            </div>
+            <div className="coefficient-value" style={{ color: isGreyedOut ? '#ccc' : 'inherit' }}>
+              {coefficient}
+            </div>
+            <div className="coefficient-controls">
+              <input
+                type="range"
+                min="-20"
+                max="20"
+                value={coefficient}
+                onChange={(e) => handleCoefficientChange(degree, parseInt(e.target.value, 10))}
+                onMouseDown={() => handleSliderMouseDown(degree)}
+                onMouseUp={() => handleSliderMouseUp(degree)}
+                onTouchStart={() => handleSliderMouseDown(degree)}
+                onTouchEnd={() => handleSliderMouseUp(degree)}
+                className="coefficient-slider"
+              />
+              <div className="remove-button-placeholder">
+                {showRemoveButton ? (
+                  <button
+                    onClick={() => handleRemoveCoefficient(degree)}
+                    className="remove-coefficient-button"
+                    title={`Remove ${formatDegreeLabel(degree)} term`}
+                  >
+                    ✕
+                  </button>
+                ) : null}
+              </div>
             </div>
           </div>
-        </div>
-      );
+        );
+      } else if (shouldShowAddButton) {
+        // + button row (positioned exactly where the new coefficient row will appear)
+        rows.push(
+          <div 
+            key={`add-${degree}`} 
+            className="coefficient-row coefficient-row-add"
+          >
+            <div className="coefficient-label">
+              {formatDegreeLabel(degree)}:
+            </div>
+            <div className="coefficient-value">
+              <button
+                onClick={handleAddDegree}
+                className="add-degree-button-inline"
+                title={`Add ${formatDegreeLabel(degree)} term to the polynomial`}
+              >
+                +
+              </button>
+            </div>
+            <div className="coefficient-controls">
+              <div className="coefficient-slider-placeholder"></div>
+              <div className="remove-button-placeholder"></div>
+            </div>
+          </div>
+        );
+      } else {
+        // Hidden placeholder row to maintain layout
+        rows.push(
+          <div 
+            key={degree} 
+            className="coefficient-row coefficient-row-hidden"
+          >
+            <div className="coefficient-label">
+              {formatDegreeLabel(degree)}:
+            </div>
+            <div className="coefficient-value">
+              {coefficient}
+            </div>
+            <div className="coefficient-controls">
+              <input
+                type="range"
+                min="-20"
+                max="20"
+                value={coefficient}
+                disabled
+                className="coefficient-slider"
+              />
+              <div className="remove-button-placeholder"></div>
+            </div>
+          </div>
+        );
+      }
     }
     
     // All rows are now rendered above with visibility control
@@ -133,18 +207,6 @@ export const PolynomialEditor: React.FC<PolynomialEditorProps> = observer(({ equ
       <div className="coefficient-rows">
         {renderCoefficientRows()}
       </div>
-      
-      {canAddDegree && (
-        <div className="add-degree-section">
-          <button
-            onClick={handleAddDegree}
-            className="add-degree-button"
-            title="Add next degree term"
-          >
-            + Add {formatDegreeLabel(effectiveMaxDegree + 1)} term
-          </button>
-        </div>
-      )}
     </div>
   );
 });
