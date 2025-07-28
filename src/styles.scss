@@ -480,13 +480,15 @@ body {
     border-radius: 50%;
     width: 32px;
     height: 32px;
-    font-size: 18px;
+    font-size: 20px;
     font-weight: bold;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: background-color 0.2s, transform 0.1s;
+    line-height: 1;
+    padding: 0;
     
     &:hover {
       background: #218838;

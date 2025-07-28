@@ -2,116 +2,16 @@ import { makeObservable, observable, action } from 'mobx';
 import { PreciseDecimal } from './Decimal';
 import { Point, WorldWindow } from './Coordinate';
 
-export type EquationType = 'quadratic' | 'linear' | 'polynomial';
-
 export interface EquationConfig {
-  type: EquationType;
-  c?: number; // For y = cx, defaults to 1
+  type: 'polynomial';
   coefficients?: number[]; // For polynomial, index 0 = constant term, index 1 = x term, etc.
 }
 
-export abstract class Equation {
-  abstract evaluate(x: PreciseDecimal): PreciseDecimal;
-  abstract getType(): EquationType;
-  abstract getDisplayName(): string;
-  abstract shouldDrawAsCurve(worldWindow: WorldWindow): boolean;
-  abstract generatePoints(worldWindow: WorldWindow, screenWidth: number): Point[];
-}
-
-export class QuadraticEquation extends Equation {
-  evaluate(x: PreciseDecimal): PreciseDecimal {
-    return x.pow(2);
-  }
-
-  getType(): EquationType {
-    return 'quadratic';
-  }
-
-  getDisplayName(): string {
-    return 'y = x²';
-  }
-
-  shouldDrawAsCurve(worldWindow: WorldWindow): boolean {
-    // At high zoom levels, y=x² appears linear within small intervals
-    const xRange = worldWindow.topRight[0].sub(worldWindow.bottomLeft[0]);
-    const rangeSize = xRange.abs();
-    const threshold = new PreciseDecimal(0.01);
-    
-    // If the x range is very small, draw as line (appears linear at high zoom)
-    return rangeSize.gte(threshold);
-  }
-
-  generatePoints(worldWindow: WorldWindow, screenWidth: number): Point[] {
-    const points: Point[] = [];
-    const xMin = worldWindow.bottomLeft[0];
-    const xMax = worldWindow.topRight[0];
-    const xRange = xMax.sub(xMin);
-    
-    // Generate points across the screen width
-    const numPoints = Math.min(screenWidth, 200); // Cap at 200 points for performance
-    
-    for (let i = 0; i <= numPoints; i++) {
-      const ratio = i / numPoints;
-      const x = xMin.add(xRange.mul(new PreciseDecimal(ratio)));
-      const y = this.evaluate(x);
-      points.push([x, y]);
-    }
-    
-    return points;
-  }
-}
-
-export class LinearEquation extends Equation {
-  constructor(private c: number = 1) {
-    super();
-  }
-
-  evaluate(x: PreciseDecimal): PreciseDecimal {
-    return x.mul(new PreciseDecimal(this.c));
-  }
-
-  getType(): EquationType {
-    return 'linear';
-  }
-
-  getDisplayName(): string {
-    if (this.c === 1) {
-      return 'y = x';
-    }
-    return `y = ${this.c}x`;
-  }
-
-  shouldDrawAsCurve(): boolean {
-    // Linear equations are always drawn as straight lines
-    return false;
-  }
-
-  generatePoints(worldWindow: WorldWindow): Point[] {
-    // For linear equations, we only need two points
-    const xMin = worldWindow.bottomLeft[0];
-    const xMax = worldWindow.topRight[0];
-    
-    return [
-      [xMin, this.evaluate(xMin)],
-      [xMax, this.evaluate(xMax)]
-    ];
-  }
-
-  getC(): number {
-    return this.c;
-  }
-
-  setC(c: number): LinearEquation {
-    return new LinearEquation(c);
-  }
-}
-
-export class PolynomialEquation extends Equation {
+export class PolynomialEquation {
   // Observable coefficients array - index 0 = constant, index 1 = x, index 2 = x², etc.
   coefficients: number[] = [0]; // Default to polynomial "0"
 
   constructor(coefficients: number[] = [0]) {
-    super();
     this.coefficients = [...coefficients];
     
     makeObservable(this, {
@@ -140,7 +40,7 @@ export class PolynomialEquation extends Equation {
     return result;
   }
 
-  getType(): EquationType {
+  getType(): 'polynomial' {
     return 'polynomial';
   }
 
@@ -259,6 +159,7 @@ export class PolynomialEquation extends Equation {
 
   // Observable actions for editing coefficients
   setCoefficient(degree: number, value: number): void {
+    console.log(`[PolynomialEquation] setCoefficient(${degree}, ${value}) called`);
     // Extend array if necessary
     while (this.coefficients.length <= degree) {
       this.coefficients.push(0);
@@ -267,6 +168,8 @@ export class PolynomialEquation extends Equation {
     
     // Clean up trailing zeros
     this.trimTrailingZeros();
+    console.log(`[PolynomialEquation] Coefficients after change:`, this.coefficients);
+    console.log(`[PolynomialEquation] Display name:`, this.getDisplayName());
   }
 
   addDegree(): void {
@@ -314,34 +217,6 @@ export class PolynomialEquation extends Equation {
   }
 }
 
-export function createEquation(config: EquationConfig): Equation {
-  switch (config.type) {
-    case 'quadratic':
-      return new QuadraticEquation();
-    case 'linear':
-      return new LinearEquation(config.c || 1);
-    case 'polynomial':
-      return new PolynomialEquation(config.coefficients || [0]);
-    default:
-      throw new Error(`Unknown equation type: ${config.type}`);
-  }
-}
-
-// Helper function to convert existing equations to polynomial
-export function convertToPolynomial(equation: Equation): PolynomialEquation {
-  if (equation instanceof PolynomialEquation) {
-    return equation;
-  }
-  
-  if (equation instanceof LinearEquation) {
-    const c = equation.getC();
-    return new PolynomialEquation([0, c]); // 0 + cx
-  }
-  
-  if (equation instanceof QuadraticEquation) {
-    return new PolynomialEquation([0, 0, 1]); // 0 + 0x + 1x²
-  }
-  
-  // Fallback
-  return new PolynomialEquation([0]);
+export function createEquation(config: EquationConfig): PolynomialEquation {
+  return new PolynomialEquation(config.coefficients || [0]);
 }

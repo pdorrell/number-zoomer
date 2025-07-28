@@ -8,9 +8,11 @@ import { GridRenderer } from './GridRenderer';
 
 interface CoordinatePlaneProps {
   store: AppStore;
+  isEditingEquation?: boolean;
 }
 
-export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store }) => {
+export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store, isEditingEquation = false }) => {
+  console.log(`[CoordinatePlane] Rendering with isEditingEquation: ${isEditingEquation}`);
   const containerRef = useRef<HTMLDivElement>(null);
   const outerContainerRef = useRef<HTMLDivElement>(null);
   const [isDraggingPoint, setIsDraggingPoint] = useState(false);
@@ -545,10 +547,28 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
           borderRadius: '4px'
         }}
       >
-        {/* Canvas for grid lines, coordinates, and equation */}
-        <CanvasRenderer 
-          store={store}
-        />
+        {/* Canvas system - dual canvas when editing, single when normal */}
+        {isEditingEquation ? (
+          <>
+            {/* Grid canvas - static background */}
+            <CanvasRenderer 
+              store={store}
+              renderMode="grid"
+            />
+            {/* Equation canvas - dynamic foreground with red equation */}
+            <CanvasRenderer 
+              store={store}
+              renderMode="equation"
+              equationColor="#dc3545"
+            />
+          </>
+        ) : (
+          /* Normal mode - single canvas with everything */
+          <CanvasRenderer 
+            store={store}
+            renderMode="combined"
+          />
+        )}
         
         {/* Clipped SVG overlay for current point circle */}
         <svg 

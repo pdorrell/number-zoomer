@@ -1,43 +1,28 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
-import { Equation, EquationType, PolynomialEquation, convertToPolynomial } from '../types/Equation';
+import { PolynomialEquation } from '../types/Equation';
 import { PolynomialEditor } from './PolynomialEditor';
 
 interface EquationEditModalProps {
   isOpen: boolean;
-  equation: Equation;
+  equation: PolynomialEquation;
   onSave: () => void;
   onCancel: () => void;
-  onEquationChange: (equation: Equation) => void;
 }
 
 export const EquationEditModal: React.FC<EquationEditModalProps> = observer(({
   isOpen,
   equation,
   onSave,
-  onCancel,
-  onEquationChange
+  onCancel
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [position, setPosition] = useState({ x: 100, y: 100 });
-  const [polynomialEquation, setPolynomialEquation] = useState<PolynomialEquation>(() => 
-    convertToPolynomial(equation)
-  );
   const modalRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
 
-  // Convert to polynomial equation when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      const poly = convertToPolynomial(equation);
-      setPolynomialEquation(poly);
-      // Immediately update the parent equation to polynomial
-      onEquationChange(poly);
-    }
-  }, [isOpen, equation, onEquationChange]);
-
-  // No longer need legacy equation type handlers - polynomial editor handles everything
+  // No conversion needed - equation is already PolynomialEquation and editing happens in-place
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (headerRef.current && headerRef.current.contains(e.target as Node)) {
@@ -107,11 +92,11 @@ export const EquationEditModal: React.FC<EquationEditModalProps> = observer(({
           onMouseDown={handleMouseDown}
           style={{ cursor: 'grab' }}
         >
-          <h3>Edit Equation: {polynomialEquation.getDisplayName()}</h3>
+          <h3>Edit Equation: {equation.getDisplayName()}</h3>
         </div>
         
         <div className="modal-content">
-          <PolynomialEditor equation={polynomialEquation} />
+          <PolynomialEditor equation={equation} />
         </div>
         
         <div className="modal-actions">

@@ -5,9 +5,11 @@ import { GridRenderer } from './GridRenderer';
 
 interface CanvasRendererProps {
   store: AppStore;
+  renderMode?: 'combined' | 'grid' | 'equation';
+  equationColor?: string;
 }
 
-export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store }) => {
+export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store, renderMode = 'combined', equationColor = '#dc3545' }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
   // Memoize grid renderer to prevent recreation on every render
@@ -16,7 +18,9 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store }
   }, [store.mapping]);
   
   // Memoize grid lines and equation points calculation
+  // The key is to make sure we access store.equation.coefficients here so MobX tracks it
   const { horizontalLines, verticalLines, screenPoints } = useMemo(() => {
+    console.log(`[CanvasRenderer] Recalculating points, coefficients:`, store.equation.coefficients);
     const maxPrecision = gridRenderer.calculateMaxPrecision();
     const horizontalLines = gridRenderer.calculateHorizontalGridLines(maxPrecision);
     const verticalLines = gridRenderer.calculateVerticalGridLines(maxPrecision);
@@ -26,9 +30,10 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store }
     const screenPoints = equationPoints.map(point => store.mapping.worldToScreen(point));
     
     return { horizontalLines, verticalLines, screenPoints };
-  }, [gridRenderer, store.equation, store.worldWindow, store.mapping, store.screenViewport.width, store.extension]);
+  }, [gridRenderer, store.equation, store.equation.coefficients, store.worldWindow, store.mapping, store.screenViewport.width, store.extension]);
   
   const drawCanvas = useCallback(() => {
+    console.log(`[CanvasRenderer] drawCanvas called with renderMode: ${renderMode}, coefficients:`, store.equation.coefficients);
     const canvas = canvasRef.current;
     if (!canvas) return;
     
@@ -38,49 +43,54 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store }
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Set canvas background
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Set canvas background (only for grid or combined mode)
+    if (renderMode === 'grid' || renderMode === 'combined') {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
     
-    // Draw grid lines in interleaved thickness order (thickest last)
-    // This ensures thicker lines are drawn over thinner lines in the other direction
-    const maxThicknessLevels = Math.max(horizontalLines.length, verticalLines.length);
-    
-    for (let thicknessLevel = 0; thicknessLevel < maxThicknessLevels; thicknessLevel++) {
-      // Draw horizontal lines of this thickness level
-      if (horizontalLines[thicknessLevel]) {
-        horizontalLines[thicknessLevel].forEach(line => {
-          // Adjust screen coordinates for canvas offset
-          const screenY = line.screenPosition + store.screenViewport.height * store.extension;
-          
-          ctx.strokeStyle = line.color;
-          ctx.lineWidth = line.thickness;
-          ctx.beginPath();
-          ctx.moveTo(0, screenY);
-          ctx.lineTo(canvas.width, screenY);
-          ctx.stroke();
-        });
-      }
+    // Draw grid lines (only for grid or combined mode)
+    if (renderMode === 'grid' || renderMode === 'combined') {
+      // Draw grid lines in interleaved thickness order (thickest last)
+      // This ensures thicker lines are drawn over thinner lines in the other direction
+      const maxThicknessLevels = Math.max(horizontalLines.length, verticalLines.length);
       
-      // Draw vertical lines of this thickness level
-      if (verticalLines[thicknessLevel]) {
-        verticalLines[thicknessLevel].forEach(line => {
-          // Adjust screen coordinates for canvas offset
-          const screenX = line.screenPosition + store.screenViewport.width * store.extension;
-          
-          ctx.strokeStyle = line.color;
-          ctx.lineWidth = line.thickness;
-          ctx.beginPath();
-          ctx.moveTo(screenX, 0);
-          ctx.lineTo(screenX, canvas.height);
-          ctx.stroke();
-        });
+      for (let thicknessLevel = 0; thicknessLevel < maxThicknessLevels; thicknessLevel++) {
+        // Draw horizontal lines of this thickness level
+        if (horizontalLines[thicknessLevel]) {
+          horizontalLines[thicknessLevel].forEach(line => {
+            // Adjust screen coordinates for canvas offset
+            const screenY = line.screenPosition + store.screenViewport.height * store.extension;
+            
+            ctx.strokeStyle = line.color;
+            ctx.lineWidth = line.thickness;
+            ctx.beginPath();
+            ctx.moveTo(0, screenY);
+            ctx.lineTo(canvas.width, screenY);
+            ctx.stroke();
+          });
+        }
+        
+        // Draw vertical lines of this thickness level
+        if (verticalLines[thicknessLevel]) {
+          verticalLines[thicknessLevel].forEach(line => {
+            // Adjust screen coordinates for canvas offset
+            const screenX = line.screenPosition + store.screenViewport.width * store.extension;
+            
+            ctx.strokeStyle = line.color;
+            ctx.lineWidth = line.thickness;
+            ctx.beginPath();
+            ctx.moveTo(screenX, 0);
+            ctx.lineTo(screenX, canvas.height);
+            ctx.stroke();
+          });
+        }
       }
     }
     
-    // Draw equation graph
-    if (screenPoints.length > 0) {
-      ctx.strokeStyle = "#dc3545";
+    // Draw equation graph (only for equation or combined mode)
+    if ((renderMode === 'equation' || renderMode === 'combined') && screenPoints.length > 0) {
+      ctx.strokeStyle = equationColor;
       ctx.lineWidth = 2;
       ctx.beginPath();
       
@@ -105,7 +115,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store }
       }
       ctx.stroke();
     }
-  }, [store.mapping, store.equation, store.worldWindow, horizontalLines, verticalLines, screenPoints]);
+  }, [renderMode, equationColor, horizontalLines, verticalLines, screenPoints, store.screenViewport, store.extension]);
   
   // Redraw canvas when dependencies change
   useEffect(() => {
@@ -127,22 +137,23 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store }
     drawCanvas();
   }, [store.screenViewport.width, store.screenViewport.height, store.extension, drawCanvas]);
   
-  const extendedWidth = store.screenViewport.width * (1 + 2 * store.extension);
-  const extendedHeight = store.screenViewport.height * (1 + 2 * store.extension);
+  const canvasExtendedWidth = store.screenViewport.width * (1 + 2 * store.extension);
+  const canvasExtendedHeight = store.screenViewport.height * (1 + 2 * store.extension);
   const offsetX = -store.screenViewport.width * store.extension;
   const offsetY = -store.screenViewport.height * store.extension;
 
   return (
     <canvas
       ref={canvasRef}
-      width={extendedWidth}
-      height={extendedHeight}
+      width={canvasExtendedWidth}
+      height={canvasExtendedHeight}
       style={{
         position: 'absolute',
         top: offsetY,
         left: offsetX,
         transform: store.transformState.gridTransform,
-        transformOrigin: `${store.screenViewport.width * store.extension}px ${store.screenViewport.height * store.extension}px`
+        transformOrigin: `${store.screenViewport.width * store.extension}px ${store.screenViewport.height * store.extension}px`,
+        ...(renderMode === 'equation' && { pointerEvents: 'none' }) // Equation canvas shouldn't intercept interactions
       }}
     />
   );

@@ -5,20 +5,21 @@ import { CoordinatePlane } from './components/CoordinatePlane';
 import { ZoomSlider } from './components/ZoomSlider';
 import { DebugInfo } from './components/DebugInfo';
 import { EquationEditModal } from './components/EquationEditModal';
-import { Equation, EquationType } from './types/Equation';
+import { PolynomialEquation } from './types/Equation';
 
 export const App: React.FC = observer(() => {
   const [store] = useState(() => new AppStore());
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [previousEquation, setPreviousEquation] = useState<Equation | null>(null);
-
-  const handleSetEquation = (equation: Equation) => {
-    store.equation = equation;
-  };
+  const [previousEquation, setPreviousEquation] = useState<PolynomialEquation | null>(null);
 
   const handleOpenEditModal = () => {
-    setPreviousEquation(store.equation);
+    console.log('[App] Opening edit modal');
+    console.log('[App] Current equation coefficients:', store.equation.coefficients);
+    // Create a deep copy of the equation for potential cancellation
+    const backup = new PolynomialEquation([...store.equation.coefficients]);
+    setPreviousEquation(backup);
     setIsEditModalOpen(true);
+    console.log('[App] Edit modal opened, isEditingEquation will be:', true);
   };
 
   const handleSaveEquation = () => {
@@ -28,7 +29,8 @@ export const App: React.FC = observer(() => {
 
   const handleCancelEquation = () => {
     if (previousEquation) {
-      store.equation = previousEquation;
+      // Restore coefficients from backup
+      store.equation.setCoefficients(previousEquation.coefficients);
     }
     setIsEditModalOpen(false);
     setPreviousEquation(null);
@@ -75,7 +77,7 @@ export const App: React.FC = observer(() => {
         
         {/* 3. Coordinate plane (flexible) */}
         <div className="coordinate-plane-area">
-          <CoordinatePlane store={store} />
+          <CoordinatePlane store={store} isEditingEquation={isEditModalOpen} />
         </div>
         
         {/* 4. Zoom slider */}
@@ -92,10 +94,9 @@ export const App: React.FC = observer(() => {
       {/* Equation Edit Modal */}
       <EquationEditModal
         isOpen={isEditModalOpen}
-        equation={store.equation}
+        equation={store.equation as PolynomialEquation}
         onSave={handleSaveEquation}
         onCancel={handleCancelEquation}
-        onEquationChange={handleSetEquation}
       />
     </div>
   );

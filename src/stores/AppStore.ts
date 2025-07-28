@@ -1,7 +1,7 @@
 import { makeAutoObservable } from 'mobx';
 import { PreciseDecimal } from '../types/Decimal';
 import { Point, WorldWindow, ScreenViewport, CoordinateMapping } from '../types/Coordinate';
-import { Equation, PolynomialEquation, createEquation } from '../types/Equation';
+import { PolynomialEquation, createEquation } from '../types/Equation';
 import { ZoomableInterface, ZoomSource } from '../interfaces/ZoomableInterface';
 import { ScaledFloat } from '../types/ScaledFloat';
 
@@ -17,7 +17,7 @@ export class AppStore implements ZoomableInterface {
   worldWindow: WorldWindow;
   currentPoint: Point;
   mapping: CoordinateMapping;
-  equation: Equation;
+  equation: PolynomialEquation;
   transformState: TransformState;
   version: string;
 
