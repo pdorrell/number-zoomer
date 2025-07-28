@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { AppStore } from '../stores/AppStore';
 import { ScreenVector } from '../types/CanvasTypes';
+import { CanvasContext } from './CanvasContext';
 
 interface CanvasRendererProps {
   store: AppStore;
@@ -14,8 +15,8 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store, 
   
   
   // Use computed properties for grid lines and equation points
-  const { horizontalLines, verticalLines } = store.gridRenderer.canvasGridLines;
-  const { screenPoints } = store.canvasEquationGraph;
+  const gridLines = store.gridRenderer.canvasGridLines;
+  const equationGraph = store.canvasEquationGraph;
   
   // Define extension offset vector
   const extensionOffset = new ScreenVector(
@@ -31,79 +32,22 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store, 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     
+    const canvasContext = new CanvasContext(canvas, ctx, extensionOffset);
+    
     // Clear canvas
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    canvasContext.clear();
     
-    // Set canvas background (only for grid or combined mode)
+    // Draw background and grid lines (only for grid or combined mode)
     if (renderMode === 'grid' || renderMode === 'combined') {
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    }
-    
-    // Draw grid lines (only for grid or combined mode)
-    if (renderMode === 'grid' || renderMode === 'combined') {
-      // Draw grid lines in interleaved thickness order (thickest last)
-      // This ensures thicker lines are drawn over thinner lines in the other direction
-      const maxThicknessLevels = Math.max(horizontalLines.length, verticalLines.length);
-      
-      for (let thicknessLevel = 0; thicknessLevel < maxThicknessLevels; thicknessLevel++) {
-        // Draw horizontal lines of this thickness level
-        if (horizontalLines[thicknessLevel]) {
-          horizontalLines[thicknessLevel].forEach(line => {
-            // Adjust screen coordinates for canvas offset
-            const screenY = line.screenPosition + extensionOffset.y;
-            
-            ctx.strokeStyle = line.color;
-            ctx.lineWidth = line.thickness;
-            ctx.beginPath();
-            ctx.moveTo(0, screenY);
-            ctx.lineTo(canvas.width, screenY);
-            ctx.stroke();
-          });
-        }
-        
-        // Draw vertical lines of this thickness level
-        if (verticalLines[thicknessLevel]) {
-          verticalLines[thicknessLevel].forEach(line => {
-            // Adjust screen coordinates for canvas offset
-            const screenX = line.screenPosition + extensionOffset.x;
-            
-            ctx.strokeStyle = line.color;
-            ctx.lineWidth = line.thickness;
-            ctx.beginPath();
-            ctx.moveTo(screenX, 0);
-            ctx.lineTo(screenX, canvas.height);
-            ctx.stroke();
-          });
-        }
-      }
+      canvasContext.drawBackground();
+      canvasContext.drawGridLines(gridLines);
     }
     
     // Draw equation graph (only for equation or combined mode)
-    if ((renderMode === 'equation' || renderMode === 'combined') && screenPoints.length > 0) {
-      ctx.strokeStyle = equationColor;
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      
-      // Adjust first point for canvas offset
-      const adjustedFirst = screenPoints[0].add(extensionOffset);
-      ctx.moveTo(adjustedFirst.x, adjustedFirst.y);
-      
-      if (store.equation.shouldDrawAsCurve(store.worldWindow) && screenPoints.length > 2) {
-        // Draw as smooth curve for quadratic equations at low zoom
-        for (let i = 1; i < screenPoints.length; i++) {
-          const adjusted = screenPoints[i].add(extensionOffset);
-          ctx.lineTo(adjusted.x, adjusted.y);
-        }
-      } else {
-        // Draw as straight line for linear equations or high zoom quadratic
-        const lastPoint = screenPoints[screenPoints.length - 1];
-        const adjustedLast = lastPoint.add(extensionOffset);
-        ctx.lineTo(adjustedLast.x, adjustedLast.y);
-      }
-      ctx.stroke();
+    if (renderMode === 'equation' || renderMode === 'combined') {
+      canvasContext.drawEquationGraph(equationGraph, equationColor);
     }
-  }, [renderMode, equationColor, horizontalLines, verticalLines, screenPoints, extensionOffset]);
+  }, [renderMode, equationColor, gridLines, equationGraph, extensionOffset]);
   
   // Redraw canvas when dependencies change
   useEffect(() => {

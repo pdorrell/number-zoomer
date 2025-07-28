@@ -37,8 +37,10 @@ export class CanvasGridLines {
 
 export class CanvasEquationGraph {
   screenPoints: ScreenPoint[];
+  shouldDrawAsCurve: boolean;
 
-  constructor(screenPoints: ScreenPoint[]) {
+  constructor(screenPoints: ScreenPoint[], shouldDrawAsCurve: boolean) {
     this.screenPoints = screenPoints;
+    this.shouldDrawAsCurve = shouldDrawAsCurve;
   }
 }
