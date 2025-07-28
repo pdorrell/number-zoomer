@@ -107,7 +107,7 @@ export const EquationEditModal: React.FC<EquationEditModalProps> = ({
           onMouseDown={handleMouseDown}
           style={{ cursor: 'grab' }}
         >
-          <h3>Edit Equation</h3>
+          <h3>Edit Equation: {equation.getDisplayName()}</h3>
         </div>
         
         <div className="modal-content">
@@ -129,10 +129,6 @@ export const EquationEditModal: React.FC<EquationEditModalProps> = ({
                 </select>
               </label>
             )}
-          </div>
-          
-          <div className="modal-preview">
-            Current: {equation.getDisplayName()}
           </div>
         </div>
         
