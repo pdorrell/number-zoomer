@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
 import { AppStore } from '../stores/AppStore';
+import { ScreenVector } from '../types/CanvasTypes';
 
 interface CanvasRendererProps {
   store: AppStore;
@@ -15,6 +16,12 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store, 
   // Use computed properties for grid lines and equation points
   const { horizontalLines, verticalLines } = store.gridRenderer.canvasGridLines;
   const { screenPoints } = store.canvasEquationGraph;
+  
+  // Define extension offset vector
+  const extensionOffset = new ScreenVector(
+    store.screenViewport.width * store.extension,
+    store.screenViewport.height * store.extension
+  );
   
   const drawCanvas = useCallback(() => {
     console.log(`[CanvasRenderer] drawCanvas called with renderMode: ${renderMode}, coefficients:`, store.equation.coefficients);
@@ -79,27 +86,24 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store, 
       ctx.beginPath();
       
       // Adjust first point for canvas offset
-      const adjustedFirstX = screenPoints[0].x + store.screenViewport.width * store.extension;
-      const adjustedFirstY = screenPoints[0].y + store.screenViewport.height * store.extension;
-      ctx.moveTo(adjustedFirstX, adjustedFirstY);
+      const adjustedFirst = screenPoints[0].add(extensionOffset);
+      ctx.moveTo(adjustedFirst.x, adjustedFirst.y);
       
       if (store.equation.shouldDrawAsCurve(store.worldWindow) && screenPoints.length > 2) {
         // Draw as smooth curve for quadratic equations at low zoom
         for (let i = 1; i < screenPoints.length; i++) {
-          const adjustedX = screenPoints[i].x + store.screenViewport.width * store.extension;
-          const adjustedY = screenPoints[i].y + store.screenViewport.height * store.extension;
-          ctx.lineTo(adjustedX, adjustedY);
+          const adjusted = screenPoints[i].add(extensionOffset);
+          ctx.lineTo(adjusted.x, adjusted.y);
         }
       } else {
         // Draw as straight line for linear equations or high zoom quadratic
         const lastPoint = screenPoints[screenPoints.length - 1];
-        const adjustedLastX = lastPoint.x + store.screenViewport.width * store.extension;
-        const adjustedLastY = lastPoint.y + store.screenViewport.height * store.extension;
-        ctx.lineTo(adjustedLastX, adjustedLastY);
+        const adjustedLast = lastPoint.add(extensionOffset);
+        ctx.lineTo(adjustedLast.x, adjustedLast.y);
       }
       ctx.stroke();
     }
-  }, [renderMode, equationColor, horizontalLines, verticalLines, screenPoints, store.screenViewport, store.extension]);
+  }, [renderMode, equationColor, horizontalLines, verticalLines, screenPoints, extensionOffset]);
   
   // Redraw canvas when dependencies change
   useEffect(() => {
