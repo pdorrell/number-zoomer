@@ -71,7 +71,7 @@ export const PolynomialEditor: React.FC<PolynomialEditorProps> = observer(({ equ
   };
 
   const formatDegreeLabel = (degree: number): string => {
-    if (degree === 0) return 'Constant';
+    if (degree === 0) return '';
     if (degree === 1) return 'x';
     // Use Unicode superscript characters
     const superscriptMap: { [key: string]: string } = {
@@ -113,7 +113,7 @@ export const PolynomialEditor: React.FC<PolynomialEditorProps> = observer(({ equ
             className="coefficient-row"
           >
             <div className="coefficient-label">
-              {formatDegreeLabel(degree)}:
+              {formatDegreeLabel(degree)}
             </div>
             <div className="coefficient-value" style={{ color: isGreyedOut ? '#ccc' : 'inherit' }}>
               {coefficient}
