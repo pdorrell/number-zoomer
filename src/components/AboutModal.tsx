@@ -125,18 +125,19 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
             <p>Edit the equation.</p>
           </div>
           
-          <div className="about-links">
-            <a 
-              href="https://github.com/pdorrell/number-zoomer" 
-              target="_blank" 
-              rel="noopener noreferrer"
-            >
-              Source
-            </a>
-          </div>
-          
-          <div className="about-copyright">
-            Philip Dorrell © 2025
+          <div className="about-footer">
+            <div className="about-copyright">
+              Philip Dorrell © 2025
+            </div>
+            <div className="about-links">
+              <a 
+                href="https://github.com/pdorrell/number-zoomer" 
+                target="_blank" 
+                rel="noopener noreferrer"
+              >
+                Source
+              </a>
+            </div>
           </div>
         </div>
         
