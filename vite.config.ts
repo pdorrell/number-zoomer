@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3002,
       host: '0.0.0.0',
-      open: true,
+      open: false,
     },
     define: {
       'process.env.APP_VERSION': JSON.stringify(
