@@ -5,9 +5,9 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "start": "webpack serve --mode development --config webpack.config.user.js",
-    "start:claude": "webpack serve --mode development --config webpack.config.claude.js",
-    "build": "webpack --mode production",
+    "start": "vite --config vite.config.ts",
+    "start:claude": "vite --config vite.config.claude.ts",
+    "build": "vite build --config vite.config.ts",
     "type-check": "tsc --noEmit",
     "check-code": "tsc --noEmit",
     "test": "jest",
@@ -21,18 +21,12 @@
     "@types/jest": "^30.0.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
-    "css-loader": "^6.8.1",
-    "html-webpack-plugin": "^5.5.3",
+    "@vitejs/plugin-react": "^4.7.0",
     "jest": "^30.0.5",
     "sass": "^1.69.5",
-    "sass-loader": "^13.3.2",
-    "style-loader": "^3.3.3",
     "ts-jest": "^29.4.0",
-    "ts-loader": "^9.5.0",
     "typescript": "^5.2.2",
-    "webpack": "^5.89.0",
-    "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^4.15.1"
+    "vite": "^7.0.6"
   },
   "dependencies": {
     "@use-gesture/react": "^10.3.1",
