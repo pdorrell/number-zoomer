@@ -39,13 +39,13 @@ Depending on the current world window, both the equation graph and the current p
 
 ## Tech Stack
 
-The tech stack for an initial implementation is:
+The tech stack is:
 
 * Fully type-checked Typescript
 * MobX
-* Function React components
+* Functional React components
 * SCCS
-* Node, babel & webpack for development
+* Node, vite & esbuild for development
 
 This will allow deployment of the application as a static web application.
 
