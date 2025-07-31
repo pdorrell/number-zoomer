@@ -13,6 +13,7 @@ export default defineConfig({
     port: 3001,
     host: 'localhost',
     open: false,
+    allowedHosts: 'all',
   },
   css: {
     preprocessorOptions: {
