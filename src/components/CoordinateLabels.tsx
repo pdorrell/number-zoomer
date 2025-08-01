@@ -2,6 +2,7 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { GridLine } from './GridRenderer';
 import { AppStore } from '@/stores/AppStore';
+import { PreciseDecimal } from '@/types/Decimal';
 
 interface CoordinateLabelsProps {
   horizontalLines: GridLine[];
@@ -53,7 +54,7 @@ export const CoordinateLabels: React.FC<CoordinateLabelsProps> = observer(({
 
   // Calculate the expected character width for all labels to ensure consistent rectangle sizes
   // This is based on the maximum width needed: integer part + decimal point/space + decimal places
-  const calculateLabelWidth = (position: any): number => {
+  const calculateLabelWidth = (position: PreciseDecimal): number => {
     const str = position.toString();
     const integerPart = str.indexOf('.') === -1 ? str : str.split('.')[0];
 
