@@ -8,7 +8,7 @@ interface PolynomialEditorProps {
 
 export const PolynomialEditor: React.FC<PolynomialEditorProps> = observer(({ equation }) => {
   const [editingCoefficient, setEditingCoefficient] = useState<number | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<number | null>(null);
 
   const maxDisplayDegree = equation.getMaxDisplayDegree();
   const effectiveMaxDegree = editingCoefficient !== null ? Math.max(maxDisplayDegree, editingCoefficient) : maxDisplayDegree;
@@ -91,7 +91,6 @@ export const PolynomialEditor: React.FC<PolynomialEditorProps> = observer(({ equ
     const rows = [];
 
     // Always show degree 0 through effective max degree, with all 6 rows for layout stability
-    const minDegree = 0;
     const displayUpTo = effectiveMaxDegree;
 
     // Render all 6 coefficient rows (0-5) with visibility control and inline + button

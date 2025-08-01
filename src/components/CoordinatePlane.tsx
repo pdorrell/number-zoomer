@@ -112,7 +112,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     const container = outerContainerRef.current;
     if (!container) return;
 
-    let timeoutId: NodeJS.Timeout | null = null;
+    let timeoutId: number | null = null;
 
     const updateViewport = () => {
       const rect = container.getBoundingClientRect();
@@ -130,8 +130,8 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
 
     // Debounced update function to prevent excessive calls
     const debouncedUpdate = () => {
-      if (timeoutId) clearTimeout(timeoutId);
-      timeoutId = setTimeout(updateViewport, 50);
+      if (timeoutId) window.clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(updateViewport, 50);
     };
 
     // ResizeObserver for container size changes
@@ -145,7 +145,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     window.addEventListener('resize', debouncedUpdate);
 
     return () => {
-      if (timeoutId) clearTimeout(timeoutId);
+      if (timeoutId) window.clearTimeout(timeoutId);
       resizeObserver.disconnect();
       window.removeEventListener('resize', debouncedUpdate);
     };
