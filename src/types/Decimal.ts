@@ -57,9 +57,6 @@ export class PreciseDecimal {
     // Count existing decimal places
     const existingDecimalPlaces = str.length - decimalIndex - 1;
 
-    // Always ensure we have at least minDecimalPlaces total characters after the integer part
-    const totalDecimalChars = Math.max(existingDecimalPlaces, minDecimalPlaces);
-
     if (existingDecimalPlaces === 0) {
       // Number ends with decimal point but no digits (e.g., "2.")
       // Replace decimal point with space and add padding for decimal places
