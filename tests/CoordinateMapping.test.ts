@@ -19,7 +19,7 @@ describe('CoordinateMapping', () => {
     describe('screenToWorld', () => {
       it('should convert screen coordinates to world coordinates', () => {
         const [worldX, worldY] = mapping.screenToWorld(400, 300);
-        
+
         expect(worldX.toString()).toBe('0');
         expect(worldY.toString()).toBe('0');
       });
@@ -38,7 +38,7 @@ describe('CoordinateMapping', () => {
 
       it('should handle arbitrary screen positions', () => {
         const [worldX, worldY] = mapping.screenToWorld(200, 150);
-        
+
         expect(worldX.toString()).toBe('-2');
         expect(worldY.toString()).toBe('1.5');
       });
@@ -48,7 +48,7 @@ describe('CoordinateMapping', () => {
       it('should convert world coordinates to screen coordinates', () => {
         const point = [new PreciseDecimal(0, 1), new PreciseDecimal(0, 1)] as const;
         const screen = mapping.worldToScreen(point);
-        
+
         expect(screen.x).toBe(400);
         expect(screen.y).toBe(300);
       });
@@ -70,7 +70,7 @@ describe('CoordinateMapping', () => {
       it('should handle arbitrary world positions', () => {
         const point = [new PreciseDecimal(-2, 1), new PreciseDecimal(1.5, 1)] as const;
         const screen = mapping.worldToScreen(point);
-        
+
         expect(screen.x).toBe(200);
         expect(screen.y).toBe(150);
       });
@@ -164,7 +164,7 @@ describe('CoordinateMapping', () => {
     it('should handle different X and Y scales correctly', () => {
       const xPixelsPerUnit = mapping.x.getPixelsPerUnit();
       const yPixelsPerUnit = mapping.y.getPixelsPerUnit();
-      
+
       expect(xPixelsPerUnit).toBe(40);  // 800 pixels / 20 X units
       expect(yPixelsPerUnit).toBe(150); // 600 pixels / 4 Y units
     });
@@ -172,7 +172,7 @@ describe('CoordinateMapping', () => {
     it('should maintain correct aspect ratios', () => {
       const centerPoint = [new PreciseDecimal(0, 1), new PreciseDecimal(0, 1)] as const;
       const screen = mapping.worldToScreen(centerPoint);
-      
+
       expect(screen.x).toBe(400);
       expect(screen.y).toBe(300);
     });
@@ -184,12 +184,12 @@ describe('CoordinateMapping', () => {
         bottomLeft: [new PreciseDecimal('0.001', 3), new PreciseDecimal('0.001', 3)],
         topRight: [new PreciseDecimal('0.002', 3), new PreciseDecimal('0.002', 3)]
       };
-      
+
       const tinyMapping = new CoordinateMapping(screenViewport, tinyWorldWindow);
-      
+
       const pixelsPerXUnit = tinyMapping.x.getPixelsPerUnit();
       const pixelsPerYUnit = tinyMapping.y.getPixelsPerUnit();
-      
+
       expect(pixelsPerXUnit).toBe(800000);  // 800 / 0.001
       expect(pixelsPerYUnit).toBe(600000);  // 600 / 0.001
     });
@@ -199,12 +199,12 @@ describe('CoordinateMapping', () => {
         bottomLeft: [new PreciseDecimal(-1000, 0), new PreciseDecimal(-1000, 0)],
         topRight: [new PreciseDecimal(1000, 0), new PreciseDecimal(1000, 0)]
       };
-      
+
       const hugeMapping = new CoordinateMapping(screenViewport, hugeWorldWindow);
-      
+
       const pixelsPerXUnit = hugeMapping.x.getPixelsPerUnit();
       const pixelsPerYUnit = hugeMapping.y.getPixelsPerUnit();
-      
+
       expect(pixelsPerXUnit).toBe(0.4);   // 800 / 2000
       expect(pixelsPerYUnit).toBeCloseTo(0.3, 10);   // 600 / 2000 (handle floating point precision)
     });
@@ -214,20 +214,20 @@ describe('CoordinateMapping', () => {
     it('should maintain precision in screen->world->screen roundtrips', () => {
       const originalScreenX = 333;
       const originalScreenY = 444;
-      
+
       const [worldX, worldY] = mapping.screenToWorld(originalScreenX, originalScreenY);
       const finalScreen = mapping.worldToScreen([worldX, worldY]);
-      
+
       expect(Math.abs(finalScreen.x - originalScreenX)).toBeLessThan(1e-10);
       expect(Math.abs(finalScreen.y - originalScreenY)).toBeLessThan(1e-10);
     });
 
     it('should maintain precision in world->screen->world roundtrips', () => {
       const originalPoint = [new PreciseDecimal('1.234567', 6), new PreciseDecimal('-2.987654', 6)] as const;
-      
+
       const screen = mapping.worldToScreen(originalPoint);
       const [finalWorldX, finalWorldY] = mapping.screenToWorld(screen.x, screen.y);
-      
+
       expect(Math.abs(finalWorldX.toNumber() - originalPoint[0].toNumber())).toBeLessThan(1e-10);
       expect(Math.abs(finalWorldY.toNumber() - originalPoint[1].toNumber())).toBeLessThan(1e-10);
     });
@@ -236,14 +236,14 @@ describe('CoordinateMapping', () => {
   describe('Axis mapping access', () => {
     it('should provide access to X axis mapping', () => {
       expect(mapping.x).toBeDefined();
-      
+
       const worldX = mapping.x.screenToWorld(400);
       expect(worldX.toString()).toBe('0');
     });
 
     it('should provide access to Y axis mapping', () => {
       expect(mapping.y).toBeDefined();
-      
+
       const worldY = mapping.y.screenToWorld(300);
       expect(worldY.toString()).toBe('0');
     });
@@ -251,7 +251,7 @@ describe('CoordinateMapping', () => {
     it('should allow direct axis operations', () => {
       const xPixelsPerUnit = mapping.x.getPixelsPerUnit();
       const yPixelsPerUnit = mapping.y.getPixelsPerUnit();
-      
+
       expect(xPixelsPerUnit).toBe(mapping.x.getPixelsPerUnit());
       expect(yPixelsPerUnit).toBe(mapping.y.getPixelsPerUnit());
     });

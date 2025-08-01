@@ -157,7 +157,7 @@ describe('CoordinateAxisMapping', () => {
       const worldPos = new PreciseDecimal('0.2', 1);
       const screenPos = mapping.worldToScreen(worldPos);
       const backToWorld = mapping.screenToWorld(screenPos);
-      
+
       expect(Math.abs(backToWorld.toNumber() - 0.2)).toBeLessThan(1e-10);
     });
 
@@ -169,7 +169,7 @@ describe('CoordinateAxisMapping', () => {
         0,
         1
       );
-      
+
       const result = zeroRangeMapping.getPixelsPerUnit();
       expect(result).toBe(0);
     });
@@ -182,7 +182,7 @@ describe('CoordinateAxisMapping', () => {
         100,
         1
       );
-      
+
       const result = identicalMapping.screenToWorld(50);
       expect(result.toString()).toBe('5');
     });
@@ -205,14 +205,14 @@ describe('CoordinateAxisMapping', () => {
       it('should return ScaledFloat for world positions', () => {
         const worldPos = new PreciseDecimal(5, 1);
         const scaledResult = mapping.worldToScreenScaled(worldPos);
-        
+
         expect(scaledResult.toFloat()).toBe(600);
       });
 
       it('should handle extreme world positions without overflow', () => {
         const extremePos = new PreciseDecimal('1e100', 0);
         const scaledResult = mapping.worldToScreenScaled(extremePos);
-        
+
         // Should not throw and should return a valid ScaledFloat
         expect(typeof scaledResult.getMantissa()).toBe('number');
         expect(typeof scaledResult.getExponent()).toBe('number');
@@ -222,7 +222,7 @@ describe('CoordinateAxisMapping', () => {
     describe('getPixelsPerUnitScaled', () => {
       it('should return ScaledFloat for pixels per unit', () => {
         const scaledResult = mapping.getPixelsPerUnitScaled();
-        
+
         expect(scaledResult.toFloat()).toBe(40); // 800 pixels / 20 units
       });
     });

@@ -33,7 +33,7 @@ export const ZoomSlider: React.FC<ZoomSliderProps> = ({
   const getMousePosition = useCallback((event: React.MouseEvent | React.TouchEvent, rect: DOMRect) => {
     let clientX: number;
     let clientY: number;
-    
+
     if ('touches' in event) {
       clientX = event.touches[0].clientX;
       clientY = event.touches[0].clientY;
@@ -41,7 +41,7 @@ export const ZoomSlider: React.FC<ZoomSliderProps> = ({
       clientX = event.clientX;
       clientY = event.clientY;
     }
-    
+
     return {
       x: clientX - rect.left,
       y: clientY - rect.top
@@ -50,31 +50,31 @@ export const ZoomSlider: React.FC<ZoomSliderProps> = ({
 
   const handleStart = useCallback((event: React.MouseEvent | React.TouchEvent) => {
     if (disabled) return;
-    
+
     event.preventDefault();
-    
+
     const rect = sliderRef.current?.getBoundingClientRect();
     if (!rect) return;
-    
+
     const position = getMousePosition(event, rect);
-    
+
     setIsDragging(true);
     setStartPosition(position);
     setCirclePosition(position);
-    
+
     // Start zoom operation
     zoomable.startZoom(source, 'slider');
   }, [disabled, zoomable, source, getMousePosition]);
 
   const handleMove = useCallback((event: MouseEvent | TouchEvent) => {
     if (!isDragging || !startPosition || !sliderRef.current) return;
-    
+
     event.preventDefault();
-    
+
     const rect = sliderRef.current.getBoundingClientRect();
     let clientX: number;
     let clientY: number;
-    
+
     if ('touches' in event) {
       clientX = event.touches[0].clientX;
       clientY = event.touches[0].clientY;
@@ -82,37 +82,37 @@ export const ZoomSlider: React.FC<ZoomSliderProps> = ({
       clientX = event.clientX;
       clientY = event.clientY;
     }
-    
+
     const currentX = clientX - rect.left;
     const currentY = clientY - rect.top;
-    
+
     // Update circle position
     setCirclePosition({ x: currentX, y: currentY });
-    
+
     // Calculate zoom factor based on horizontal distance travelled
     const deltaX = currentX - startPosition.x;
     const sliderWidth = rect.width;
     const zoomFactor = calculateZoomFactor(deltaX, sliderWidth);
-    
+
     // Update zoom factor
     zoomable.setZoomFactor(source, zoomFactor);
   }, [isDragging, startPosition, source, zoomable, calculateZoomFactor]);
 
   const handleEnd = useCallback(() => {
     if (!isDragging || !startPosition || !sliderRef.current) return;
-    
+
     const rect = sliderRef.current.getBoundingClientRect();
     const deltaX = (circlePosition?.x || startPosition.x) - startPosition.x;
     const sliderWidth = rect.width;
     const finalZoomFactor = calculateZoomFactor(deltaX, sliderWidth);
-    
+
     // Complete zoom operation
     zoomable.completeZoom(source, finalZoomFactor);
-    
+
     // Start fade-out animation
     setIsFadingOut(true);
     setIsDragging(false);
-    
+
     // Clear state after fade-out completes
     setTimeout(() => {
       setCirclePosition(null);
@@ -124,17 +124,17 @@ export const ZoomSlider: React.FC<ZoomSliderProps> = ({
   // Global event listeners for mouse/touch move and end
   React.useEffect(() => {
     if (!isDragging) return;
-    
+
     const handleMouseMove = (e: MouseEvent) => handleMove(e);
     const handleTouchMove = (e: TouchEvent) => handleMove(e);
     const handleMouseUp = () => handleEnd();
     const handleTouchEnd = () => handleEnd();
-    
+
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('mouseup', handleMouseUp);
     document.addEventListener('touchend', handleTouchEnd);
-    
+
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('touchmove', handleTouchMove);

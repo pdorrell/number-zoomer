@@ -16,7 +16,7 @@ export class ScaledFloat {
     // Normalize mantissa to be in range [1.0, 10.0) or (-10.0, -1.0]
     const absValue = Math.abs(value);
     const sign = Math.sign(value);
-    
+
     if (absValue >= 1.0 && absValue < 10.0) {
       this.mantissa = value;
       this.exponent = exponent;
@@ -53,7 +53,7 @@ export class ScaledFloat {
     if (value === 0 || this.mantissa === 0) {
       return new ScaledFloat(0);
     }
-    
+
     const newMantissa = this.mantissa * value;
     return new ScaledFloat(newMantissa, this.exponent);
   }
@@ -62,7 +62,7 @@ export class ScaledFloat {
     if (this.mantissa === 0 || other.mantissa === 0) {
       return new ScaledFloat(0);
     }
-    
+
     const newMantissa = this.mantissa * other.mantissa;
     const newExponent = this.exponent + other.exponent;
     return new ScaledFloat(newMantissa, newExponent);
@@ -112,11 +112,11 @@ export class ScaledFloat {
     }
 
     const value = this.mantissa * Math.pow(10, this.exponent);
-    
+
     if (value < minValue || value > maxValue) {
       return null;
     }
-    
+
     return value;
   }
 
@@ -130,11 +130,11 @@ export class ScaledFloat {
   toPreciseDecimal(precision: int): any {
     // Import PreciseDecimal dynamically to avoid circular dependency
     const { PreciseDecimal } = require('./Decimal');
-    
+
     if (this.mantissa === 0) {
       return new PreciseDecimal(0).quantize(precision);
     }
-    
+
     const valueStr = this.toString();
     return PreciseDecimal.fromString(valueStr).quantize(precision);
   }
@@ -153,7 +153,7 @@ export class ScaledFloat {
     if (this.mantissa < 0) {
       throw new Error("Cannot take log10 of negative number");
     }
-    
+
     // log10(mantissa * 10^exponent) = log10(mantissa) + exponent
     return Math.log10(this.mantissa) + this.exponent;
   }

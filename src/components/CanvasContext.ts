@@ -22,18 +22,18 @@ export class CanvasContext {
 
   drawGridLines(gridLines: CanvasGridLines): void {
     const { horizontalLines, verticalLines } = gridLines;
-    
+
     // Draw grid lines in interleaved thickness order (thickest last)
     // This ensures thicker lines are drawn over thinner lines in the other direction
     const maxThicknessLevels = Math.max(horizontalLines.length, verticalLines.length);
-    
+
     for (let thicknessLevel = 0; thicknessLevel < maxThicknessLevels; thicknessLevel++) {
       // Draw horizontal lines of this thickness level
       if (horizontalLines[thicknessLevel]) {
         horizontalLines[thicknessLevel].forEach(line => {
           // Adjust screen coordinates for canvas offset
           const screenY = line.screenPosition + this.extensionOffset.y;
-          
+
           this.ctx.strokeStyle = line.color;
           this.ctx.lineWidth = line.thickness;
           this.ctx.beginPath();
@@ -42,13 +42,13 @@ export class CanvasContext {
           this.ctx.stroke();
         });
       }
-      
+
       // Draw vertical lines of this thickness level
       if (verticalLines[thicknessLevel]) {
         verticalLines[thicknessLevel].forEach(line => {
           // Adjust screen coordinates for canvas offset
           const screenX = line.screenPosition + this.extensionOffset.x;
-          
+
           this.ctx.strokeStyle = line.color;
           this.ctx.lineWidth = line.thickness;
           this.ctx.beginPath();
@@ -62,17 +62,17 @@ export class CanvasContext {
 
   drawEquationGraph(graph: CanvasEquationGraph, equationColor: string = '#dc3545'): void {
     const { screenPoints, shouldDrawAsCurve } = graph;
-    
+
     if (screenPoints.length === 0) return;
-    
+
     this.ctx.strokeStyle = equationColor;
     this.ctx.lineWidth = 2;
     this.ctx.beginPath();
-    
+
     // Adjust first point for canvas offset
     const adjustedFirst = screenPoints[0].add(this.extensionOffset);
     this.ctx.moveTo(adjustedFirst.x, adjustedFirst.y);
-    
+
     if (shouldDrawAsCurve && screenPoints.length > 2) {
       // Draw as smooth curve for quadratic equations at low zoom
       for (let i = 1; i < screenPoints.length; i++) {

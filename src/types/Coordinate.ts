@@ -37,10 +37,10 @@ export class CoordinateAxisMapping {
   screenToWorld(screenPosition: float): PreciseDecimal {
     // Convert screen position to ratio (0-1) based on screen direction
     const screenOffset = screenPosition - this.screenBase;
-    const ratio = this.screenDirection > 0 ? 
-      screenOffset / this.screenRange : 
+    const ratio = this.screenDirection > 0 ?
+      screenOffset / this.screenRange :
       -screenOffset / this.screenRange;
-    
+
     return this.minWindowPosition.add(this.windowRange.mul(new PreciseDecimal(ratio)));
   }
 
@@ -55,9 +55,9 @@ export class CoordinateAxisMapping {
     const pixelsPerUnit = this.getPixelsPerUnitScaled();
     const worldOffsetScaled = worldOffset.toScaledFloat();
     const screenOffset = pixelsPerUnit.mulScaled(worldOffsetScaled);
-    
+
     const screenBase = new ScaledFloat(this.screenBase);
-    return this.screenDirection > 0 ? 
+    return this.screenDirection > 0 ?
       screenBase.add(screenOffset.toFloat()) :
       screenBase.add(-screenOffset.toFloat());
   }

@@ -36,15 +36,15 @@ export class PreciseDecimal {
 
   toStringPadded(minDecimalPlaces: number): string {
     const str = this.value.toString();
-    
+
     // Handle scientific notation - just return as-is
     if (str.includes('e') || str.includes('E')) {
       return str;
     }
-    
+
     // Find decimal point
     const decimalIndex = str.indexOf('.');
-    
+
     if (decimalIndex === -1) {
       // No decimal point - need to pad to match decimal format length
       if (minDecimalPlaces > 0) {
@@ -53,24 +53,24 @@ export class PreciseDecimal {
       }
       return str;
     }
-    
+
     // Count existing decimal places
     const existingDecimalPlaces = str.length - decimalIndex - 1;
-    
+
     // Always ensure we have at least minDecimalPlaces total characters after the integer part
     const totalDecimalChars = Math.max(existingDecimalPlaces, minDecimalPlaces);
-    
+
     if (existingDecimalPlaces === 0) {
       // Number ends with decimal point but no digits (e.g., "2.")
       // Replace decimal point with space and add padding for decimal places
       return str.slice(0, decimalIndex) + ' ' + ' '.repeat(minDecimalPlaces) + '\u200B';
     }
-    
+
     if (existingDecimalPlaces >= minDecimalPlaces) {
       // Already has enough or more decimal places, return as-is
       return str;
     }
-    
+
     // Has some decimal digits but needs padding
     const paddingNeeded = minDecimalPlaces - existingDecimalPlaces;
     return str + ' '.repeat(paddingNeeded) + '\u200B'; // Add zero-width space to preserve trailing spaces
@@ -91,7 +91,7 @@ export class PreciseDecimal {
       const rounded = this.value.div(power).round().mul(power);
       return new PreciseDecimal(rounded);
     }
-    
+
     // Positive precision: round to decimal places
     const quantizedValue = this.value.toDecimalPlaces(precision);
     return new PreciseDecimal(quantizedValue);
@@ -134,10 +134,10 @@ export class PreciseDecimal {
     const str = this.value.toString();
     const [mantissaStr, exponentStr] = str.toLowerCase().split('e');
     const exponent = exponentStr ? parseInt(exponentStr, 10) : 0;
-    
+
     // Convert mantissa to a number (this is safe as mantissa should be in float range)
     const mantissa = parseFloat(mantissaStr);
-    
+
     return new ScaledFloat(mantissa, exponent);
   }
 

@@ -9,7 +9,7 @@ interface PolynomialEditorProps {
 export const PolynomialEditor: React.FC<PolynomialEditorProps> = observer(({ equation }) => {
   const [editingCoefficient, setEditingCoefficient] = useState<number | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   const maxDisplayDegree = equation.getMaxDisplayDegree();
   const effectiveMaxDegree = editingCoefficient !== null ? Math.max(maxDisplayDegree, editingCoefficient) : maxDisplayDegree;
   const canAddDegree = effectiveMaxDegree < 5;
@@ -23,7 +23,7 @@ export const PolynomialEditor: React.FC<PolynomialEditorProps> = observer(({ equ
   const handleSliderMouseDown = (degree: number) => {
     // Set editing state when user starts dragging
     setEditingCoefficient(degree);
-    
+
     // Clear any existing timeout
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -54,7 +54,7 @@ export const PolynomialEditor: React.FC<PolynomialEditorProps> = observer(({ equ
     if (editingCoefficient !== null) {
       document.addEventListener('mouseup', handleGlobalMouseUp);
       document.addEventListener('touchend', handleGlobalTouchEnd);
-      
+
       return () => {
         document.removeEventListener('mouseup', handleGlobalMouseUp);
         document.removeEventListener('touchend', handleGlobalTouchEnd);
@@ -89,11 +89,11 @@ export const PolynomialEditor: React.FC<PolynomialEditorProps> = observer(({ equ
   // Create rows for degrees 0 through max(current degree, 0), plus empty rows up to degree 5
   const renderCoefficientRows = () => {
     const rows = [];
-    
+
     // Always show degree 0 through effective max degree, with all 6 rows for layout stability
     const minDegree = 0;
     const displayUpTo = effectiveMaxDegree;
-    
+
     // Render all 6 coefficient rows (0-5) with visibility control and inline + button
     for (let degree = 0; degree <= 5; degree++) {
       const coefficient = equation.getCoefficient(degree);
@@ -101,15 +101,15 @@ export const PolynomialEditor: React.FC<PolynomialEditorProps> = observer(({ equ
       const shouldShow = degree <= displayUpTo;
       const showRemoveButton = shouldShowRemoveButton(degree);
       const isGreyedOut = isZero && !(degree === 0 && effectiveMaxDegree === 0);
-      
+
       // Show + button if this degree is the next one to add (degree = displayUpTo + 1) and we can add it
       const shouldShowAddButton = degree === displayUpTo + 1 && canAddDegree;
-      
+
       if (shouldShow) {
         // Regular coefficient row
         rows.push(
-          <div 
-            key={degree} 
+          <div
+            key={degree}
             className="coefficient-row"
           >
             <div className="coefficient-label">
@@ -148,8 +148,8 @@ export const PolynomialEditor: React.FC<PolynomialEditorProps> = observer(({ equ
       } else if (shouldShowAddButton) {
         // + button row (positioned exactly where the new coefficient row will appear)
         rows.push(
-          <div 
-            key={`add-${degree}`} 
+          <div
+            key={`add-${degree}`}
             className="coefficient-row coefficient-row-add"
           >
             <div className="coefficient-label">
@@ -173,8 +173,8 @@ export const PolynomialEditor: React.FC<PolynomialEditorProps> = observer(({ equ
       } else {
         // Hidden placeholder row to maintain layout
         rows.push(
-          <div 
-            key={degree} 
+          <div
+            key={degree}
             className="coefficient-row coefficient-row-hidden"
           >
             <div className="coefficient-label">
@@ -198,9 +198,9 @@ export const PolynomialEditor: React.FC<PolynomialEditorProps> = observer(({ equ
         );
       }
     }
-    
+
     // All rows are now rendered above with visibility control
-    
+
     return rows;
   };
 

@@ -31,7 +31,7 @@ export const CoordinateLabels: React.FC<CoordinateLabelsProps> = observer(({
   const isWorldPositionVisible = (worldPosition: any, axis: 'x' | 'y'): boolean => {
     // Use preview world window if available (during drag/zoom operations)
     const currentWorldWindow = store.previewWorldWindow || store.dragPreviewWorldWindow || store.worldWindow;
-    
+
     // Check if the world position is within the current (or preview) world window bounds
     if (axis === 'x') {
       return worldPosition.isWithinInterval(currentWorldWindow.bottomLeft[0], currentWorldWindow.topRight[0]);
@@ -56,7 +56,7 @@ export const CoordinateLabels: React.FC<CoordinateLabelsProps> = observer(({
   const calculateLabelWidth = (position: any): number => {
     const str = position.toString();
     const integerPart = str.indexOf('.') === -1 ? str : str.split('.')[0];
-    
+
     if (minDecimalPlaces > 0) {
       // Width = integer part + 1 (for decimal point/space) + decimal places
       return integerPart.length + 1 + minDecimalPlaces;
@@ -84,12 +84,12 @@ export const CoordinateLabels: React.FC<CoordinateLabelsProps> = observer(({
           const screenY = line.screenPosition;
           const labelText = line.position.toStringPadded(minDecimalPlaces);
           const individualTransform = getYLabelTransform ? getYLabelTransform(screenY) : '';
-          
+
           // Only render label if the grid line's world position is visible within the current viewport
           if (!isWorldPositionVisible(line.position, 'y')) {
             return null;
           }
-          
+
           return (
             <g key={`y-${index}-${line.position.toString()}`} transform={individualTransform}>
               <rect
@@ -123,12 +123,12 @@ export const CoordinateLabels: React.FC<CoordinateLabelsProps> = observer(({
           const screenX = line.screenPosition;
           const labelText = line.position.toStringPadded(minDecimalPlaces);
           const individualTransform = getXLabelTransform ? getXLabelTransform(screenX) : '';
-          
+
           // Only render label if the grid line's world position is visible within the current viewport
           if (!isWorldPositionVisible(line.position, 'x')) {
             return null;
           }
-          
+
           return (
             <g key={`x-${index}-${line.position.toString()}`} transform={individualTransform}>
               <rect

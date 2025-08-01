@@ -106,7 +106,7 @@ export const EquationEditModal: React.FC<EquationEditModalProps> = observer(({
 
   return (
     <div className="modal-overlay">
-      <div 
+      <div
         ref={modalRef}
         className="equation-edit-modal"
         style={{
@@ -118,7 +118,7 @@ export const EquationEditModal: React.FC<EquationEditModalProps> = observer(({
         onKeyDown={handleKeyDown}
         tabIndex={-1}
       >
-        <div 
+        <div
           ref={headerRef}
           className="modal-header"
           onMouseDown={handleMouseDown}
@@ -127,11 +127,11 @@ export const EquationEditModal: React.FC<EquationEditModalProps> = observer(({
         >
           <h3>Edit Equation: {equation.getDisplayName()}</h3>
         </div>
-        
+
         <div className="modal-content">
           <PolynomialEditor equation={equation} />
         </div>
-        
+
         <div className="modal-actions">
           <button onClick={onSave} className="modal-button modal-save">
             OK

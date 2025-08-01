@@ -53,14 +53,14 @@ export const App: React.FC = observer(() => {
             <div className="version-debug-container">
               <div className="version-display">v{store.version}</div>
               <div className="debug-info-buttons">
-                <div 
+                <div
                   className="info-button"
                   onClick={() => setIsAboutModalOpen(true)}
                   title="About Number Zoomer"
                 >
                   ℹ️
                 </div>
-                <div 
+                <div
                   className={`debug-toggle ${store.showDebugInfo ? 'active' : ''}`}
                   onClick={() => store.toggleDebugInfo()}
                   title="Toggle debug info"
@@ -72,12 +72,12 @@ export const App: React.FC = observer(() => {
           </div>
           <DebugInfo store={store} />
         </div>
-        
+
         {/* 2. Equation heading */}
         <div className="equation-heading-container">
           <h2 className="equation-heading">
             {store.equation.getDisplayName()}
-            <button 
+            <button
               className="equation-edit-button"
               onClick={handleOpenEditModal}
               title="Edit equation"
@@ -86,15 +86,15 @@ export const App: React.FC = observer(() => {
             </button>
           </h2>
         </div>
-        
+
         {/* 3. Coordinate plane (flexible) */}
         <div className="coordinate-plane-area">
           <CoordinatePlane store={store} isEditingEquation={isEditModalOpen} />
         </div>
-        
+
         {/* 4. Zoom slider */}
         <div className="zoom-slider-container">
-          <ZoomSlider 
+          <ZoomSlider
             zoomable={store}
             source="slider"
             zoomRange={8}
@@ -102,7 +102,7 @@ export const App: React.FC = observer(() => {
           />
         </div>
       </div>
-      
+
       {/* Equation Edit Modal */}
       <EquationEditModal
         isOpen={isEditModalOpen}
@@ -110,7 +110,7 @@ export const App: React.FC = observer(() => {
         onSave={handleSaveEquation}
         onCancel={handleCancelEquation}
       />
-      
+
       {/* About Modal */}
       <AboutModal
         isOpen={isAboutModalOpen}

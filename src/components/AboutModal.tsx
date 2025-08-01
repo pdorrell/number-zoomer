@@ -92,7 +92,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
 
   return (
     <div className="modal-overlay">
-      <div 
+      <div
         ref={modalRef}
         className="about-modal"
         style={{
@@ -104,7 +104,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
         onKeyDown={handleKeyDown}
         tabIndex={-1}
       >
-        <div 
+        <div
           ref={headerRef}
           className="modal-header"
           onMouseDown={handleMouseDown}
@@ -113,7 +113,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
         >
           <h3>Number Zoomer</h3>
         </div>
-        
+
         <div className="modal-content">
           <div className="about-description">
             <p>A portal into the ℝ² number plane.</p>
@@ -124,15 +124,15 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
             <p>Find the square root of 2.</p>
             <p>Edit the equation.</p>
           </div>
-          
+
           <div className="about-footer">
             <div className="about-copyright">
               Philip Dorrell © 2025
             </div>
             <div className="about-links">
-              <a 
-                href="https://github.com/pdorrell/number-zoomer" 
-                target="_blank" 
+              <a
+                href="https://github.com/pdorrell/number-zoomer"
+                target="_blank"
                 rel="noopener noreferrer"
               >
                 Source
@@ -140,7 +140,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
             </div>
           </div>
         </div>
-        
+
         <div className="modal-actions">
           <button onClick={onClose} className="modal-button modal-save">
             Close
