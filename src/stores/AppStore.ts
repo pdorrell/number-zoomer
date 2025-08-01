@@ -462,7 +462,7 @@ export class AppStore implements ZoomableInterface {
   }
 
   // Transform methods for responsive UI
-  startPointDrag(startScreenPos: { x: number; y: number }) {
+  startPointDrag() {
     // Point dragging updates continuously, no transform needed
     this.transformState.isTransforming = false;
     this.transformState.pointTransform = '';

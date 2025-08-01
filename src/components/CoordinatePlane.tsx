@@ -22,7 +22,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
   const [startDragPos, setStartDragPos] = useState({ x: 0, y: 0 });
   const [accumulatedPanDelta, setAccumulatedPanDelta] = useState({ x: 0, y: 0 });
   const [initialZoomFactor, setInitialZoomFactor] = useState(1);
-  const [zoomCenter, setZoomCenter] = useState({ x: 0, y: 0 });
+  const [, setZoomCenter] = useState({ x: 0, y: 0 });
   const [pinchStartScale, setPinchStartScale] = useState(1);
   const [hasMovedDuringDrag, setHasMovedDuringDrag] = useState(false);
   const [draggedPointStartPosition, setDraggedPointStartPosition] = useState<{ x: number; y: number } | null>(null);
@@ -160,7 +160,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
     const currentPointScreen = store.mapping.worldToScreen(store.currentPoint);
     setDraggedPointStartPosition({ x: currentPointScreen.x, y: currentPointScreen.y });
 
-    store.startPointDrag({ x: mouseX, y: mouseY });
+    store.startPointDrag();
     setStartDragPos({ x: mouseX, y: mouseY });
     setLastMousePos({ x: mouseX, y: mouseY });
   }, [store]);
@@ -320,7 +320,7 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
       }
     },
 
-    onDrag: ({ event, movement: [movementX, movementY], xy: [currentX, currentY] }) => {
+    onDrag: ({ movement: [movementX, movementY], xy: [currentX, currentY] }) => {
       if (!containerRef.current) return;
 
       // Block drag operations during pinch zoom
