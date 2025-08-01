@@ -16,8 +16,14 @@
     "noEmit": true,
     "pretty": false,
     "jsx": "react-jsx",
-    "experimentalDecorators": true,
-    "useDefineForClassFields": true
+    "useDefineForClassFields": true,
+    
+    /* Path mapping */
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@/tests/*": ["tests/*"]
+    }
   },
   "include": [
     "src"
