@@ -28,7 +28,7 @@ export const CoordinateLabels: React.FC<CoordinateLabelsProps> = observer(({
   getXLabelTransform
 }) => {
   // Helper function to check if a world position is currently visible in the viewport
-  const isWorldPositionVisible = (worldPosition: any, axis: 'x' | 'y'): boolean => {
+  const isWorldPositionVisible = (worldPosition: PreciseDecimal, axis: 'x' | 'y'): boolean => {
     // Use preview world window if available (during drag/zoom operations)
     const currentWorldWindow = store.previewWorldWindow || store.dragPreviewWorldWindow || store.worldWindow;
 

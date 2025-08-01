@@ -56,7 +56,6 @@ unit-per-pixel variables.
    and optional scale factor.
 * `PreciseDecimal.toScaledFloat` - convert a `PreciseDecimal` to a `ScaledFloat`. This will lose
   precision, but it will not overflow or underflow.
-* `ScaledFloat.toPreciseDecimal(precision: int)` - convert to a `PreciseDecimal` by quantising.
 * `ScaledFloat.reciprocal` - return the reciprocal of the `ScaledFloat` as a `ScaledFloat`.
 * `ScaledFloat.mul(value: float)` - multiply the `ScaledFloat` by a float to return a `ScaledFloat`.
 * `ScaledFloat.add(value: float)` - add `float` value to the `ScaledFloat` to return a `ScaledFloat`.

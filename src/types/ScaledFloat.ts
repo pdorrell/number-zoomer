@@ -127,17 +127,6 @@ export class ScaledFloat {
     return this.mantissa * Math.pow(10, this.exponent);
   }
 
-  toPreciseDecimal(precision: int): any {
-    // Import PreciseDecimal dynamically to avoid circular dependency
-    const { PreciseDecimal } = require('./Decimal');
-
-    if (this.mantissa === 0) {
-      return new PreciseDecimal(0).quantize(precision);
-    }
-
-    const valueStr = this.toString();
-    return PreciseDecimal.fromString(valueStr).quantize(precision);
-  }
 
   toString(): string {
     if (this.mantissa === 0) {
