@@ -15,4 +15,6 @@ to explore different possible  solutions.
 ## Individual Issues
 
 * [world-to-screen-defaults.md]
+* [extreme-vertical-graph.md]
+
 
