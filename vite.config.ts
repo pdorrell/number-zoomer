@@ -31,6 +31,11 @@ export default defineConfig(({ mode }) => {
     plugins: [react()],
     root: './src',
     publicDir: false,
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+      },
+    },
     build: {
       outDir: '../dist',
       emptyOutDir: true,
