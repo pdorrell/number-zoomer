@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
-import { PolynomialEquation } from '../types/Equation';
+import { PolynomialEquation } from '@/types/Equation';
 
 interface PolynomialEditorProps {
   equation: PolynomialEquation;

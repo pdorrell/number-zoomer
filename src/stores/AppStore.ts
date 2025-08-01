@@ -1,11 +1,11 @@
-import { makeAutoObservable, computed } from 'mobx';
-import { PreciseDecimal } from '../types/Decimal';
-import { Point, WorldWindow, ScreenViewport, CoordinateMapping } from '../types/Coordinate';
-import { PolynomialEquation, createEquation } from '../types/Equation';
-import { ZoomableInterface, ZoomSource } from '../interfaces/ZoomableInterface';
-import { ScaledFloat } from '../types/ScaledFloat';
-import { GridRenderer } from '../components/GridRenderer';
-import { CanvasEquationGraph, ScreenPoint } from '../types/CanvasTypes';
+import { makeAutoObservable } from 'mobx';
+import { PreciseDecimal } from '@/types/Decimal';
+import { Point, WorldWindow, ScreenViewport, CoordinateMapping } from '@/types/Coordinate';
+import { PolynomialEquation, createEquation } from '@/types/Equation';
+import { ZoomableInterface, ZoomSource } from '@/interfaces/ZoomableInterface';
+import { ScaledFloat } from '@/types/ScaledFloat';
+import { GridRenderer } from '@/components/GridRenderer';
+import { CanvasEquationGraph, ScreenPoint } from '@/types/CanvasTypes';
 
 export interface TransformState {
   pointTransform: string;

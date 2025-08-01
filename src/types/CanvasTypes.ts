@@ -1,5 +1,4 @@
-import { Point } from './Coordinate';
-import { GridLine } from '../components/GridRenderer';
+import { GridLine } from '@/components/GridRenderer';
 
 export class ScreenVector {
   x: number;

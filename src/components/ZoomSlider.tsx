@@ -1,5 +1,6 @@
 import React, { useRef, useState, useCallback } from 'react';
-import { ZoomableInterface, ZoomSource } from '../interfaces/ZoomableInterface';
+import { observer } from 'mobx-react-lite';
+import { ZoomableInterface, ZoomSource } from '@/interfaces/ZoomableInterface';
 
 interface ZoomSliderProps {
   zoomable: ZoomableInterface;
@@ -9,7 +10,7 @@ interface ZoomSliderProps {
   disabled?: boolean;
 }
 
-export const ZoomSlider: React.FC<ZoomSliderProps> = ({
+export const ZoomSlider: React.FC<ZoomSliderProps> = observer(({
   zoomable,
   source,
   zoomRange,
@@ -204,4 +205,4 @@ export const ZoomSlider: React.FC<ZoomSliderProps> = ({
       </div>
     </div>
   );
-};
+});

@@ -1,5 +1,5 @@
 import Decimal from 'decimal.js';
-import { ScaledFloat, int } from './ScaledFloat';
+import { ScaledFloat } from './ScaledFloat';
 
 Decimal.set({ precision: 1000 });
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { AppStore } from '../stores/AppStore';
+import { AppStore } from '@/stores/AppStore';
 
 interface DebugInfoProps {
   store: AppStore;

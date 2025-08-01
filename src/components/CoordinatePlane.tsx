@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { observer } from 'mobx-react-lite';
 import { useGesture } from '@use-gesture/react';
-import { AppStore } from '../stores/AppStore';
+import { AppStore } from '@/stores/AppStore';
 import { CanvasRenderer } from './CanvasRenderer';
 import { CoordinateLabels } from './CoordinateLabels';
 import { GridRenderer } from './GridRenderer';

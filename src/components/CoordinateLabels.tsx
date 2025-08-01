@@ -1,7 +1,7 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { GridLine } from './GridRenderer';
-import { AppStore } from '../stores/AppStore';
+import { AppStore } from '@/stores/AppStore';
 
 interface CoordinateLabelsProps {
   horizontalLines: GridLine[];

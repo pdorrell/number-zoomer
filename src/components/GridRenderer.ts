@@ -1,8 +1,8 @@
-import { PreciseDecimal } from '../types/Decimal';
-import { CoordinateMapping, CoordinateAxisMapping, Point } from '../types/Coordinate';
-import { ScaledFloat } from '../types/ScaledFloat';
-import { makeAutoObservable, computed } from 'mobx';
-import { CanvasGridLines } from '../types/CanvasTypes';
+import { PreciseDecimal } from '@/types/Decimal';
+import { CoordinateMapping, CoordinateAxisMapping } from '@/types/Coordinate';
+import { ScaledFloat } from '@/types/ScaledFloat';
+import { makeAutoObservable } from 'mobx';
+import { CanvasGridLines } from '@/types/CanvasTypes';
 
 export interface GridLine {
   position: PreciseDecimal;

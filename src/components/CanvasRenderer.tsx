@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
-import { AppStore } from '../stores/AppStore';
-import { ScreenVector } from '../types/CanvasTypes';
+import { AppStore } from '@/stores/AppStore';
+import { ScreenVector } from '@/types/CanvasTypes';
 import { CanvasContext } from './CanvasContext';
 
 interface CanvasRendererProps {

@@ -1,4 +1,4 @@
-import { ScreenVector, CanvasGridLines, CanvasEquationGraph } from '../types/CanvasTypes';
+import { ScreenVector, CanvasGridLines, CanvasEquationGraph } from '@/types/CanvasTypes';
 
 export class CanvasContext {
   private canvas: HTMLCanvasElement;

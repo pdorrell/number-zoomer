@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { observer } from 'mobx-react-lite';
 
 interface AboutModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
+export const AboutModal: React.FC<AboutModalProps> = observer(({ isOpen, onClose }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [position, setPosition] = useState({ x: 150, y: 150 });
@@ -149,4 +150,4 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
       </div>
     </div>
   );
-};
+});
