@@ -44,10 +44,10 @@ export class CoordinateAxisMapping {
     return this.minWindowPosition.add(this.windowRange.mul(new PreciseDecimal(ratio)));
   }
 
-  worldToScreen(worldPosition: PreciseDecimal): number {
+  worldToScreen(worldPosition: PreciseDecimal): number | null {
     const worldToScreenScaled = this.worldToScreenScaled(worldPosition);
     const result = worldToScreenScaled.toFloatInBounds(-1e10, 1e10);
-    return result !== null ? result : 0;
+    return result;
   }
 
   worldToScreenScaled(worldPosition: PreciseDecimal): ScaledFloat {
@@ -129,8 +129,24 @@ export class CoordinateMapping {
     return [this.x.screenToWorld(screenX), this.y.screenToWorld(screenY)];
   }
 
-  worldToScreen(point: Point): { x: number; y: number } {
-    return { x: this.x.worldToScreen(point[0]), y: this.y.worldToScreen(point[1]) };
+  worldToScreen(point: Point): { x: number; y: number }{
+    const xScreenPoint = this.x.worldToScreen(point[0]);
+    const yScreenPoint = this.y.worldToScreen(point[1]);
+    return {
+      x: xScreenPoint == null ? 0 : xScreenPoint,
+      y: yScreenPoint == null ? 0 : yScreenPoint
+    }
+  }
+
+  worldToScreenNoDefault(point: Point): { x: number; y: number } | null {
+    const xScreenPoint = this.x.worldToScreen(point[0]);
+    const yScreenPoint = this.y.worldToScreen(point[1]);
+    if (xScreenPoint !== null && yScreenPoint !== null) {
+      return { x: xScreenPoint, y: yScreenPoint };
+    }
+    else {
+      return null;
+    }
   }
 
   getScreenViewport(): ScreenViewport {

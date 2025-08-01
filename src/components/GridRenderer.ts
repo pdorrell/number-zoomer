@@ -89,6 +89,9 @@ export class GridRenderer {
       // Calculate initial window position and screen position
       let windowPosition = startIndex.mul(stepSize);
       let screenPosition = axisMapping.worldToScreen(windowPosition);
+      if (screenPosition == null) { // shouldn't normally happen
+        return [];
+      }
 
       // Calculate steps for incremental arithmetic
       const windowStep = stepSize;
