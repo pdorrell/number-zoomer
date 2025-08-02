@@ -92,7 +92,7 @@ export class GridRenderer {
 
       // Calculate steps for incremental arithmetic
       const windowStep = stepSize;
-      const screenStep = axisMapping.worldToScreenRange(windowStep);
+      const screenStep = axisMapping.worldToScreenRange(windowStep, 1000000);
 
       // Use incremental arithmetic instead of repeated coordinate transformations
       let i = startIndex;

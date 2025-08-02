@@ -77,10 +77,12 @@ export class CoordinateAxisMapping {
     );
   }
 
-  worldToScreenRange(worldRange: PreciseDecimal): number {
-    // Convert world distance to screen distance, accounting for screen direction
-    const pixelsPerUnit = this.getPixelsPerUnit();
-    const screenDistance = worldRange.toNumber() * pixelsPerUnit;
+  worldToScreenRange(worldRange: PreciseDecimal, bound: number): number {
+    // Convert world distance to screen distance using ScaledFloat for better precision
+    const pixelsPerUnitScaled = this.getPixelsPerUnitScaled();
+    const worldRangeScaled = worldRange.toScaledFloat();
+    const screenDistanceScaled = pixelsPerUnitScaled.mulScaled(worldRangeScaled).abs();
+    const screenDistance = screenDistanceScaled.toFloatBounded(0, bound);
     return this.screenDirection > 0 ? screenDistance : -screenDistance;
   }
 

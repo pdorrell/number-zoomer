@@ -162,6 +162,13 @@ export class ScaledFloat {
     return `${this.mantissa}e${this.exponent}`;
   }
 
+  abs(): ScaledFloat {
+    if (this.mantissa === 0) {
+      return new ScaledFloat(0);
+    }
+    return ScaledFloat.fromMantissaExponent(Math.abs(this.mantissa), this.exponent);
+  }
+
   log10(): number {
     if (this.mantissa === 0) {
       return -Infinity;
