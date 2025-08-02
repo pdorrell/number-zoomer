@@ -63,8 +63,8 @@ describe('CoordinateAxisMapping', () => {
     describe('getPixelsPerUnit', () => {
       it('should calculate correct pixels per unit', () => {
         // World range: 5 units, Screen range: 500 pixels
-        const result = xMapping.getPixelsPerUnit();
-        expect(result).toBe(100);
+        const result = xMapping.getPixelsPerUnitScaled();
+        expect(result.toFloat()).toBe(100);
       });
     });
   });
@@ -133,8 +133,8 @@ describe('CoordinateAxisMapping', () => {
     describe('getPixelsPerUnit', () => {
       it('should calculate correct pixels per unit', () => {
         // World range: 5 units, Screen range: 400 pixels
-        const result = yMapping.getPixelsPerUnit();
-        expect(result).toBe(80);
+        const result = yMapping.getPixelsPerUnitScaled();
+        expect(result.toFloat()).toBe(80);
       });
     });
   });
@@ -170,8 +170,8 @@ describe('CoordinateAxisMapping', () => {
         1
       );
 
-      const result = zeroRangeMapping.getPixelsPerUnit();
-      expect(result).toBe(0);
+      const result = zeroRangeMapping.getPixelsPerUnitScaled();
+      expect(result.toFloat()).toBe(0);
     });
 
     it('should handle identical world positions', () => {
