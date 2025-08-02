@@ -237,12 +237,17 @@ export class AppStore implements ZoomableInterface {
   calculateWorldWindowPrecision(): number {
     // Calculate world window precision N based on X dimension only (per design spec)
     // This ensures aspect ratio preservation and identical grid resolution for both axes
-    const pixelsPerXUnit = this.mapping.x.getPixelsPerUnit();
-    const minSeparation = 5;
+    const pixelsPerXUnitScaled = this.mapping.x.getPixelsPerUnitScaled();
+    const minSeparation = new ScaledFloat(5);
 
     // Direct calculation: maxPrecision = floor(log10(pixelsPerXUnit / minSeparation))
     // This replaces the loop that finds the highest precision where separation >= minSeparation
-    const maxPrecision = Math.floor(Math.log10(pixelsPerXUnit / minSeparation));
+    // Use ScaledFloat division and log10 to handle extreme zoom levels
+    const ratio = ScaledFloat.fromMantissaExponent(
+      pixelsPerXUnitScaled.getMantissa() / minSeparation.getMantissa(),
+      pixelsPerXUnitScaled.getExponent() - minSeparation.getExponent()
+    );
+    const maxPrecision = Math.floor(ratio.log10());
 
     return maxPrecision;
   }
@@ -398,45 +403,60 @@ export class AppStore implements ZoomableInterface {
   }
 
   // Live preview method for px/unit during zoom operations
-  getPreviewPixelsPerXUnit(): number {
+  getPreviewPixelsPerXUnitScaled(): ScaledFloat {
     if (this.previewWorldWindow) {
       // Calculate px/unit based on preview world window using ScaledFloat
       const previewWidth = this.previewWorldWindow.topRight[0].sub(this.previewWorldWindow.bottomLeft[0]);
       const previewWidthScaled = previewWidth.toScaledFloat();
       const screenWidth = new ScaledFloat(this.screenViewport.width);
 
-      const ratio = ScaledFloat.fromMantissaExponent(
+      return ScaledFloat.fromMantissaExponent(
         screenWidth.getMantissa() / previewWidthScaled.getMantissa(),
         screenWidth.getExponent() - previewWidthScaled.getExponent()
       );
-
-      // Convert to number for UI display (safe as this is for display purposes)
-      const result = ratio.toFloatInBounds(-1e308, 1e308);
-      return result !== null ? result : this.mapping.x.getPixelsPerUnit();
     }
-    return this.mapping.x.getPixelsPerUnit();
+    return this.mapping.x.getPixelsPerUnitScaled();
   }
 
-  getPreviewPixelsPerYUnit(): number {
+  getPreviewPixelsPerXUnit(): number {
+    const scaledResult = this.getPreviewPixelsPerXUnitScaled();
+    // Convert to number for UI display (safe as this is for display purposes)
+    const result = scaledResult.toFloatInBounds(-1e308, 1e308);
+    return result !== null ? result : this.mapping.x.getPixelsPerUnit();
+  }
+
+  getPreviewPixelsPerYUnitScaled(): ScaledFloat {
     if (this.previewWorldWindow) {
       // Calculate px/unit based on preview world window using ScaledFloat
       const previewHeight = this.previewWorldWindow.topRight[1].sub(this.previewWorldWindow.bottomLeft[1]);
       const previewHeightScaled = previewHeight.toScaledFloat();
       const screenHeight = new ScaledFloat(this.screenViewport.height);
 
-      const ratio = ScaledFloat.fromMantissaExponent(
+      return ScaledFloat.fromMantissaExponent(
         screenHeight.getMantissa() / previewHeightScaled.getMantissa(),
         screenHeight.getExponent() - previewHeightScaled.getExponent()
       );
-
-      // Convert to number for UI display (safe as this is for display purposes)
-      const result = ratio.toFloatInBounds(-1e308, 1e308);
-      return result !== null ? result : this.mapping.y.getPixelsPerUnit();
     }
-    return this.mapping.y.getPixelsPerUnit();
+    return this.mapping.y.getPixelsPerUnitScaled();
   }
 
-  // Current pixels per unit for X and Y axes
+  getPreviewPixelsPerYUnit(): number {
+    const scaledResult = this.getPreviewPixelsPerYUnitScaled();
+    // Convert to number for UI display (safe as this is for display purposes)
+    const result = scaledResult.toFloatInBounds(-1e308, 1e308);
+    return result !== null ? result : this.mapping.y.getPixelsPerUnit();
+  }
+
+  // Current pixels per unit for X and Y axes - ScaledFloat versions
+  getPixelsPerXUnitScaled(): ScaledFloat {
+    return this.mapping.x.getPixelsPerUnitScaled();
+  }
+
+  getPixelsPerYUnitScaled(): ScaledFloat {
+    return this.mapping.y.getPixelsPerUnitScaled();
+  }
+
+  // Current pixels per unit for X and Y axes - number versions for UI display
   getPixelsPerXUnit(): number {
     return this.mapping.x.getPixelsPerUnit();
   }
