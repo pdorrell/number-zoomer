@@ -46,8 +46,7 @@ export class CoordinateAxisMapping {
 
   worldToScreen(worldPosition: PreciseDecimal): number {
     const worldToScreenScaled = this.worldToScreenScaled(worldPosition);
-    const result = worldToScreenScaled.toFloatInBounds(-1e10, 1e10);
-    return result !== null ? result : 0;
+    return worldToScreenScaled.toFloatBounded(-1e6, 1e6);
   }
 
   worldToScreenScaled(worldPosition: PreciseDecimal): ScaledFloat {
@@ -60,12 +59,6 @@ export class CoordinateAxisMapping {
     return this.screenDirection > 0 ?
       screenBase.add(screenOffset.toFloat()) :
       screenBase.add(-screenOffset.toFloat());
-  }
-
-  getPixelsPerUnit(): number {
-    const pixelsPerUnitScaled = this.getPixelsPerUnitScaled();
-    const result = pixelsPerUnitScaled.toFloatInBounds(-1e308, 1e308);
-    return result !== null ? result : 0;
   }
 
   getPixelsPerUnitScaled(): ScaledFloat {
