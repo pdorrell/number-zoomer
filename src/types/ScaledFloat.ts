@@ -120,6 +120,33 @@ export class ScaledFloat {
     return value;
   }
 
+  toFloatBounded(minValue: float, maxValue: float): float {
+    if (this.mantissa === 0) {
+      return 0;
+    }
+
+    // Check if exponent is too large (would overflow)
+    if (this.exponent > 308) { // Close to Number.MAX_VALUE exponent
+      return this.mantissa > 0 ? maxValue : minValue;
+    }
+
+    // Check if exponent is too small (would underflow to zero)
+    if (this.exponent < -324) { // Close to Number.MIN_VALUE exponent
+      return 0;
+    }
+
+    const value = this.mantissa * Math.pow(10, this.exponent);
+
+    if (value > maxValue) {
+      return maxValue;
+    }
+    if (value < minValue) {
+      return minValue;
+    }
+
+    return value;
+  }
+
   toFloat(): float {
     if (this.mantissa === 0) {
       return 0;
