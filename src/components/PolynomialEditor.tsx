@@ -15,9 +15,7 @@ export const PolynomialEditor: React.FC<PolynomialEditorProps> = observer(({ equ
   const canAddDegree = effectiveMaxDegree < 5;
 
   const handleCoefficientChange = (degree: number, value: number) => {
-    console.log(`[PolynomialEditor] Setting coefficient degree ${degree} to ${value}`);
     equation.setCoefficient(degree, value);
-    console.log(`[PolynomialEditor] New coefficients:`, equation.coefficients);
   };
 
   const handleSliderMouseDown = (degree: number) => {

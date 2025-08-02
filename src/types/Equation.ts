@@ -159,7 +159,6 @@ export class PolynomialEquation {
 
   // Observable actions for editing coefficients
   setCoefficient(degree: number, value: number): void {
-    console.log(`[PolynomialEquation] setCoefficient(${degree}, ${value}) called`);
     // Extend array if necessary
     while (this.coefficients.length <= degree) {
       this.coefficients.push(0);
@@ -168,8 +167,6 @@ export class PolynomialEquation {
 
     // Clean up trailing zeros
     this.trimTrailingZeros();
-    console.log(`[PolynomialEquation] Coefficients after change:`, this.coefficients);
-    console.log(`[PolynomialEquation] Display name:`, this.getDisplayName());
   }
 
   addDegree(): void {

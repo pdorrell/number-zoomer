@@ -12,7 +12,6 @@ interface CoordinatePlaneProps {
 }
 
 export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store, isEditingEquation = false }) => {
-  console.log(`[CoordinatePlane] Rendering with isEditingEquation: ${isEditingEquation}`);
   const containerRef = useRef<HTMLDivElement>(null);
   const outerContainerRef = useRef<HTMLDivElement>(null);
   const [isDraggingPoint, setIsDraggingPoint] = useState(false);
@@ -122,7 +121,6 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
 
         // Only update if dimensions actually changed
         if (newWidth !== store.screenViewport.width || newHeight !== store.screenViewport.height) {
-          console.log('Updating viewport to:', newWidth, newHeight);
           store.updateScreenViewport(newWidth, newHeight);
         }
       }
@@ -402,9 +400,6 @@ export const CoordinatePlane: React.FC<CoordinatePlaneProps> = observer(({ store
 
       // Calculate the relative scale from the pinch start
       const relativeScale = scale / pinchStartScale;
-
-      // Debug the scale values
-      console.log('Pinch scale:', scale, 'Start scale:', pinchStartScale, 'Relative:', relativeScale);
 
       // Use the relative scale for the zoom factor
       store.setZoomFactor('pinch', relativeScale);

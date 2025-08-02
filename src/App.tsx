@@ -15,13 +15,10 @@ export const App: React.FC = observer(() => {
   const [previousEquation, setPreviousEquation] = useState<PolynomialEquation | null>(null);
 
   const handleOpenEditModal = () => {
-    console.log('[App] Opening edit modal');
-    console.log('[App] Current equation coefficients:', store.equation.coefficients);
     // Create a deep copy of the equation for potential cancellation
     const backup = new PolynomialEquation([...store.equation.coefficients]);
     setPreviousEquation(backup);
     setIsEditModalOpen(true);
-    console.log('[App] Edit modal opened, isEditingEquation will be:', true);
   };
 
   const handleSaveEquation = () => {

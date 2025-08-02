@@ -25,7 +25,6 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store, 
   );
 
   const drawCanvas = useCallback(() => {
-    console.log(`[CanvasRenderer] drawCanvas called with renderMode: ${renderMode}, coefficients:`, store.equation.coefficients);
     const canvas = canvasRef.current;
     if (!canvas) return;
 
