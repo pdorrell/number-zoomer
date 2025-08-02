@@ -57,8 +57,8 @@ export class CoordinateAxisMapping {
 
     const screenBase: ScaledFloat = new ScaledFloat(this.screenBase);
     return this.screenDirection > 0 ?
-      screenBase.add(screenOffset.toFloat()) :
-      screenBase.add(-screenOffset.toFloat());
+      screenBase.add(screenOffset) :
+      screenBase.add(screenOffset.neg());
   }
 
   getPixelsPerUnitScaled(): ScaledFloat {

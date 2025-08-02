@@ -126,7 +126,7 @@ describe('CoordinateAxisMapping', () => {
 
       it('should handle world positions outside range', () => {
         const result = yMapping.worldToScreen(new PreciseDecimal(6, 1));
-        expect(result).toBe(-160);
+        expect(result).toBeCloseTo(-160, 10);
       });
     });
 

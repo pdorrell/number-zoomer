@@ -68,7 +68,47 @@ export class ScaledFloat {
     return new ScaledFloat(newMantissa, newExponent);
   }
 
-  add2(value: float): ScaledFloat {
+  neg(): ScaledFloat {
+    if (this.mantissa === 0) {
+      return new ScaledFloat(0);
+    }
+    return ScaledFloat.fromMantissaExponent(-this.mantissa, this.exponent);
+  }
+
+  add(other: ScaledFloat): ScaledFloat {
+    if (this.mantissa === 0) {
+      return ScaledFloat.fromMantissaExponent(other.mantissa, other.exponent);
+    }
+    if (other.mantissa === 0) {
+      return ScaledFloat.fromMantissaExponent(this.mantissa, this.exponent);
+    }
+
+    // Find the maximum exponent
+    const maxExponent = Math.max(this.exponent, other.exponent);
+    
+    // Scale both numbers by reducing exponent by maxExponent
+    const thisScaled = this.mantissa * Math.pow(10, this.exponent - maxExponent);
+    const otherScaled = other.mantissa * Math.pow(10, other.exponent - maxExponent);
+    
+    // Convert to float and add (underflow numbers become zero)
+    const thisFloat = Math.abs(thisScaled) < Number.MIN_VALUE ? 0 : thisScaled;
+    const otherFloat = Math.abs(otherScaled) < Number.MIN_VALUE ? 0 : otherScaled;
+    const resultFloat = thisFloat + otherFloat;
+    
+    // Convert result to ScaledFloat and rescale by adding maxExponent back
+    if (resultFloat === 0) {
+      return new ScaledFloat(0);
+    }
+    
+    return new ScaledFloat(resultFloat, maxExponent);
+  }
+
+  sub(other: ScaledFloat): ScaledFloat {
+    return this.add(other.neg());
+  }
+
+  // Keep the old add(float) method for backward compatibility
+  addFloat(value: float): ScaledFloat {
     if (this.mantissa === 0) {
       return new ScaledFloat(value);
     }
@@ -80,20 +120,6 @@ export class ScaledFloat {
     const thisValue = this.mantissa * Math.pow(10, this.exponent);
     const result = thisValue + value;
     return new ScaledFloat(result);
-  }
-
-  sub(other: ScaledFloat): ScaledFloat {
-    if (other.mantissa === 0) {
-      return ScaledFloat.fromMantissaExponent(this.mantissa, this.exponent);
-    }
-    if (this.mantissa === 0) {
-      return ScaledFloat.fromMantissaExponent(-other.mantissa, other.exponent);
-    }
-
-    // Convert both to the same scale for subtraction
-    const thisValue = this.toFloat();
-    const otherValue = other.toFloat();
-    return new ScaledFloat(thisValue - otherValue);
   }
 
   toFloatInBounds(minValue: float, maxValue: float): float | null {
@@ -184,22 +210,22 @@ export class ScaledFloat {
   // Vector operations for 2D points/vectors
   static addVector(point: [ScaledFloat, ScaledFloat], vector: [ScaledFloat, ScaledFloat]): [ScaledFloat, ScaledFloat] {
     return [
-      ScaledFloat.fromMantissaExponent(point[0].mantissa + vector[0].toFloat(), point[0].exponent),
-      ScaledFloat.fromMantissaExponent(point[1].mantissa + vector[1].toFloat(), point[1].exponent)
+      point[0].add(vector[0]),
+      point[1].add(vector[1])
     ];
   }
 
   static subtractPoints(point1: [ScaledFloat, ScaledFloat], point2: [ScaledFloat, ScaledFloat]): [ScaledFloat, ScaledFloat] {
     return [
-      new ScaledFloat(point1[0].toFloat() - point2[0].toFloat()),
-      new ScaledFloat(point1[1].toFloat() - point2[1].toFloat())
+      point1[0].sub(point2[0]),
+      point1[1].sub(point2[1])
     ];
   }
 
   static multiplyVector(vector: [ScaledFloat, ScaledFloat], scalar: ScaledFloat): [ScaledFloat, ScaledFloat] {
     return [
-      ScaledFloat.fromMantissaExponent(vector[0].mantissa * scalar.toFloat(), vector[0].exponent),
-      ScaledFloat.fromMantissaExponent(vector[1].mantissa * scalar.toFloat(), vector[1].exponent)
+      vector[0].mulScaled(scalar),
+      vector[1].mulScaled(scalar)
     ];
   }
 }
