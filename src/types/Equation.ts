@@ -1,6 +1,7 @@
 import { makeObservable, observable, action } from 'mobx';
 import { PreciseDecimal } from './Decimal';
 import { Point, WorldWindow } from './Coordinate';
+import { LinearIntersectionCalculator } from '@/utils/LinearIntersectionCalculator';
 
 export interface EquationConfig {
   type: 'polynomial';
@@ -136,11 +137,19 @@ export class PolynomialEquation {
     const xMax = worldWindow.topRight[0];
 
     if (degree <= 1) {
-      // Linear or constant, only need two points
-      return [
-        [xMin, this.evaluate(xMin)],
-        [xMax, this.evaluate(xMax)]
-      ];
+      // Use linear intersection calculator for precise rectangle edge intersections
+      const calculator = new LinearIntersectionCalculator(worldWindow);
+      const fAtXMin = this.evaluate(xMin);
+      const fAtXMax = this.evaluate(xMax);
+
+      const result = calculator.calculateIntersection(fAtXMin, fAtXMax);
+
+      if (result.hasIntersection) {
+        return result.points;
+      } else {
+        // Line doesn't intersect the rectangle
+        return [];
+      }
     }
 
     // Higher degree polynomials need more points for smooth curves
