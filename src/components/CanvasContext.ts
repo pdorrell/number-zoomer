@@ -118,6 +118,72 @@ export class CanvasContext {
     return intersectionX >= minX && intersectionX <= maxX;
   }
 
+  private isPointYVisible(y: number): boolean {
+    // Extended viewport includes extension beyond the normal viewport
+    // Extension offset represents the negative offset, so actual extended range is:
+    const minY = this.extensionOffset.y; // This is negative
+    const maxY = this.screenViewport.height - this.extensionOffset.y; // This accounts for extension
+    return y >= minY && y <= maxY;
+  }
+
+  private findVisibleLineSegment(screenPoints: any[], worldPoints: any[]): { startIdx: number; endIdx: number } | null {
+    if (screenPoints.length === 0) return null;
+
+    // Find starting point
+    let startIdx = -1;
+    
+    // If first point is visible, use it
+    if (this.isPointYVisible(screenPoints[0].y)) {
+      startIdx = 0;
+    } else {
+      // Find last invisible point where next point is visible OR crosses visible area
+      for (let i = 0; i < screenPoints.length - 1; i++) {
+        const currY = screenPoints[i].y;
+        const nextY = screenPoints[i + 1].y;
+        
+        if (!this.isPointYVisible(currY)) {
+          // Next point is visible, or they're on opposite sides of visible area
+          if (this.isPointYVisible(nextY) || 
+              (currY < this.extensionOffset.y && nextY > this.screenViewport.height - this.extensionOffset.y) ||
+              (currY > this.screenViewport.height - this.extensionOffset.y && nextY < this.extensionOffset.y)) {
+            startIdx = i;
+            break;
+          }
+        }
+      }
+    }
+    
+    if (startIdx === -1) return null; // No visible segment found
+
+    // Find ending point
+    let endIdx = -1;
+    
+    // If last point is visible, use it
+    if (this.isPointYVisible(screenPoints[screenPoints.length - 1].y)) {
+      endIdx = screenPoints.length - 1;
+    } else {
+      // Search backwards from the end
+      for (let i = screenPoints.length - 1; i > 0; i--) {
+        const currY = screenPoints[i].y;
+        const prevY = screenPoints[i - 1].y;
+        
+        if (!this.isPointYVisible(currY)) {
+          // Previous point is visible, or they're on opposite sides of visible area
+          if (this.isPointYVisible(prevY) ||
+              (currY < this.extensionOffset.y && prevY > this.screenViewport.height - this.extensionOffset.y) ||
+              (currY > this.screenViewport.height - this.extensionOffset.y && prevY < this.extensionOffset.y)) {
+            endIdx = i;
+            break;
+          }
+        }
+      }
+    }
+    
+    if (endIdx === -1 || endIdx < startIdx) return null;
+    
+    return { startIdx, endIdx };
+  }
+
   drawEquationGraph(graph: CanvasEquationGraph, equationColor: string = '#dc3545'): void {
     const { screenPoints, worldPoints, shouldDrawAsCurve } = graph;
 
@@ -127,12 +193,11 @@ export class CanvasContext {
     this.ctx.lineWidth = 2;
     this.ctx.beginPath();
 
-    // Adjust first point for canvas offset
-    const adjustedFirst = screenPoints[0].add(this.extensionOffset);
-    this.ctx.moveTo(adjustedFirst.x, adjustedFirst.y);
-
     if (shouldDrawAsCurve && screenPoints.length > 2) {
       // Draw as smooth curve for quadratic equations at low zoom
+      const adjustedFirst = screenPoints[0].add(this.extensionOffset);
+      this.ctx.moveTo(adjustedFirst.x, adjustedFirst.y);
+      
       for (let i = 1; i < screenPoints.length; i++) {
         const adjusted = screenPoints[i].add(this.extensionOffset);
 
@@ -152,23 +217,28 @@ export class CanvasContext {
       }
     } else {
       // Draw as straight line for linear equations or high zoom quadratic
-      const lastPoint = screenPoints[screenPoints.length - 1];
-      const adjustedLast = lastPoint.add(this.extensionOffset);
-
-      // Log the single line segment for linear equations
-      if (screenPoints.length >= 2) {
-        const firstPoint = screenPoints[0];
-        const firstWorld = worldPoints[0];
-        const lastWorld = worldPoints[worldPoints.length - 1];
-
-        if (this.isLineSegmentVisible(firstPoint.x, firstPoint.y, lastPoint.x, lastPoint.y)) {
-          console.log(`📏 Drawing single line segment:
-  World: (${firstWorld[0].toFixed(6)}, ${firstWorld[1].toFixed(6)}) → (${lastWorld[0].toFixed(6)}, ${lastWorld[1].toFixed(6)})
-  Screen: (${firstPoint.x.toFixed(2)}, ${firstPoint.y.toFixed(2)}) → (${lastPoint.x.toFixed(2)}, ${lastPoint.y.toFixed(2)})`);
-        }
+      // Find the visible segment to draw
+      const visibleSegment = this.findVisibleLineSegment(screenPoints, worldPoints);
+      
+      if (visibleSegment) {
+        const startPoint = screenPoints[visibleSegment.startIdx];
+        const endPoint = screenPoints[visibleSegment.endIdx];
+        const startWorld = worldPoints[visibleSegment.startIdx];
+        const endWorld = worldPoints[visibleSegment.endIdx];
+        
+        const adjustedStart = startPoint.add(this.extensionOffset);
+        const adjustedEnd = endPoint.add(this.extensionOffset);
+        
+        console.log(`📏 Drawing visible line segment (${visibleSegment.startIdx} → ${visibleSegment.endIdx}):
+  World: (${startWorld[0].toFixed(6)}, ${startWorld[1].toFixed(6)}) → (${endWorld[0].toFixed(6)}, ${endWorld[1].toFixed(6)})
+  Screen: (${startPoint.x.toFixed(2)}, ${startPoint.y.toFixed(2)}) → (${endPoint.x.toFixed(2)}, ${endPoint.y.toFixed(2)})`);
+        
+        this.ctx.moveTo(adjustedStart.x, adjustedStart.y);
+        this.ctx.lineTo(adjustedEnd.x, adjustedEnd.y);
+      } else {
+        console.log('📏 No visible line segment found - not drawing anything');
+        return; // Don't stroke if nothing to draw
       }
-
-      this.ctx.lineTo(adjustedLast.x, adjustedLast.y);
     }
     this.ctx.stroke();
   }
