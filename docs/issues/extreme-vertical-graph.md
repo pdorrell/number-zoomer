@@ -40,7 +40,8 @@ What currently happens in practice as the user zooms out is:
   but it will not be the full red line from 0 to the edge (or edges).
   
 One possible solution is simply to make sure that X=0 is always included in the set of X values
-if X=0 is indeed within the current world X-range.
+if X=0 is indeed within the current world X-range. (This means that 0 will have to be inserted
+into the list of positions after the last negative position and before the first positive position.)
 
 This will force at least one screen point to appear in the filtered `screenPoints` variable
 in `canvasEquationGraph`. However this could result in a situation where there are no 
@@ -60,6 +61,5 @@ So a full solution to the problem might be:
 * If zoom-out is over a certain threshold:
     * ensure that X=0 is included in the equation points returned from this.equation.generatePoints
     * If there is no X>0 point in the equation points, add a vertical line from 0,0 in the 
-      relevant direction that extends (well) beyond the screen edge.
+      relevant direction that extends beyond the screen edge.
     * Similarly if there is no X<0 point.
-

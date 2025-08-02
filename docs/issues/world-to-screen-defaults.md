@@ -48,4 +48,3 @@ In effect:
 A possible solution might be to somehow mark PreciseDecimals representing world window points derived
 from user interactions on the screen as belonging to a special sub-type that is (more-or-less) guaranteed
 to be mappable back to a non-null screen point.
-
