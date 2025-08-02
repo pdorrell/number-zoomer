@@ -36,10 +36,12 @@ export class CanvasGridLines {
 
 export class CanvasEquationGraph {
   screenPoints: ScreenPoint[];
+  worldPoints: [number, number][]; // Store world coordinates for debugging
   shouldDrawAsCurve: boolean;
 
-  constructor(screenPoints: ScreenPoint[], shouldDrawAsCurve: boolean) {
+  constructor(screenPoints: ScreenPoint[], worldPoints: [number, number][], shouldDrawAsCurve: boolean) {
     this.screenPoints = screenPoints;
+    this.worldPoints = worldPoints;
     this.shouldDrawAsCurve = shouldDrawAsCurve;
   }
 }

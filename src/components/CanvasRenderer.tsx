@@ -31,7 +31,7 @@ export const CanvasRenderer: React.FC<CanvasRendererProps> = observer(({ store, 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const canvasContext = new CanvasContext(canvas, ctx, extensionOffset);
+    const canvasContext = new CanvasContext(canvas, ctx, extensionOffset, store.screenViewport);
 
     // Clear canvas
     canvasContext.clear();

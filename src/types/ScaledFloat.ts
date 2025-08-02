@@ -68,7 +68,7 @@ export class ScaledFloat {
     return new ScaledFloat(newMantissa, newExponent);
   }
 
-  add(value: float): ScaledFloat {
+  add2(value: float): ScaledFloat {
     if (this.mantissa === 0) {
       return new ScaledFloat(value);
     }
