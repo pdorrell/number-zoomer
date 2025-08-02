@@ -125,10 +125,11 @@ export class GridRenderer {
   private calculateGridLineColor(precision: number, maxPrecision: number): string {
     const thickness = this.calculateThickness(precision, maxPrecision);
 
-    // Calculate pixels per unit for the current precision level
-    const pixelsPerUnit = this.mapping.x.getPixelsPerUnit();
-    const multiplier = Math.pow(10, precision);
-    const pixelsSeparation = pixelsPerUnit / multiplier;
+    // Calculate pixels per unit for the current precision level using ScaledFloat
+    const pixelsPerUnitScaled = this.mapping.x.getPixelsPerUnitScaled();
+    const precisionScale = new ScaledFloat(1, -precision);
+    const pixelsSeparationScaled = pixelsPerUnitScaled.mulScaled(precisionScale);
+    const pixelsSeparation = pixelsSeparationScaled.toFloatBounded(0, 20);
 
     // Define color transition: 10% grey at 5px to normal grey at 10px
     const thinColor = "#495057";  // Normal grey (thick lines)
