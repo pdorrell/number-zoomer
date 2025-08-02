@@ -418,13 +418,6 @@ export class AppStore implements ZoomableInterface {
     return this.mapping.x.getPixelsPerUnitScaled();
   }
 
-  getPreviewPixelsPerXUnit(): number {
-    const scaledResult = this.getPreviewPixelsPerXUnitScaled();
-    // Convert to number for UI display (safe as this is for display purposes)
-    const result = scaledResult.toFloatInBounds(-1e308, 1e308);
-    return result !== null ? result : this.mapping.x.getPixelsPerUnit();
-  }
-
   getPreviewPixelsPerYUnitScaled(): ScaledFloat {
     if (this.previewWorldWindow) {
       // Calculate px/unit based on preview world window using ScaledFloat
@@ -440,13 +433,6 @@ export class AppStore implements ZoomableInterface {
     return this.mapping.y.getPixelsPerUnitScaled();
   }
 
-  getPreviewPixelsPerYUnit(): number {
-    const scaledResult = this.getPreviewPixelsPerYUnitScaled();
-    // Convert to number for UI display (safe as this is for display purposes)
-    const result = scaledResult.toFloatInBounds(-1e308, 1e308);
-    return result !== null ? result : this.mapping.y.getPixelsPerUnit();
-  }
-
   // Current pixels per unit for X and Y axes - ScaledFloat versions
   getPixelsPerXUnitScaled(): ScaledFloat {
     return this.mapping.x.getPixelsPerUnitScaled();
@@ -456,14 +442,6 @@ export class AppStore implements ZoomableInterface {
     return this.mapping.y.getPixelsPerUnitScaled();
   }
 
-  // Current pixels per unit for X and Y axes - number versions for UI display
-  getPixelsPerXUnit(): number {
-    return this.mapping.x.getPixelsPerUnit();
-  }
-
-  getPixelsPerYUnit(): number {
-    return this.mapping.y.getPixelsPerUnit();
-  }
 
   isCurrentPointVisible(): boolean {
     // Check if current point is within the current world window
