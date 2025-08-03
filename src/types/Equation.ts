@@ -41,6 +41,28 @@ export class PolynomialEquation {
     return result;
   }
 
+  evaluateWithPrecision(x: PreciseDecimal, worldWindow: WorldWindow): PreciseDecimal {
+    // Calculate required precision based on world window scale
+    const xRange = worldWindow.topRight[0].sub(worldWindow.bottomLeft[0]);
+    const yRange = worldWindow.topRight[1].sub(worldWindow.bottomLeft[1]);
+    
+    // Use the smaller range to determine precision needed
+    const minRange = xRange.abs().lte(yRange.abs()) ? xRange : yRange;
+    const rangeMagnitude = Math.abs(minRange.toNumber());
+    
+    // Calculate decimal places needed: if range is 0.001, we need at least 3 decimal places
+    const decimalPlaces = rangeMagnitude > 0 ? Math.max(3, Math.ceil(-Math.log10(rangeMagnitude)) + 3) : 15;
+    
+    // Cap at reasonable maximum to avoid excessive precision
+    const windowPrecision = Math.min(decimalPlaces, 20);
+    
+    // Evaluate normally first
+    const result = this.evaluate(x);
+    
+    // Quantize to appropriate precision for the world window
+    return result.quantize(windowPrecision);
+  }
+
   getType(): 'polynomial' {
     return 'polynomial';
   }
@@ -186,13 +208,28 @@ export class PolynomialEquation {
       // Don't re-evaluate the polynomial at intersection X coordinates
       const xMin = worldWindow.bottomLeft[0];
       const xMax = worldWindow.topRight[0];
-      const calculator = new LinearIntersectionCalculator(worldWindow);
-      const fAtXMin = this.evaluate(xMin);
-      const fAtXMax = this.evaluate(xMax);
+      
+      // Calculate appropriate precision for the world window
+      const xRange = worldWindow.topRight[0].sub(worldWindow.bottomLeft[0]);
+      const yRange = worldWindow.topRight[1].sub(worldWindow.bottomLeft[1]);
+      const minRange = xRange.abs().lte(yRange.abs()) ? xRange : yRange;
+      const rangeMagnitude = Math.abs(minRange.toNumber());
+      const decimalPlaces = rangeMagnitude > 0 ? Math.max(3, Math.ceil(-Math.log10(rangeMagnitude)) + 3) : 15;
+      const windowPrecision = Math.min(decimalPlaces, 20);
+      
+      const calculator = new LinearIntersectionCalculator(worldWindow, windowPrecision);
+      const fAtXMin = this.evaluateWithPrecision(xMin, worldWindow);
+      const fAtXMax = this.evaluateWithPrecision(xMax, worldWindow);
 
       const result = calculator.calculateIntersection(fAtXMin, fAtXMax);
 
       if (result.hasIntersection) {
+        console.log(`🔢 Linear approximation calculation:
+  xMin: ${xMin.toString()}
+  xMax: ${xMax.toString()}
+  f(xMin): ${fAtXMin.toString()}
+  f(xMax): ${fAtXMax.toString()}
+  Intersection points: [${result.points[0][0].toString()}, ${result.points[0][1].toString()}] → [${result.points[1][0].toString()}, ${result.points[1][1].toString()}]`);
         return result.points;
       } else {
         return [];
@@ -201,7 +238,7 @@ export class PolynomialEquation {
 
     // For curves, use X values and evaluate the polynomial
     const xValues = this.generateXValues(worldWindow, screenWidth);
-    return xValues.map(x => [x, this.evaluate(x)] as Point);
+    return xValues.map(x => [x, this.evaluateWithPrecision(x, worldWindow)] as Point);
   }
 
   // Observable actions for editing coefficients
