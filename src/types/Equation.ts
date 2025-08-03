@@ -144,12 +144,38 @@ export class PolynomialEquation {
       return false; // Linear or constant, draw as line
     }
 
-    // For higher degrees, use similar logic to quadratic
-    const xRange = worldWindow.topRight[0].sub(worldWindow.bottomLeft[0]);
+    // Check if the function actually behaves linearly within the world window
+    const xMin = worldWindow.bottomLeft[0];
+    const xMax = worldWindow.topRight[0];
+    const xRange = xMax.sub(xMin);
+    
+    // If range is very small, it might appear linear
     const rangeSize = xRange.abs();
-    const threshold = new PreciseDecimal(0.1);
-
-    return rangeSize.gte(threshold);
+    const smallRangeThreshold = new PreciseDecimal(0.01);
+    
+    if (rangeSize.lte(smallRangeThreshold)) {
+      // For very small ranges, check if linear approximation is accurate
+      // Sample the function at the midpoint and compare to linear interpolation
+      const xMid = xMin.add(xRange.div(new PreciseDecimal(2)));
+      
+      const fAtXMin = this.evaluate(xMin);
+      const fAtXMax = this.evaluate(xMax);
+      const fAtXMid = this.evaluate(xMid);
+      
+      // Linear interpolation at midpoint
+      const linearAtMid = fAtXMin.add(fAtXMax.sub(fAtXMin).div(new PreciseDecimal(2)));
+      
+      // Check how much the actual function deviates from linear approximation
+      const deviation = fAtXMid.sub(linearAtMid).abs();
+      const yRange = worldWindow.topRight[1].sub(worldWindow.bottomLeft[1]).abs();
+      
+      // If deviation is less than 0.01% of Y range, treat as linear
+      const deviationThreshold = yRange.mul(new PreciseDecimal(0.0001));
+      return deviation.gte(deviationThreshold);
+    }
+    
+    // For larger ranges, always draw as curve
+    return true;
   }
 
   generateXValues(worldWindow: WorldWindow, screenWidth: number): PreciseDecimal[] {
