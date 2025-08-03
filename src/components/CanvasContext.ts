@@ -131,7 +131,7 @@ export class CanvasContext {
 
     // Find starting point
     let startIdx = -1;
-    
+
     // If first point is visible, use it
     if (this.isPointYVisible(screenPoints[0].y)) {
       startIdx = 0;
@@ -140,10 +140,10 @@ export class CanvasContext {
       for (let i = 0; i < screenPoints.length - 1; i++) {
         const currY = screenPoints[i].y;
         const nextY = screenPoints[i + 1].y;
-        
+
         if (!this.isPointYVisible(currY)) {
           // Next point is visible, or they're on opposite sides of visible area
-          if (this.isPointYVisible(nextY) || 
+          if (this.isPointYVisible(nextY) ||
               (currY < this.extensionOffset.y && nextY > this.screenViewport.height - this.extensionOffset.y) ||
               (currY > this.screenViewport.height - this.extensionOffset.y && nextY < this.extensionOffset.y)) {
             startIdx = i;
@@ -152,12 +152,12 @@ export class CanvasContext {
         }
       }
     }
-    
+
     if (startIdx === -1) return null; // No visible segment found
 
     // Find ending point
     let endIdx = -1;
-    
+
     // If last point is visible, use it
     if (this.isPointYVisible(screenPoints[screenPoints.length - 1].y)) {
       endIdx = screenPoints.length - 1;
@@ -166,7 +166,7 @@ export class CanvasContext {
       for (let i = screenPoints.length - 1; i > 0; i--) {
         const currY = screenPoints[i].y;
         const prevY = screenPoints[i - 1].y;
-        
+
         if (!this.isPointYVisible(currY)) {
           // Previous point is visible, or they're on opposite sides of visible area
           if (this.isPointYVisible(prevY) ||
@@ -178,9 +178,9 @@ export class CanvasContext {
         }
       }
     }
-    
+
     if (endIdx === -1 || endIdx < startIdx) return null;
-    
+
     return { startIdx, endIdx };
   }
 
@@ -201,7 +201,7 @@ export class CanvasContext {
       // Draw as smooth curve for quadratic equations at low zoom
       const adjustedFirst = screenPoints[0].add(this.extensionOffset);
       this.ctx.moveTo(adjustedFirst.x, adjustedFirst.y);
-      
+
       for (let i = 1; i < screenPoints.length; i++) {
         const adjusted = screenPoints[i].add(this.extensionOffset);
 
@@ -227,33 +227,33 @@ export class CanvasContext {
         const endPoint = screenPoints[1];
         const startWorld = worldPoints[0];
         const endWorld = worldPoints[1];
-        
+
         const adjustedStart = startPoint.add(this.extensionOffset);
         const adjustedEnd = endPoint.add(this.extensionOffset);
-        
+
         console.log(`📏 Drawing linear intersection line:
   World: (${startWorld[0].toFixed(6)}, ${startWorld[1].toFixed(6)}) → (${endWorld[0].toFixed(6)}, ${endWorld[1].toFixed(6)})
   Screen: (${startPoint.x.toFixed(2)}, ${startPoint.y.toFixed(2)}) → (${endPoint.x.toFixed(2)}, ${endPoint.y.toFixed(2)})`);
-        
+
         this.ctx.moveTo(adjustedStart.x, adjustedStart.y);
         this.ctx.lineTo(adjustedEnd.x, adjustedEnd.y);
       } else {
         // For multiple points, find the visible segment to draw
         const visibleSegment = this.findVisibleLineSegment(screenPoints, worldPoints);
-        
+
         if (visibleSegment) {
           const startPoint = screenPoints[visibleSegment.startIdx];
           const endPoint = screenPoints[visibleSegment.endIdx];
           const startWorld = worldPoints[visibleSegment.startIdx];
           const endWorld = worldPoints[visibleSegment.endIdx];
-          
+
           const adjustedStart = startPoint.add(this.extensionOffset);
           const adjustedEnd = endPoint.add(this.extensionOffset);
-          
+
           console.log(`📏 Drawing visible line segment (${visibleSegment.startIdx} → ${visibleSegment.endIdx}):
   World: (${startWorld[0].toFixed(6)}, ${startWorld[1].toFixed(6)}) → (${endWorld[0].toFixed(6)}, ${endWorld[1].toFixed(6)})
   Screen: (${startPoint.x.toFixed(2)}, ${startPoint.y.toFixed(2)}) → (${endPoint.x.toFixed(2)}, ${endPoint.y.toFixed(2)})`);
-          
+
           this.ctx.moveTo(adjustedStart.x, adjustedStart.y);
           this.ctx.lineTo(adjustedEnd.x, adjustedEnd.y);
         } else {

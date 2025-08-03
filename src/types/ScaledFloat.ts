@@ -85,21 +85,21 @@ export class ScaledFloat {
 
     // Find the maximum exponent
     const maxExponent = Math.max(this.exponent, other.exponent);
-    
+
     // Scale both numbers by reducing exponent by maxExponent
     const thisScaled = this.mantissa * Math.pow(10, this.exponent - maxExponent);
     const otherScaled = other.mantissa * Math.pow(10, other.exponent - maxExponent);
-    
+
     // Convert to float and add (underflow numbers become zero)
     const thisFloat = Math.abs(thisScaled) < Number.MIN_VALUE ? 0 : thisScaled;
     const otherFloat = Math.abs(otherScaled) < Number.MIN_VALUE ? 0 : otherScaled;
     const resultFloat = thisFloat + otherFloat;
-    
+
     // Convert result to ScaledFloat and rescale by adding maxExponent back
     if (resultFloat === 0) {
       return new ScaledFloat(0);
     }
-    
+
     return new ScaledFloat(resultFloat, maxExponent);
   }
 
