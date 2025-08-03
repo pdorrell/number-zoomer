@@ -15,7 +15,7 @@ export class LinearIntersectionCalculator {
   private h: PreciseDecimal; // height
   private precision: number; // precision for calculations
 
-  constructor(worldWindow: WorldWindow, precision: number = 15) {
+  constructor(worldWindow: WorldWindow, precision: number = 50) {
     this.xMin = worldWindow.bottomLeft[0];
     this.xMax = worldWindow.topRight[0];
     this.yMin = worldWindow.bottomLeft[1];
@@ -123,15 +123,15 @@ export class LinearIntersectionCalculator {
 
     // G(v) = (v - b) / a
     const result = targetV.sub(b).div(a);
-    return result.quantize(this.precision);
+    return result;
   }
 
   private createResult(startU: PreciseDecimal, startV: PreciseDecimal, endU: PreciseDecimal, endV: PreciseDecimal): IntersectionResult {
-    // Transform back to world coordinates
-    const startX = this.xMin.add(startU).quantize(this.precision);
-    const startY = this.yMin.add(startV).quantize(this.precision);
-    const endX = this.xMin.add(endU).quantize(this.precision);
-    const endY = this.yMin.add(endV).quantize(this.precision);
+    // Transform back to world coordinates - preserve full precision
+    const startX = this.xMin.add(startU);
+    const startY = this.yMin.add(startV);
+    const endX = this.xMin.add(endU);
+    const endY = this.yMin.add(endV);
 
     return {
       points: [

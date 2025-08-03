@@ -235,17 +235,10 @@ export class PolynomialEquation {
       const xMin = worldWindow.bottomLeft[0];
       const xMax = worldWindow.topRight[0];
       
-      // Calculate appropriate precision for the world window
-      const xRange = worldWindow.topRight[0].sub(worldWindow.bottomLeft[0]);
-      const yRange = worldWindow.topRight[1].sub(worldWindow.bottomLeft[1]);
-      const minRange = xRange.abs().lte(yRange.abs()) ? xRange : yRange;
-      const rangeMagnitude = Math.abs(minRange.toNumber());
-      const decimalPlaces = rangeMagnitude > 0 ? Math.max(3, Math.ceil(-Math.log10(rangeMagnitude)) + 3) : 15;
-      const windowPrecision = Math.min(decimalPlaces, 20);
-      
-      const calculator = new LinearIntersectionCalculator(worldWindow, windowPrecision);
-      const fAtXMin = this.evaluateWithPrecision(xMin, worldWindow);
-      const fAtXMax = this.evaluateWithPrecision(xMax, worldWindow);
+      // For linear approximation at extreme zoom, don't limit precision
+      const calculator = new LinearIntersectionCalculator(worldWindow);
+      const fAtXMin = this.evaluate(xMin);
+      const fAtXMax = this.evaluate(xMax);
 
       const result = calculator.calculateIntersection(fAtXMin, fAtXMax);
 
