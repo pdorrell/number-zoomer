@@ -189,7 +189,11 @@ export class CanvasContext {
 
     if (screenPoints.length === 0) return;
 
-    this.ctx.strokeStyle = equationColor;
+    // Use blue for single line segments (linear equations), red for curves
+    const isSingleLineSegment = screenPoints.length === 2 && !shouldDrawAsCurve;
+    const lineColor = isSingleLineSegment ? '#007bff' : equationColor;
+
+    this.ctx.strokeStyle = lineColor;
     this.ctx.lineWidth = 2;
     this.ctx.beginPath();
 

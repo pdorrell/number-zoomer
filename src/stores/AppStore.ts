@@ -74,7 +74,7 @@ export class AppStore implements ZoomableInterface {
       return new ScreenPoint(screenCoord.x, screenCoord.y);
     });
     const worldPoints = equationPoints.map(point => [point[0].toNumber(), point[1].toNumber()] as [number, number]);
-    const shouldDrawAsCurve = this.equation.shouldDrawAsCurve(this.worldWindow);
+    const shouldDrawAsCurve = this.equation.shouldDrawAsCurve(extendedWorldWindow);
     return new CanvasEquationGraph(screenPoints, worldPoints, shouldDrawAsCurve);
   }
 

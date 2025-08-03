@@ -125,7 +125,7 @@ export class PolynomialEquation {
     // For higher degrees, use similar logic to quadratic
     const xRange = worldWindow.topRight[0].sub(worldWindow.bottomLeft[0]);
     const rangeSize = xRange.abs();
-    const threshold = new PreciseDecimal(0.01);
+    const threshold = new PreciseDecimal(0.1);
 
     return rangeSize.gte(threshold);
   }
@@ -136,7 +136,13 @@ export class PolynomialEquation {
     const xMin = worldWindow.bottomLeft[0];
     const xMax = worldWindow.topRight[0];
 
-    if (degree <= 1) {
+    // Use linear intersection calculator when:
+    // 1. Polynomial is actually linear (degree <= 1), OR
+    // 2. Any polynomial when zoomed in very close (shouldDrawAsCurve = false)
+    const shouldDrawAsCurve = this.shouldDrawAsCurve(worldWindow);
+    const shouldUseLinearApproximation = degree <= 1 || !shouldDrawAsCurve;
+
+    if (shouldUseLinearApproximation) {
       // Use linear intersection calculator for precise rectangle edge intersections
       const calculator = new LinearIntersectionCalculator(worldWindow);
       const fAtXMin = this.evaluate(xMin);
