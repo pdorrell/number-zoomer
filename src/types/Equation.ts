@@ -159,14 +159,42 @@ export class PolynomialEquation {
     }
 
     // Higher degree polynomials need more points for smooth curves
-    const xRange = xMax.sub(xMin);
     const numPoints = 4 * Math.min(screenWidth, 200);
-    const xValues: PreciseDecimal[] = [];
+    return this.generateXValuesForSmoothCurve(xMin, xMax, numPoints);
+  }
 
-    for (let i = 0; i <= numPoints; i++) {
-      const ratio = i / numPoints;
-      const x = xMin.add(xRange.mul(new PreciseDecimal(ratio)));
-      xValues.push(x);
+  generateXValuesForSmoothCurve(xMin: PreciseDecimal, xMax: PreciseDecimal, numPoints: number): PreciseDecimal[] {
+    const xRange = xMax.sub(xMin);
+
+    // Calculate step size with appropriate precision for the current world window
+    // Use the range magnitude to determine precision needed
+    const rangeMagnitude = Math.max(Math.abs(xMin.toNumber()), Math.abs(xMax.toNumber()));
+    const precisionNeeded = Math.max(10, Math.ceil(Math.log10(rangeMagnitude)) + 6);
+    const step = xRange.div(new PreciseDecimal(numPoints));
+    const stepQuantized = step.quantize(precisionNeeded);
+
+    const xValues: PreciseDecimal[] = [];
+    const zero = new PreciseDecimal(0);
+    let current = xMin;
+
+    // Generate points from xMin, adding step each time
+    while (current.lte(xMax)) {
+      xValues.push(current);
+      current = current.add(stepQuantized);
+    }
+
+    // Special case: if xMin <= 0 <= xMax, ensure exact 0 is included
+    // This guarantees we sample the function at x=0 which may be a critical point
+    if (xMin.lte(zero) && zero.lte(xMax)) {
+      // Find insertion point: after last negative, before first positive
+      let insertIndex = xValues.length;
+      for (let i = 0; i < xValues.length; i++) {
+        if (xValues[i].gte(zero)) {
+          insertIndex = i;
+          break;
+        }
+      }
+      xValues.splice(insertIndex, 0, zero);
     }
 
     return xValues;
