@@ -130,9 +130,8 @@ export class PolynomialEquation {
     return rangeSize.gte(threshold);
   }
 
-  generatePoints(worldWindow: WorldWindow, screenWidth: number): Point[] {
+  generateXValues(worldWindow: WorldWindow, screenWidth: number): PreciseDecimal[] {
     const degree = this.getDegree();
-    const points: Point[] = [];
     const xMin = worldWindow.bottomLeft[0];
     const xMax = worldWindow.topRight[0];
 
@@ -151,7 +150,8 @@ export class PolynomialEquation {
       const result = calculator.calculateIntersection(fAtXMin, fAtXMax);
 
       if (result.hasIntersection) {
-        return result.points;
+        // Extract X values from intersection points
+        return result.points.map(point => point[0]);
       } else {
         // Line doesn't intersect the rectangle
         return [];
@@ -161,15 +161,20 @@ export class PolynomialEquation {
     // Higher degree polynomials need more points for smooth curves
     const xRange = xMax.sub(xMin);
     const numPoints = 4 * Math.min(screenWidth, 200);
+    const xValues: PreciseDecimal[] = [];
 
     for (let i = 0; i <= numPoints; i++) {
       const ratio = i / numPoints;
       const x = xMin.add(xRange.mul(new PreciseDecimal(ratio)));
-      const y = this.evaluate(x);
-      points.push([x, y]);
+      xValues.push(x);
     }
 
-    return points;
+    return xValues;
+  }
+
+  generatePoints(worldWindow: WorldWindow, screenWidth: number): Point[] {
+    const xValues = this.generateXValues(worldWindow, screenWidth);
+    return xValues.map(x => [x, this.evaluate(x)] as Point);
   }
 
   // Observable actions for editing coefficients
