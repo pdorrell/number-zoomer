@@ -221,27 +221,45 @@ export class CanvasContext {
       }
     } else {
       // Draw as straight line for linear equations or high zoom quadratic
-      // Find the visible segment to draw
-      const visibleSegment = this.findVisibleLineSegment(screenPoints, worldPoints);
-      
-      if (visibleSegment) {
-        const startPoint = screenPoints[visibleSegment.startIdx];
-        const endPoint = screenPoints[visibleSegment.endIdx];
-        const startWorld = worldPoints[visibleSegment.startIdx];
-        const endWorld = worldPoints[visibleSegment.endIdx];
+      if (screenPoints.length === 2) {
+        // For exactly 2 points (linear intersection results), draw directly
+        const startPoint = screenPoints[0];
+        const endPoint = screenPoints[1];
+        const startWorld = worldPoints[0];
+        const endWorld = worldPoints[1];
         
         const adjustedStart = startPoint.add(this.extensionOffset);
         const adjustedEnd = endPoint.add(this.extensionOffset);
         
-        console.log(`📏 Drawing visible line segment (${visibleSegment.startIdx} → ${visibleSegment.endIdx}):
+        console.log(`📏 Drawing linear intersection line:
   World: (${startWorld[0].toFixed(6)}, ${startWorld[1].toFixed(6)}) → (${endWorld[0].toFixed(6)}, ${endWorld[1].toFixed(6)})
   Screen: (${startPoint.x.toFixed(2)}, ${startPoint.y.toFixed(2)}) → (${endPoint.x.toFixed(2)}, ${endPoint.y.toFixed(2)})`);
         
         this.ctx.moveTo(adjustedStart.x, adjustedStart.y);
         this.ctx.lineTo(adjustedEnd.x, adjustedEnd.y);
       } else {
-        console.log('📏 No visible line segment found - not drawing anything');
-        return; // Don't stroke if nothing to draw
+        // For multiple points, find the visible segment to draw
+        const visibleSegment = this.findVisibleLineSegment(screenPoints, worldPoints);
+        
+        if (visibleSegment) {
+          const startPoint = screenPoints[visibleSegment.startIdx];
+          const endPoint = screenPoints[visibleSegment.endIdx];
+          const startWorld = worldPoints[visibleSegment.startIdx];
+          const endWorld = worldPoints[visibleSegment.endIdx];
+          
+          const adjustedStart = startPoint.add(this.extensionOffset);
+          const adjustedEnd = endPoint.add(this.extensionOffset);
+          
+          console.log(`📏 Drawing visible line segment (${visibleSegment.startIdx} → ${visibleSegment.endIdx}):
+  World: (${startWorld[0].toFixed(6)}, ${startWorld[1].toFixed(6)}) → (${endWorld[0].toFixed(6)}, ${endWorld[1].toFixed(6)})
+  Screen: (${startPoint.x.toFixed(2)}, ${startPoint.y.toFixed(2)}) → (${endPoint.x.toFixed(2)}, ${endPoint.y.toFixed(2)})`);
+          
+          this.ctx.moveTo(adjustedStart.x, adjustedStart.y);
+          this.ctx.lineTo(adjustedEnd.x, adjustedEnd.y);
+        } else {
+          console.log('📏 No visible line segment found - not drawing anything');
+          return; // Don't stroke if nothing to draw
+        }
       }
     }
     this.ctx.stroke();

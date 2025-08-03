@@ -131,34 +131,10 @@ export class PolynomialEquation {
   }
 
   generateXValues(worldWindow: WorldWindow, screenWidth: number): PreciseDecimal[] {
-    const degree = this.getDegree();
     const xMin = worldWindow.bottomLeft[0];
     const xMax = worldWindow.topRight[0];
 
-    // Use linear intersection calculator when:
-    // 1. Polynomial is actually linear (degree <= 1), OR
-    // 2. Any polynomial when zoomed in very close (shouldDrawAsCurve = false)
-    const shouldDrawAsCurve = this.shouldDrawAsCurve(worldWindow);
-    const shouldUseLinearApproximation = degree <= 1 || !shouldDrawAsCurve;
-
-    if (shouldUseLinearApproximation) {
-      // Use linear intersection calculator for precise rectangle edge intersections
-      const calculator = new LinearIntersectionCalculator(worldWindow);
-      const fAtXMin = this.evaluate(xMin);
-      const fAtXMax = this.evaluate(xMax);
-
-      const result = calculator.calculateIntersection(fAtXMin, fAtXMax);
-
-      if (result.hasIntersection) {
-        // Extract X values from intersection points
-        return result.points.map(point => point[0]);
-      } else {
-        // Line doesn't intersect the rectangle
-        return [];
-      }
-    }
-
-    // Higher degree polynomials need more points for smooth curves
+    // This method is only used for smooth curves (linear approximation handled in generatePoints)
     const numPoints = 4 * Math.min(screenWidth, 200);
     return this.generateXValuesForSmoothCurve(xMin, xMax, numPoints);
   }
@@ -201,6 +177,29 @@ export class PolynomialEquation {
   }
 
   generatePoints(worldWindow: WorldWindow, screenWidth: number): Point[] {
+    const degree = this.getDegree();
+    const shouldDrawAsCurve = this.shouldDrawAsCurve(worldWindow);
+    const shouldUseLinearApproximation = degree <= 1 || !shouldDrawAsCurve;
+
+    if (shouldUseLinearApproximation) {
+      // For linear approximation, return the intersection points directly
+      // Don't re-evaluate the polynomial at intersection X coordinates
+      const xMin = worldWindow.bottomLeft[0];
+      const xMax = worldWindow.topRight[0];
+      const calculator = new LinearIntersectionCalculator(worldWindow);
+      const fAtXMin = this.evaluate(xMin);
+      const fAtXMax = this.evaluate(xMax);
+
+      const result = calculator.calculateIntersection(fAtXMin, fAtXMax);
+
+      if (result.hasIntersection) {
+        return result.points;
+      } else {
+        return [];
+      }
+    }
+
+    // For curves, use X values and evaluate the polynomial
     const xValues = this.generateXValues(worldWindow, screenWidth);
     return xValues.map(x => [x, this.evaluate(x)] as Point);
   }
