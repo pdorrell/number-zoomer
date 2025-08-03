@@ -1,4 +1,4 @@
-import { ScreenVector, CanvasGridLines, CanvasEquationGraph } from '@/types/CanvasTypes';
+import { ScreenVector, ScreenPoint, CanvasGridLines, CanvasEquationGraph } from '@/types/CanvasTypes';
 import { ScreenViewport } from '@/types/Coordinate';
 
 export class CanvasContext {
@@ -126,7 +126,7 @@ export class CanvasContext {
     return y >= minY && y <= maxY;
   }
 
-  private findVisibleLineSegment(screenPoints: any[], worldPoints: any[]): { startIdx: number; endIdx: number } | null {
+  private findVisibleLineSegment(screenPoints: ScreenPoint[], _worldPoints: [number, number][]): { startIdx: number; endIdx: number } | null {
     if (screenPoints.length === 0) return null;
 
     // Find starting point
