@@ -5,6 +5,7 @@
   "type": "module",
   "main": "dist/index.js",
   "scripts": {
+    "dev": "vite --config vite.config.ts",
     "start": "vite --config vite.config.ts",
     "start:claude": "vite --config vite.config.claude.ts",
     "build": "vite build --config vite.config.ts",
