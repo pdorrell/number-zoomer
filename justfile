@@ -4,7 +4,7 @@ clean-caches:
 
 # Clean generated files
 clean:
-    rm -rf dist build
+    rm -rf dist build coverage
 
 # Clean all caches and generated files
 clean-all: clean-caches clean
